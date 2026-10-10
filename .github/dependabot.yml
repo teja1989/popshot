@@ -16,6 +16,16 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      # eslint-plugin-jsx-a11y supports ESLint up to 9 only.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint supports TypeScript below 6.1 only.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # Types must match the Node major we run (see apps/web/.nvmrc).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       web-dev:
         dependency-type: development
