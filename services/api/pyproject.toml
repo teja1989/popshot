@@ -4,9 +4,12 @@ version = "0.1.0"
 description = "Popshot API: data, rules and stats"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "alembic==1.20.0",
     "fastapi==0.143.0",
+    "psycopg[binary]==3.3.6",
     "pydantic-settings==2.15.0",
     "pyjwt[crypto]==2.15.1",
+    "sqlalchemy==2.1.4",
     "structlog==26.1.0",
     "uvicorn==0.54.0",
 ]
@@ -34,7 +37,7 @@ required-version = ">=0.11.32"
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-src = ["src", "tests"]
+src = ["src", "tests", "migrations"]
 
 [tool.ruff.lint]
 select = [
@@ -44,15 +47,19 @@ ignore = ["TRY003", "PLR2004"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106", "PLR2004", "ARG001", "ARG002"]
+# SQL built from constant table and column names, never from input.
+"tests/db/**" = ["S101", "S608", "PLR2004", "ARG001"]
+"migrations/**" = ["S608"]
 
 [tool.mypy]
 strict = true
 python_version = "3.13"
-files = ["src", "tests"]
+files = ["src", "tests", "migrations"]
 plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config"
+markers = ["db: needs a real Postgres (see tests/db/conftest.py)"]
 xfail_strict = true
 filterwarnings = ["error"]
