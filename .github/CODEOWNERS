@@ -1,0 +1,8 @@
+# Every change needs a review from the owner.
+* @teja1989
+
+# Extra care: anything touching data access, auth or deploys.
+/services/api/migrations/ @teja1989
+/services/api/src/popshot_api/auth/ @teja1989
+/infra/ @teja1989
+/.github/workflows/ @teja1989
