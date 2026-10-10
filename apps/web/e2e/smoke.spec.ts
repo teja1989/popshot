@@ -36,11 +36,20 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
   // Every script in the server-rendered HTML carries this request's nonce. Chunks that
   // those scripts load later are allowed through 'strict-dynamic' instead.
   const nonce = /'nonce-([^']+)'/.exec(scriptSrc)?.[1] ?? "missing";
+  // Parse with the browser's own HTML parser rather than a regex, so no spelling or
+  // casing of a script tag can slip past.
   const html = (await response?.text()) ?? "";
-  const scriptTags = html.match(/<script\b[^>]*>/g) ?? [];
-  expect(scriptTags.length).toBeGreaterThan(0);
-  for (const tag of scriptTags) {
-    expect(tag).toContain(`nonce="${nonce}"`);
+  const scriptNonces = await page.evaluate(
+    (source) =>
+      Array.from(
+        new DOMParser().parseFromString(source, "text/html").querySelectorAll("script"),
+        (script) => script.getAttribute("nonce"),
+      ),
+    html,
+  );
+  expect(scriptNonces.length).toBeGreaterThan(0);
+  for (const value of scriptNonces) {
+    expect(value).toBe(nonce);
   }
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
