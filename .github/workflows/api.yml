@@ -1,0 +1,59 @@
+name: API
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: services/api
+
+jobs:
+  checks:
+    name: API lint, types, tests, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UV_VERSION: 0.11.32
+      UV_SHA256: aab924fd522efd06f1c5f3b93a243864fc453132c94b2dc49f1371b528a4b967
+      UV_PYTHON_DOWNLOADS: never
+      UV_FROZEN: "1"
+      HYPOTHESIS_PROFILE: ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+      - name: Install uv (checksum verified)
+        run: |
+          set -euo pipefail
+          tarball="uv-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$tarball" "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${tarball}"
+          echo "${UV_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" --strip-components=1
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Install dependencies
+        run: uv sync --all-groups
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Lint
+        run: uv run ruff check --output-format=github .
+      - name: Types
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest
+      - name: Audit dependencies
+        run: |
+          set -euo pipefail
+          uv export --no-emit-project --all-groups --format requirements-txt > "$RUNNER_TEMP/requirements.txt"
+          uv run pip-audit --strict --disable-pip -r "$RUNNER_TEMP/requirements.txt"
