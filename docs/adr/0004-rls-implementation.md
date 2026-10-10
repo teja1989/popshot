@@ -1,6 +1,6 @@
 # 0004: How row-level security is implemented
 
-- Status: accepted
+- Status: accepted; point 1 refined by [ADR 0005](0005-database-login.md)
 - Date: 2026-10-10
 
 ## Context

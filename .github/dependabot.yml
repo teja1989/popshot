@@ -47,6 +47,25 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
+  - package-ecosystem: docker
+    directories: ["/services/api", "/apps/web"]
+    schedule:
+      interval: weekly
+      day: monday
+    ignore:
+      # Runtimes stay on Node 24 LTS and Python 3.13 (matching .nvmrc, CI and
+      # pyproject). Digest updates within those versions still come through, which is how
+      # base-image security fixes arrive. Move runtimes on purpose, not via Dependabot.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      base-images:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+
   - package-ecosystem: terraform
     directories: ["/infra/terraform/*", "/infra/terraform/prod/*"]
     schedule:
