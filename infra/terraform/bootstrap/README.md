@@ -11,6 +11,17 @@ Creates what GitHub Actions needs to manage everything else without any keys:
 | `gha-build` service account | Pushes images to the `popshot` repo, nothing else |
 | `gha-deploy` service account | Applies Terraform and deploys. Only usable by a job in the `prod` environment, which needs your approval |
 
+## The quick way (one command, from your Mac)
+
+```sh
+./infra/provision.sh <project-id> us-east4
+```
+
+It installs or verifies the tools, signs you in to `gcloud` and `gh`, creates the state bucket,
+applies this bootstrap, sets up both GitHub environments and their variables, and starts the
+first deploy. It asks before each change and is safe to re-run. The manual steps below do the
+same thing by hand.
+
 ## Prerequisites
 
 - `gcloud` signed in as a project owner: `gcloud auth login && gcloud auth application-default login`

@@ -51,3 +51,6 @@ test-results/
 !*.tfvars.example
 crash.log
 .terraform.lock.hcl.bak
+
+# Local tool downloads (infra/provision.sh)
+.tools/
