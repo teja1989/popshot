@@ -27,6 +27,9 @@ Rotate it by bumping `admin_password_version`.
 
 ## First deploy
 
+`./infra/provision.sh <project-id>` does all of this end to end (see `../bootstrap/README.md`).
+By hand:
+
 Prerequisites:
 - the bootstrap is applied and the GitHub environments and variables are set (`../bootstrap/README.md`);
 - teja1989/popshot#8 (IAM database login) and #9 (container images) are merged, since the jobs and services need them.
