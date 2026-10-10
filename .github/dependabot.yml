@@ -23,3 +23,16 @@ updates:
         dependency-type: production
     commit-message:
       prefix: "chore(deps)"
+
+  - package-ecosystem: uv
+    directory: /services/api
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      api-dev:
+        dependency-type: development
+      api-runtime:
+        dependency-type: production
+    commit-message:
+      prefix: "chore(deps)"
