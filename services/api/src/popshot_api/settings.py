@@ -25,8 +25,12 @@ class Settings(BaseSettings):
     firebase_project_id: str = Field(pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
     # Sign-in providers we accept. Anything else enabled by mistake in the console is rejected.
     allowed_sign_in_providers: frozenset[str] = frozenset({"google.com"})
-    # SQLAlchemy URL for the popshot_app role, e.g. postgresql+psycopg://popshot_app:...@host/db
+    # SQLAlchemy URL for the API's login user, a member of popshot_app (ADR 0005), e.g.
+    # postgresql+psycopg://popshot_api:...@host/popshot
     database_url: SecretStr
+    # On Cloud SQL: log in as the service account's IAM user, with a short-lived token from
+    # the metadata server as the password. The URL then carries no password.
+    database_iam_auth: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     @property

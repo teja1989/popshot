@@ -14,26 +14,40 @@ uv sync --all-groups
 
 ## Database
 
-The API needs Postgres 16 and two roles. Create them once (as a superuser) with random
-passwords:
+The API needs Postgres 16. The role layout is the same everywhere (ADR 0004, ADR 0005):
+
+| Role | Login | Purpose |
+|---|---|---|
+| `popshot_owner` | no | Owns every table and function |
+| `popshot_app` | no | What RLS policies and grants target |
+| `popshot_migrator` (locally) / migrator service account (Cloud SQL) | yes | Member of `popshot_owner`; runs migrations |
+| `popshot_api` (locally) / API service account (Cloud SQL) | yes | Member of `popshot_app`; the API connects as this |
+
+Set it up once, locally, as a superuser:
 
 ```sh
-psql -v ON_ERROR_STOP=1 -v owner_password="$(openssl rand -hex 24)" \
-     -v app_password="$(openssl rand -hex 24)" -f db/init_roles.sql "$ADMIN_URL"
+psql -v ON_ERROR_STOP=1 -v migrator_password="$(openssl rand -hex 24)" \
+     -v api_password="$(openssl rand -hex 24)" -f db/local_login_users.sql "$ADMIN_URL"
+POPSHOT_BOOTSTRAP_ADMIN_URL="$ADMIN_URL" \
+  uv run python -m popshot_api.ops.bootstrap_db --migrator popshot_migrator --api popshot_api
 ```
 
-Then run migrations as the owner, and point the API and tests at the app role:
+The bootstrap is safe to re-run. Then migrate as the migrator and point the tests at the API user:
 
 ```sh
-export POPSHOT_MIGRATION_DATABASE_URL=postgresql+psycopg://popshot_owner:...@localhost/popshot
-export POPSHOT_TEST_APP_DATABASE_URL=postgresql+psycopg://popshot_app:...@localhost/popshot
+export POPSHOT_MIGRATION_DATABASE_URL=postgresql+psycopg://popshot_migrator:...@localhost/popshot
+export POPSHOT_TEST_APP_DATABASE_URL=postgresql+psycopg://popshot_api:...@localhost/popshot
+export POPSHOT_BOOTSTRAP_ADMIN_URL=postgresql://...   # optional: enables the bootstrap tests
 uv run alembic upgrade head
 ```
 
-Isolation rules are in [ADR 0002](../../docs/adr/0002-tenant-isolation-rls.md) and
-[ADR 0004](../../docs/adr/0004-rls-implementation.md). The isolation tests in `tests/db/` run
-when both URLs are set; otherwise they're skipped. CI sets `POPSHOT_REQUIRE_DB=1`, which
-turns a missing database into a failure.
+On Cloud SQL the login users are IAM users and there are no passwords: set
+`POPSHOT_DATABASE_IAM_AUTH=true` and the API and migrations use an access token from the
+metadata server as the password.
+
+The isolation tests in `tests/db/` run when both URLs are set; otherwise they're skipped. CI
+sets `POPSHOT_REQUIRE_DB=1`, which turns a missing database into a failure. CI also runs the
+bootstrap as a non-superuser admin, the way it runs on Cloud SQL.
 
 A new table holding group data needs: `group_id`, composite foreign keys to its parents,
 `ENABLE` and `FORCE ROW LEVEL SECURITY`, policies for `popshot_app`, grants that never include
@@ -60,11 +74,11 @@ Set `HYPOTHESIS_PROFILE=ci` to run the property tests with more examples.
 
 ```sh
 POPSHOT_FIREBASE_PROJECT_ID=<your-dev-project-id> \
-POPSHOT_DATABASE_URL=postgresql+psycopg://popshot_app:...@localhost/popshot \
+POPSHOT_DATABASE_URL=postgresql+psycopg://popshot_api:...@localhost/popshot \
   uv run uvicorn --factory popshot_api.main:create_app --reload
 ```
 
-The API refuses to start unless it's connected as `popshot_app` with no extra privileges.
+The API refuses to start unless its login user inherits `popshot_app` and nothing more powerful.
 
 `/docs` is only served when `POPSHOT_ENVIRONMENT` is `local` (the default).
 
@@ -75,7 +89,8 @@ All settings come from environment variables. Nothing is read from `.env` files.
 | Variable | Required | Default | Meaning |
 |---|---|---|---|
 | `POPSHOT_FIREBASE_PROJECT_ID` | yes | | Project that issues users' ID tokens (token audience) |
-| `POPSHOT_DATABASE_URL` | yes | | SQLAlchemy URL for the `popshot_app` role |
+| `POPSHOT_DATABASE_URL` | yes | | SQLAlchemy URL for the API's login user (no password with IAM auth) |
+| `POPSHOT_DATABASE_IAM_AUTH` | no | `false` | Log in with an IAM access token from the metadata server (Cloud SQL) |
 | `POPSHOT_ENVIRONMENT` | no | `local` | `local`, `test`, `dev` or `prod` |
 | `POPSHOT_ALLOWED_SIGN_IN_PROVIDERS` | no | `["google.com"]` | JSON list of accepted sign-in providers |
 | `POPSHOT_LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR` |
@@ -97,3 +112,16 @@ Tests use `tests/fakes.py:FakeTokenVerifier`, which lives under `tests/` so it c
 One JSON object per line on stdout, with a `severity` field for Cloud Logging. Request logs
 include method, path, status, duration, a request ID and the Cloud Trace ID. Query strings,
 headers and bodies are never logged.
+
+## Container image
+
+```sh
+docker build -t popshot-api services/api
+```
+
+- Python 3.13 slim base, pinned by digest. `uv` comes from its GitHub release, checked by SHA-256 at build time.
+- Only runtime dependencies, from the frozen lockfile. No tests, no dev tools, no `pip`.
+- Runs as uid 10001 on port 8080 and works with a read-only root filesystem.
+- Ships `alembic.ini` and `migrations/`, so the same image runs `alembic upgrade head` as the migration job.
+
+CI builds it on every PR and scans it with Trivy for fixable HIGH/CRITICAL vulnerabilities and baked-in secrets.

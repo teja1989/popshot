@@ -73,3 +73,15 @@ Read at runtime, so the same build runs in every environment.
 
 `src/app/manifest.ts` and the generated icons in `src/app/icons/[size]` make the app
 installable from the browser. There's no service worker yet, so there's no offline support.
+
+## Container image
+
+```sh
+docker build -t popshot-web apps/web
+```
+
+- Node 24 on Debian 13 slim, pinned by digest. Install scripts stay blocked during `npm ci`.
+- Runs the Next.js standalone server as uid 10001 on port 8080. `npm` and `corepack` are removed from the runtime image.
+- Works with a read-only root filesystem plus a writable `/tmp`.
+
+CI builds it on every PR and scans it with Trivy for fixable HIGH/CRITICAL vulnerabilities and baked-in secrets.

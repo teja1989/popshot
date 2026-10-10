@@ -1,9 +1,10 @@
 """Fixtures for tests against a real Postgres.
 
 Needs two URLs, both for the same database:
-  POPSHOT_MIGRATION_DATABASE_URL  migration owner (popshot_owner)
-  POPSHOT_TEST_APP_DATABASE_URL   app role (popshot_app)
-Create the roles with db/init_roles.sql. Without the URLs these tests are skipped, unless
+  POPSHOT_MIGRATION_DATABASE_URL  the migrator login user (member of popshot_owner)
+  POPSHOT_TEST_APP_DATABASE_URL   the API login user (member of popshot_app)
+Set them up with db/local_login_users.sql and the bootstrap (see README). Without the URLs
+these tests are skipped, unless
 POPSHOT_REQUIRE_DB=1 (set in CI), in which case they fail.
 
 The session starts by migrating down to base and back up, which also proves the downgrade
