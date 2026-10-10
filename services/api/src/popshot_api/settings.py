@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     firebase_project_id: str = Field(pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
     # Sign-in providers we accept. Anything else enabled by mistake in the console is rejected.
     allowed_sign_in_providers: frozenset[str] = frozenset({"google.com"})
+    # SQLAlchemy URL for the popshot_app role, e.g. postgresql+psycopg://popshot_app:...@host/db
+    database_url: SecretStr
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     @property

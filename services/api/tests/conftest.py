@@ -1,5 +1,6 @@
 import os
 from collections.abc import Iterator
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,6 +16,18 @@ hypothesis_settings.register_profile("ci", deadline=None, max_examples=1000, pri
 hypothesis_settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "default"))
 
 PROJECT_ID = "popshot-test"
+# Never connected to: tests using this URL don't touch the database.
+UNUSED_DATABASE_URL = "postgresql+psycopg://popshot_app:unused@127.0.0.1:1/none"
+
+
+def make_settings(environment: Environment = Environment.TEST, **overrides: Any) -> Settings:
+    return Settings(
+        environment=environment,
+        firebase_project_id=PROJECT_ID,
+        database_url=UNUSED_DATABASE_URL,
+        **overrides,
+    )
+
 
 ALICE = VerifiedIdentity(
     subject="alice-sub",
@@ -26,7 +39,7 @@ ALICE = VerifiedIdentity(
 
 @pytest.fixture
 def settings() -> Settings:
-    return Settings(environment=Environment.TEST, firebase_project_id=PROJECT_ID)
+    return make_settings()
 
 
 @pytest.fixture
@@ -36,5 +49,6 @@ def verifier() -> FakeTokenVerifier:
 
 @pytest.fixture
 def client(settings: Settings, verifier: FakeTokenVerifier) -> Iterator[TestClient]:
-    with TestClient(create_app(settings, verifier)) as test_client:
+    app = create_app(settings, verifier, verify_database_role=False)
+    with TestClient(app) as test_client:
         yield test_client

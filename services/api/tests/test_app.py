@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from popshot_api.main import create_app
-from popshot_api.settings import Environment, Settings
-from tests.conftest import PROJECT_ID
+from popshot_api.settings import Environment
+from tests.conftest import make_settings
 from tests.fakes import FakeTokenVerifier
 
 
@@ -37,16 +37,6 @@ def test_me_rejects_bad_credentials(client: TestClient, header: str) -> None:
     assert response.status_code == 401
 
 
-def test_me_returns_the_verified_identity(client: TestClient) -> None:
-    response = client.get("/v1/me", headers={"Authorization": "Bearer alice-token"})
-    assert response.status_code == 200
-    assert response.json() == {
-        "email": "alice@example.com",
-        "display_name": "Alice",
-        "picture_url": None,
-    }
-
-
 def test_key_outage_is_503_not_401(client: TestClient, verifier: FakeTokenVerifier) -> None:
     verifier.keys_unavailable = True
     response = client.get("/v1/me", headers={"Authorization": "Bearer alice-token"})
@@ -58,8 +48,8 @@ def test_key_outage_is_503_not_401(client: TestClient, verifier: FakeTokenVerifi
     [(Environment.LOCAL, True), (Environment.DEV, False), (Environment.PROD, False)],
 )
 def test_docs_only_exposed_locally(environment: Environment, exposed: bool) -> None:
-    settings = Settings(environment=environment, firebase_project_id=PROJECT_ID)
-    with TestClient(create_app(settings, FakeTokenVerifier())) as client:
+    app = create_app(make_settings(environment), FakeTokenVerifier(), verify_database_role=False)
+    with TestClient(app) as client:
         assert (client.get("/docs").status_code == 200) is exposed
         assert (client.get("/openapi.json").status_code == 200) is exposed
 

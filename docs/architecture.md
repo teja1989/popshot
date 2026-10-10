@@ -33,7 +33,7 @@ Sign-in is handled by Google Identity Platform. The web app gets an ID token for
 
 ### Group isolation
 
-Every table holding group data has a `group_id`. RLS is enabled and forced on each of these tables. At the start of each transaction the API runs `SET LOCAL app.user_id = '<uuid>'`, and policies allow access only to rows whose group the user is an active member of. Details and alternatives considered are in [ADR 0002](adr/0002-tenant-isolation-rls.md).
+Every table holding group data has a `group_id`. RLS is enabled and forced on each of these tables. At the start of each transaction the API runs `SET LOCAL app.user_id = '<uuid>'`, and policies allow access only to rows whose group the user is an active member of. Details and alternatives considered are in [ADR 0002](adr/0002-tenant-isolation-rls.md); how it is built is in [ADR 0004](adr/0004-rls-implementation.md).
 
 The isolation test suite proves, against a real Postgres, that a member of one group can't read, write, update or delete another group's rows, including by guessing IDs.
 
@@ -59,7 +59,7 @@ Project IDs are permanent in Google Cloud, so they stay neutral and short.
 - `group_members`: user, group, role (lead, co_lead, member), status
 - `group_invites`: hashed token, expiry, use limit, approval required
 - `players`: a person within a group, linked to a user or a guest awaiting claim
-- `matches`: group, format, points-to, win-by-2, played at, entered by, status
+- `matches`: group, format, points-to, win-by-2, best of (1 or 3), played at, entered by, status
 - `match_players`: match, player, team (A or B)
 - `match_games`: match, game number, team A score, team B score
 - `match_confirmations`: match, confirming user, decision
