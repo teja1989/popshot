@@ -1,0 +1,57 @@
+name: Infra
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Terraform fmt, validate, scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TERRAFORM_VERSION: 1.16.4
+      TERRAFORM_SHA256: dc94af0eef1147718ad7c8daea792ed199e3e0492eec180d0adafa2a65a879df
+      TRIVY_VERSION: 0.75.0
+      TRIVY_SHA256: c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f
+      TF_IN_AUTOMATION: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Terraform and Trivy (checksums verified)
+        run: |
+          set -euo pipefail
+          tf_zip="terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+          curl -fsSLo "$RUNNER_TEMP/$tf_zip" "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/${tf_zip}"
+          echo "${TERRAFORM_SHA256}  $RUNNER_TEMP/$tf_zip" | sha256sum --check --strict
+          unzip -q -o "$RUNNER_TEMP/$tf_zip" terraform -d "$RUNNER_TEMP"
+          trivy_tgz="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$trivy_tgz" "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${trivy_tgz}"
+          echo "${TRIVY_SHA256}  $RUNNER_TEMP/$trivy_tgz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$trivy_tgz" -C "$RUNNER_TEMP" trivy
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Format
+        run: terraform fmt -check -recursive -diff infra/terraform
+      - name: Validate every stack
+        run: |
+          set -euo pipefail
+          for dir in infra/terraform/*/; do
+            echo "::group::${dir}"
+            # The lockfile is committed; refuse to change it here.
+            terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+      - name: Scan for misconfigurations
+        run: |
+          trivy config --misconfig-scanners terraform --severity MEDIUM,HIGH,CRITICAL \
+            --exit-code 1 infra/terraform
