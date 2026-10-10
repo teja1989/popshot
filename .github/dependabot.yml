@@ -36,3 +36,14 @@ updates:
         dependency-type: production
     commit-message:
       prefix: "chore(deps)"
+
+  - package-ecosystem: terraform
+    directories: ["/infra/terraform/*"]
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      terraform-providers:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
