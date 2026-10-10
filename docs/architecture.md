@@ -47,10 +47,11 @@ The isolation test suite proves, against a real Postgres, that a member of one g
 
 | Environment | GCP project | Deploys |
 |---|---|---|
-| dev | `ps-dev-xxxx` | Automatically on merge to `main` |
-| prod | `ps-prod-xxxx` | Manually approved |
+| prod | set in GitHub environment variables, not in the repo | On merge to `main`, after manual approval |
 
-Project IDs are permanent in Google Cloud, so they stay neutral and short.
+There's one environment for now. A separate dev project can be added later without changing
+the stacks. Infrastructure lives in `infra/terraform` (bootstrap, then `prod/platform` and
+`prod/services`); see `infra/terraform/prod/README.md`.
 
 ## Data model (initial)
 
