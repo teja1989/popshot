@@ -1,0 +1,64 @@
+name: Images
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-scan:
+    name: Image ${{ matrix.image }} (build and scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: api
+            context: services/api
+          - image: web
+            context: apps/web
+    env:
+      TRIVY_VERSION: 0.75.0
+      TRIVY_SHA256: c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Trivy (checksum verified)
+        run: |
+          set -euo pipefail
+          tarball="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$tarball" "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${tarball}"
+          echo "${TRIVY_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" trivy
+      - name: Build
+        env:
+          CONTEXT: ${{ matrix.context }}
+          IMAGE: popshot-${{ matrix.image }}:ci
+        run: docker build --pull -t "$IMAGE" "$CONTEXT"
+      - name: Scan for fixable HIGH/CRITICAL vulnerabilities and baked-in secrets
+        env:
+          IMAGE: popshot-${{ matrix.image }}:ci
+        run: |
+          "$RUNNER_TEMP/trivy" image \
+            --db-repository mirror.gcr.io/aquasec/trivy-db,ghcr.io/aquasecurity/trivy-db \
+            --scanners vuln,secret \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            "$IMAGE"
+      - name: Image runs as a non-root user
+        env:
+          IMAGE: popshot-${{ matrix.image }}:ci
+        run: |
+          user="$(docker image inspect --format '{{.Config.User}}' "$IMAGE")"
+          echo "Image user: ${user:-<none>}"
+          case "$user" in ""|root|0|0:*) echo "Image must not run as root"; exit 1;; esac

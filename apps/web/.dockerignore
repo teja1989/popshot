@@ -1,0 +1,9 @@
+# Only what the build needs. No local env files, build output or test artifacts.
+*
+!package.json
+!package-lock.json
+!.npmrc
+!next.config.ts
+!tsconfig.json
+!src/
+src/**/*.test.ts

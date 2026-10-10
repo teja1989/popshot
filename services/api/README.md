@@ -112,3 +112,16 @@ Tests use `tests/fakes.py:FakeTokenVerifier`, which lives under `tests/` so it c
 One JSON object per line on stdout, with a `severity` field for Cloud Logging. Request logs
 include method, path, status, duration, a request ID and the Cloud Trace ID. Query strings,
 headers and bodies are never logged.
+
+## Container image
+
+```sh
+docker build -t popshot-api services/api
+```
+
+- Python 3.13 slim base, pinned by digest. `uv` comes from its GitHub release, checked by SHA-256 at build time.
+- Only runtime dependencies, from the frozen lockfile. No tests, no dev tools, no `pip`.
+- Runs as uid 10001 on port 8080 and works with a read-only root filesystem.
+- Ships `alembic.ini` and `migrations/`, so the same image runs `alembic upgrade head` as the migration job.
+
+CI builds it on every PR and scans it with Trivy for fixable HIGH/CRITICAL vulnerabilities and baked-in secrets.
