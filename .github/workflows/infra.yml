@@ -44,13 +44,16 @@ jobs:
       - name: Validate every stack
         run: |
           set -euo pipefail
-          for dir in infra/terraform/*/; do
+          # Every directory with a versions.tf is a stack (bootstrap, prod/platform, prod/services).
+          find infra/terraform -name versions.tf -not -path '*/.terraform/*' -printf '%h\n' | sort > "$RUNNER_TEMP/stacks"
+          test -s "$RUNNER_TEMP/stacks"
+          while read -r dir; do
             echo "::group::${dir}"
             # The lockfile is committed; refuse to change it here.
             terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$dir" validate
             echo "::endgroup::"
-          done
+          done < "$RUNNER_TEMP/stacks"
       - name: Scan for misconfigurations
         run: |
           trivy config --misconfig-scanners terraform --severity MEDIUM,HIGH,CRITICAL \
