@@ -33,7 +33,8 @@ jobs:
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
       - name: Scan full history
-        run: $RUNNER_TEMP/gitleaks git --redact --verbose --exit-code 1 .
+        run: |
+          "$RUNNER_TEMP/gitleaks" git --redact --verbose --exit-code 1 .
 
   dependency-review:
     name: Dependency review
@@ -64,4 +65,5 @@ jobs:
           echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" actionlint
       - name: Lint workflows
-        run: $RUNNER_TEMP/actionlint -color
+        run: |
+          "$RUNNER_TEMP/actionlint" -color
