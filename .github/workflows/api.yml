@@ -59,20 +59,31 @@ jobs:
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: uv sync --all-groups
-      - name: Create database roles
+      - name: Set up the database like Cloud SQL
         env:
           PGPASSWORD: ci-only-superuser
         run: |
           set -euo pipefail
-          owner_pw="$(openssl rand -hex 24)"
-          app_pw="$(openssl rand -hex 24)"
-          echo "::add-mask::$owner_pw"
-          echo "::add-mask::$app_pw"
-          psql -v ON_ERROR_STOP=1 -v owner_password="$owner_pw" -v app_password="$app_pw" \
-            -f db/init_roles.sql "postgresql://postgres@localhost:5432/postgres"
+          admin_pw="$(openssl rand -hex 24)"
+          migrator_pw="$(openssl rand -hex 24)"
+          api_pw="$(openssl rand -hex 24)"
+          echo "::add-mask::$admin_pw"
+          echo "::add-mask::$migrator_pw"
+          echo "::add-mask::$api_pw"
+          su_url="postgresql://postgres@localhost:5432/postgres"
+          # A non-superuser admin with CREATEROLE/CREATEDB, like Cloud SQL's postgres user.
+          psql -v ON_ERROR_STOP=1 -v pw="$admin_pw" "$su_url" <<'SQL'
+          CREATE ROLE cloud_admin LOGIN CREATEDB CREATEROLE PASSWORD :'pw';
+          SQL
+          psql -v ON_ERROR_STOP=1 -v migrator_password="$migrator_pw" -v api_password="$api_pw" \
+            -f db/local_login_users.sql "$su_url"
+          admin_url="postgresql://cloud_admin:${admin_pw}@localhost:5432/postgres"
+          POPSHOT_BOOTSTRAP_ADMIN_URL="$admin_url" \
+            uv run python -m popshot_api.ops.bootstrap_db --migrator popshot_migrator --api popshot_api
           {
-            echo "POPSHOT_MIGRATION_DATABASE_URL=postgresql+psycopg://popshot_owner:${owner_pw}@localhost:5432/popshot"
-            echo "POPSHOT_TEST_APP_DATABASE_URL=postgresql+psycopg://popshot_app:${app_pw}@localhost:5432/popshot"
+            echo "POPSHOT_BOOTSTRAP_ADMIN_URL=${admin_url}"
+            echo "POPSHOT_MIGRATION_DATABASE_URL=postgresql+psycopg://popshot_migrator:${migrator_pw}@localhost:5432/popshot"
+            echo "POPSHOT_TEST_APP_DATABASE_URL=postgresql+psycopg://popshot_api:${api_pw}@localhost:5432/popshot"
           } >> "$GITHUB_ENV"
       - name: Format
         run: uv run ruff format --check .

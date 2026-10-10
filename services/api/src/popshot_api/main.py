@@ -27,7 +27,13 @@ def create_app(
     it isn't reachable from configuration, so a deployed API always checks its role."""
     settings = settings if settings is not None else Settings()
     configure_logging(settings.log_level)
-    engine = engine if engine is not None else make_engine(settings.database_url.get_secret_value())
+    engine = (
+        engine
+        if engine is not None
+        else make_engine(
+            settings.database_url.get_secret_value(), iam_auth=settings.database_iam_auth
+        )
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:

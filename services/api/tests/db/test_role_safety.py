@@ -1,9 +1,13 @@
 """The database roles and objects are set up the way ADR 0002 says."""
 
-import pytest
-from sqlalchemy import Engine, text
+import os
+import secrets
 
-from popshot_api.db import APP_ROLE, UnsafeDatabaseRoleError, check_database_role
+import pytest
+from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.engine import make_url
+
+from popshot_api.db import APP_ROLE, OWNER_ROLE, UnsafeDatabaseRoleError, check_database_role
 from tests.db.conftest import INSUFFICIENT_PRIVILEGE, sqlstate_of
 
 pytestmark = pytest.mark.db
@@ -18,24 +22,49 @@ def test_owner_role_fails_startup_check(owner_engine: Engine) -> None:
         check_database_role(owner_engine)
 
 
-def test_app_role_attributes(owner_engine: Engine) -> None:
+def test_group_roles_cannot_log_in_or_escalate(owner_engine: Engine) -> None:
     with owner_engine.connect() as conn:
-        role = conn.execute(
+        rows = conn.execute(
             text(
-                "SELECT rolsuper, rolbypassrls, rolcreaterole, rolcreatedb, rolreplication "
-                "FROM pg_roles WHERE rolname = :r"
+                "SELECT rolname, rolcanlogin, rolsuper, rolbypassrls, rolcreaterole, rolcreatedb,"
+                " rolreplication FROM pg_roles WHERE rolname IN (:app, :owner)"
             ),
-            {"r": APP_ROLE},
-        ).one()
-        memberships = conn.execute(
+            {"app": APP_ROLE, "owner": OWNER_ROLE},
+        ).all()
+        group_memberships = conn.execute(
             text(
-                "SELECT count(*) FROM pg_auth_members WHERE member = "
-                "(SELECT oid FROM pg_roles WHERE rolname = :r)"
+                "SELECT count(*) FROM pg_auth_members a JOIN pg_roles r ON r.oid = a.member "
+                "WHERE r.rolname IN (:app, :owner)"
             ),
-            {"r": APP_ROLE},
+            {"app": APP_ROLE, "owner": OWNER_ROLE},
         ).scalar_one()
-    assert not any(role)
-    assert memberships == 0
+    assert len(rows) == 2
+    for row in rows:
+        assert not any(row[1:]), row.rolname
+    # The group roles themselves belong to nothing.
+    assert group_memberships == 0
+
+
+def _memberships(engine: Engine) -> dict[str, tuple[bool, bool]]:
+    """Roles the connected login user belongs to, with (inherit, set) for each."""
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text(
+                "SELECT r.rolname, a.inherit_option, a.set_option FROM pg_auth_members a "
+                "JOIN pg_roles r ON r.oid = a.roleid "
+                "WHERE a.member = (SELECT oid FROM pg_roles WHERE rolname = current_user)"
+            )
+        ).all()
+    return {row.rolname: (row.inherit_option, row.set_option) for row in rows}
+
+
+def test_api_login_user_belongs_only_to_popshot_app(app_engine: Engine) -> None:
+    # Inherits popshot_app's rights, but can't SET ROLE to it or anything else.
+    assert _memberships(app_engine) == {APP_ROLE: (True, False)}
+
+
+def test_migrator_login_user_belongs_only_to_popshot_owner(owner_engine: Engine) -> None:
+    assert _memberships(owner_engine) == {OWNER_ROLE: (True, True)}
 
 
 def test_every_table_has_forced_rls(owner_engine: Engine) -> None:
@@ -52,7 +81,7 @@ def test_every_table_has_forced_rls(owner_engine: Engine) -> None:
     for row in rows:
         assert row.relrowsecurity, row.relname
         assert row.relforcerowsecurity, row.relname
-        assert row.owner != APP_ROLE, row.relname
+        assert row.owner == OWNER_ROLE, row.relname
 
 
 def test_no_views_or_sequences_reachable_by_app(owner_engine: Engine) -> None:
@@ -113,7 +142,7 @@ def test_definer_functions_pin_search_path(owner_engine: Engine) -> None:
     assert len(rows) >= 8
     for row in rows:
         assert row.proconfig == ["search_path=pg_catalog, pg_temp"], row.proname
-        assert row.owner != APP_ROLE
+        assert row.owner == OWNER_ROLE, row.proname
 
 
 def test_app_cannot_turn_off_rls_or_take_over(app_engine: Engine) -> None:
@@ -132,3 +161,26 @@ def test_app_cannot_turn_off_rls_or_take_over(app_engine: Engine) -> None:
         # out instead of running unfiltered.
         conn.execute(text("SET LOCAL row_security = off"))
         assert sqlstate_of(conn, "SELECT count(*) FROM matches") == INSUFFICIENT_PRIVILEGE
+
+
+def test_startup_refuses_a_user_that_also_belongs_to_owner(app_url: str, migrated: None) -> None:
+    """A login user in both groups would inherit the owner's policies; refuse it."""
+    admin_url = os.environ.get("POPSHOT_BOOTSTRAP_ADMIN_URL")
+    if not admin_url:
+        pytest.skip("POPSHOT_BOOTSTRAP_ADMIN_URL not set")
+    password = secrets.token_hex(16)
+    admin = create_engine(admin_url.replace("postgresql://", "postgresql+psycopg://", 1))
+    with admin.begin() as conn:
+        conn.execute(text("DROP ROLE IF EXISTS popshot_test_both"))
+        conn.execute(text(f"CREATE ROLE popshot_test_both LOGIN PASSWORD '{password}'"))
+        conn.execute(text(f"GRANT {APP_ROLE}, {OWNER_ROLE} TO popshot_test_both"))
+    url = make_url(app_url).set(username="popshot_test_both", password=password)
+    engine = create_engine(url)
+    try:
+        with pytest.raises(UnsafeDatabaseRoleError, match=OWNER_ROLE):
+            check_database_role(engine)
+    finally:
+        engine.dispose()
+        with admin.begin() as conn:
+            conn.execute(text("DROP ROLE popshot_test_both"))
+        admin.dispose()
