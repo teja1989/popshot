@@ -14,6 +14,7 @@ def test_reads_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.allowed_sign_in_providers == frozenset({"google.com"})
     assert not settings.expose_docs
     assert "secret-pw" not in repr(settings)
+    assert settings.database_iam_auth is False
     assert settings.database_url.get_secret_value().endswith("@h/db")
 
 
@@ -39,3 +40,12 @@ def test_unknown_environment_rejected() -> None:
             firebase_project_id="ps-dev-1234",
             database_url="postgresql+psycopg://u:p@h/db",
         )
+
+
+def test_iam_auth_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("POPSHOT_FIREBASE_PROJECT_ID", "ps-prod-1234")
+    monkeypatch.setenv(
+        "POPSHOT_DATABASE_URL", "postgresql+psycopg://api-sa%40p.iam@10.0.0.3/popshot"
+    )
+    monkeypatch.setenv("POPSHOT_DATABASE_IAM_AUTH", "true")
+    assert Settings().database_iam_auth is True
