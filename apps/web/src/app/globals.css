@@ -1,0 +1,139 @@
+:root {
+  --bg: #f6f1e7;
+  --surface: #fffdf8;
+  --ink: #1f2a24;
+  --muted: #5b6b62;
+  --accent: #2f5d46;
+  --accent-ink: #ffffff;
+  --line: #e4dccb;
+  --warm: #b85c38;
+  --radius: 14px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16201b;
+    --surface: #1e2a24;
+    --ink: #eef2ee;
+    --muted: #a7b5ad;
+    --accent: #7fbf9a;
+    --accent-ink: #10201a;
+    --line: #2e3d35;
+    --warm: #e39a77;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  min-height: 100dvh;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 650;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+
+.brand-mark {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: #f2c94c;
+  box-shadow: inset 0 0 0 3px #d9ad2e;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+  font-weight: 700;
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0 0 1.5rem;
+  font-size: 1.05rem;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
+.notice {
+  color: var(--warm);
+  margin: 1rem 0 0;
+}
+
+.button {
+  display: inline-block;
+  text-decoration: none;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  min-height: 44px;
+  font: inherit;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--warm);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.button-quiet {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
