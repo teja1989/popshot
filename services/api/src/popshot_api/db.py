@@ -177,4 +177,7 @@ def user_session(
         yield UserSession(session=session, user_id=user_id)
 
 
-CurrentUserSession = Annotated[UserSession, Depends(user_session)]
+# scope="function": the transaction commits before the response is sent. With FastAPI's
+# default ("request") it would commit after, so a client could act on a success before the
+# change was visible to its next request, or be told it succeeded when the commit failed.
+CurrentUserSession = Annotated[UserSession, Depends(user_session, scope="function")]
