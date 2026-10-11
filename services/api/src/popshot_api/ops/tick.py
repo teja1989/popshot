@@ -1,5 +1,6 @@
-"""The scheduled job, run every 15 minutes by Cloud Scheduler: play-night reminders, and
-deleting groups whose 30 days to be restored have passed.
+"""The scheduled job, run every 15 minutes by Cloud Scheduler: play-night reminders,
+deleting groups whose 30 days to be restored have passed, and deleting usage activity older
+than 13 months.
 
 It logs in as its own database user (a member of popshot_jobs), which can only call the
 functions migration 0008 grants it. Reminders are marked sent before they go out, so a
@@ -39,6 +40,7 @@ class JobSettings(BaseSettings):
 @dataclass(frozen=True, slots=True)
 class Summary:
     purged_groups: int
+    purged_activity_days: int
     reminded_nights: int
     notifications: int
 
@@ -74,6 +76,7 @@ def run(engine: Engine, sender: PushSender | None, now: datetime | None = None) 
     now = now or datetime.now(UTC)
     with engine.begin() as conn:
         purged = int(conn.execute(text("SELECT app_purge_deleted_groups()")).scalar_one())
+        old_activity = int(conn.execute(text("SELECT app_jobs_purge_activity()")).scalar_one())
 
     reminded = 0
     sent = 0
@@ -115,10 +118,16 @@ def run(engine: Engine, sender: PushSender | None, now: datetime | None = None) 
         with engine.begin() as conn:
             for endpoint in gone:
                 conn.execute(text("SELECT app_forget_push_endpoint(:e)"), {"e": endpoint})
-    summary = Summary(purged_groups=purged, reminded_nights=reminded, notifications=sent)
+    summary = Summary(
+        purged_groups=purged,
+        purged_activity_days=old_activity,
+        reminded_nights=reminded,
+        notifications=sent,
+    )
     log.info(
         "tick.done",
         purged_groups=summary.purged_groups,
+        purged_activity_days=summary.purged_activity_days,
         reminded_nights=summary.reminded_nights,
         notifications=summary.notifications,
     )
