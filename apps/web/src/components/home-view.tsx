@@ -7,7 +7,6 @@ import { useMemo } from "react";
 import { ROLE_LABEL, type GroupDetail, type GroupSummary } from "@/lib/groups";
 import { firstName, greetingFor } from "@/lib/people";
 
-import { AppHeader } from "./app-header";
 import { useSignedIn } from "./auth";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { useApiGet } from "./use-api";
@@ -49,8 +48,7 @@ export function HomeView() {
   const name = firstName(me?.display_name);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 pt-10 pb-12 lg:max-w-5xl lg:px-8">
-      <AppHeader />
+    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-5xl lg:px-8 lg:pt-10">
 
       <section className="relative isolate animate-rise overflow-hidden rounded-3xl border border-line bg-surface p-5 lg:p-7">
         <CourtMotif />

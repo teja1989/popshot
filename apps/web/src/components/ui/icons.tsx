@@ -98,3 +98,40 @@ export function PlayIcon() {
     </svg>
   );
 }
+
+// Navigation icons (the same shapes as the design canvas).
+export function HomeIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <path d="M3 10l8-6.5 8 6.5V19H13.5v-5h-5v5H3z" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+export function GamesIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <path d="M4 5h14M4 11h14M4 17h9" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+export function BoardIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <path d="M4 18V11M11 18V5M18 18v-9" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+export function YouIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <path
+        d="M11 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3.5 19c1.2-3.3 4-5 7.5-5s6.3 1.7 7.5 5"
+        strokeWidth="1.8"
+        {...stroke}
+      />
+    </svg>
+  );
+}

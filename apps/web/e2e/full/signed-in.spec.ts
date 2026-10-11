@@ -21,8 +21,9 @@ test("a signed-in user lands on their home, with their profile from the API", as
 
 test("signing out returns to the sign-in screen and stays signed out", async ({ page }) => {
   await signIn(page, newUser("Bob"));
-  await page.goto("/");
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.goto("/you");
+  // The You page's own button (on desktop the sidebar has one too).
+  await page.getByRole("main").getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
 
   await page.reload();

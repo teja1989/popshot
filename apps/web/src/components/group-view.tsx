@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { describeRules, ROLE_LABEL, type GroupDetail, type Member } from "@/lib/groups";
 
-import { AppHeader } from "./app-header";
 import { useSignedIn } from "./auth";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
@@ -15,8 +14,7 @@ export function GroupView({ groupId }: { groupId: string }) {
   const { result, reload } = useApiGet<GroupDetail>(`/v1/groups/${groupId}`);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-5 pt-12 pb-9">
-      <AppHeader />
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
       <Link
         href="/"
         className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-[15px] font-bold text-primary no-underline"
