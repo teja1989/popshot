@@ -5,16 +5,16 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import Engine, text
 
-from tests.db.conftest import ADMIN, People, create, sign_in, sign_in_as
+from tests.db.conftest import ADMIN, Admins, People, create, sign_in, sign_in_as
 from tests.fakes import FakeAccountLookup
 
 pytestmark = pytest.mark.db
 
 
 @pytest.fixture
-def accounts(admins: People) -> FakeAccountLookup:
+def accounts(admins: Admins) -> FakeAccountLookup:
     fake = FakeAccountLookup()
-    admins.client.app.state.account_lookup = fake  # type: ignore[attr-defined]
+    admins.admin.app.state.account_lookup = fake  # type: ignore[attr-defined]
     return fake
 
 
@@ -26,12 +26,12 @@ def boss(people: People) -> dict[str, str]:
     "path",
     ["/v1/admin/people?q=casey", f"/v1/admin/people/{uuid4()}", f"/v1/admin/groups/{uuid4()}"],
 )
-def test_everyone_else_gets_not_found(admins: People, path: str) -> None:
-    response = admins.client.get(path, headers=admins.new("Casey"))
+def test_everyone_else_gets_not_found(admins: Admins, path: str) -> None:
+    response = admins.admin.get(path, headers=admins.new("Casey"))
     assert (response.status_code, response.json()) == (404, {"detail": "Not Found"})
 
 
-def test_search_by_name_id_and_email(admins: People, accounts: FakeAccountLookup) -> None:
+def test_search_by_name_id_and_email(admins: Admins, accounts: FakeAccountLookup) -> None:
     casey, subject = sign_in_as(admins, "casey@example.com")
     accounts.add(subject, "casey@example.com")
     casey_id = admins.user_id(casey)
@@ -39,7 +39,7 @@ def test_search_by_name_id_and_email(admins: People, accounts: FakeAccountLookup
     admins.client.patch("/v1/me", json={"display_name": f"Casey {tag}"}, headers=casey)
 
     def search(q: str) -> list[str]:
-        response = admins.client.get("/v1/admin/people", params={"q": q}, headers=boss(admins))
+        response = admins.admin.get("/v1/admin/people", params={"q": q}, headers=boss(admins))
         assert response.status_code == 200, response.text
         return [p["id"] for p in response.json()["people"]]
 
@@ -51,26 +51,26 @@ def test_search_by_name_id_and_email(admins: People, accounts: FakeAccountLookup
     assert str(casey_id) not in search("%_")
 
 
-def test_email_search_says_when_firebase_cant_be_asked(admins: People) -> None:
+def test_email_search_says_when_firebase_cant_be_asked(admins: Admins) -> None:
     # No fake set up: lookup is off, as it is locally.
-    response = admins.client.get(
+    response = admins.admin.get(
         "/v1/admin/people", params={"q": "casey@example.com"}, headers=boss(admins)
     )
     assert response.json() == {"people": [], "email_search": False}
 
 
-def test_search_needs_two_characters(admins: People) -> None:
-    response = admins.client.get("/v1/admin/people", params={"q": "c"}, headers=boss(admins))
+def test_search_needs_two_characters(admins: Admins) -> None:
+    response = admins.admin.get("/v1/admin/people", params={"q": "c"}, headers=boss(admins))
     assert response.status_code == 422
 
 
-def test_a_person(admins: People, accounts: FakeAccountLookup, owner_engine: Engine) -> None:
+def test_a_person(admins: Admins, accounts: FakeAccountLookup, owner_engine: Engine) -> None:
     casey, subject = sign_in_as(admins, "casey@example.com")
     accounts.add(subject, "casey@example.com")
     casey_id = admins.user_id(casey)
     group = create(admins, casey, "Thursday Smashers")
     admin_headers, admin_subject = sign_in_as(admins, ADMIN.lower())
-    response = admins.client.get(f"/v1/admin/people/{casey_id}", headers=admin_headers)
+    response = admins.admin.get(f"/v1/admin/people/{casey_id}", headers=admin_headers)
     assert response.status_code == 200, response.text
     body = response.json()
     assert (body["email"], body["account"], body["disabled"]) == (
@@ -95,16 +95,16 @@ def test_a_person(admins: People, accounts: FakeAccountLookup, owner_engine: Eng
     assert target == casey_id
 
 
-def test_a_person_when_firebase_cant_be_asked(admins: People) -> None:
+def test_a_person_when_firebase_cant_be_asked(admins: Admins) -> None:
     casey_id = admins.user_id(admins.new("Casey"))
-    body = admins.client.get(f"/v1/admin/people/{casey_id}", headers=boss(admins)).json()
+    body = admins.admin.get(f"/v1/admin/people/{casey_id}", headers=boss(admins)).json()
     assert (body["email"], body["account"]) == (None, "unavailable")
 
 
-def test_a_crew(admins: People) -> None:
+def test_a_crew(admins: Admins) -> None:
     casey = admins.new("Casey")
     group = create(admins, casey, "Thursday Smashers")
-    response = admins.client.get(f"/v1/admin/groups/{group['id']}", headers=boss(admins))
+    response = admins.admin.get(f"/v1/admin/groups/{group['id']}", headers=boss(admins))
     assert response.status_code == 200, response.text
     body = response.json()
     assert (body["name"], body["members"], body["games"], body["deleted_at"]) == (
@@ -119,6 +119,6 @@ def test_a_crew(admins: People) -> None:
 
 
 @pytest.mark.parametrize(("kind", "what"), [("people", "person"), ("groups", "crew")])
-def test_unknown_ids(admins: People, kind: str, what: str) -> None:
-    response = admins.client.get(f"/v1/admin/{kind}/{uuid4()}", headers=boss(admins))
+def test_unknown_ids(admins: Admins, kind: str, what: str) -> None:
+    response = admins.admin.get(f"/v1/admin/{kind}/{uuid4()}", headers=boss(admins))
     assert (response.status_code, response.json()) == (404, {"detail": f"No such {what}."})

@@ -7,7 +7,13 @@ import pytest
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import make_url
 
-from popshot_api.db import APP_ROLE, OWNER_ROLE, UnsafeDatabaseRoleError, check_database_role
+from popshot_api.db import (
+    ADMIN_ROLE,
+    APP_ROLE,
+    OWNER_ROLE,
+    UnsafeDatabaseRoleError,
+    check_database_role,
+)
 from tests.db.conftest import INSUFFICIENT_PRIVILEGE, sqlstate_of
 
 pytestmark = pytest.mark.db
@@ -184,3 +190,19 @@ def test_startup_refuses_a_user_that_also_belongs_to_owner(app_url: str, migrate
         with admin.begin() as conn:
             conn.execute(text("DROP ROLE popshot_test_both"))
         admin.dispose()
+
+
+def test_the_admin_service_login_passes_only_the_admin_check(
+    admin_engine: Engine, app_engine: Engine
+) -> None:
+    check_database_role(admin_engine, admin=True)
+    # The API refuses a login that could call the admin functions...
+    with pytest.raises(UnsafeDatabaseRoleError, match="popshot_admin"):
+        check_database_role(admin_engine)
+    # ...and the admin service refuses one that can't.
+    with pytest.raises(UnsafeDatabaseRoleError, match="popshot_admin"):
+        check_database_role(app_engine, admin=True)
+
+
+def test_admin_login_user_belongs_to_app_and_admin(admin_engine: Engine) -> None:
+    assert _memberships(admin_engine) == {APP_ROLE: (True, False), ADMIN_ROLE: (True, False)}

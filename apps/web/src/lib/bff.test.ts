@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { forward, upstreamPath } from "./bff";
+import { forward, upstreamFor, upstreamPath } from "./bff";
 
 const API = new URL("https://api.internal.example/");
 
@@ -19,6 +19,23 @@ function sentHeaders(fetchFn: ReturnType<typeof okFetch>): Headers {
   const init = fetchFn.mock.calls[0]?.[1];
   return new Headers(init?.headers);
 }
+
+describe("upstreamFor", () => {
+  const api = new URL("https://api.example.com");
+  const admin = { baseUrl: new URL("https://admin.example.com"), audience: "https://admin.example.com" };
+
+  it("sends /v1/admin/... to the admin service and the rest to the API", () => {
+    const config = { apiBaseUrl: api, apiAudience: "https://api.example.com", adminApi: admin };
+    expect(upstreamFor(["v1", "admin", "overview"], config)).toBe(admin);
+    expect(upstreamFor(["v1", "groups"], config)).toEqual({ baseUrl: api, audience: "https://api.example.com" });
+    // Only the second segment counts: a group called "admin" is still the API's.
+    expect(upstreamFor(["v1", "groups", "admin"], config)?.baseUrl).toBe(api);
+  });
+
+  it("has nowhere to send admin paths when there's no admin service", () => {
+    expect(upstreamFor(["v1", "admin", "overview"], { apiBaseUrl: api, apiAudience: null, adminApi: null })).toBeNull();
+  });
+});
 
 describe("upstreamPath", () => {
   it.each([
@@ -73,9 +90,7 @@ describe("forward", () => {
     });
     expect(response.status).toBe(200);
     const target = fetchFn.mock.calls[0]?.[0];
-    expect(target instanceof URL ? target.href : target).toBe(
-      "https://api.internal.example/v1/me?a=1",
-    );
+    expect(target instanceof URL ? target.href : target).toBe("https://api.internal.example/v1/me?a=1");
     const sent = sentHeaders(fetchFn);
     expect([...sent.keys()].sort()).toEqual([
       "accept",
@@ -93,7 +108,7 @@ describe("forward", () => {
   it("drops a malformed trace header", async () => {
     const fetchFn = okFetch();
     const request = new Request("https://web.example/api/v1/me", {
-      headers: { authorization: "Bearer u", "x-cloud-trace-context": "\"},{\"injected\":1" },
+      headers: { authorization: "Bearer u", "x-cloud-trace-context": '"},{"injected":1' },
     });
     await forward(request, ["v1", "me"], { apiBaseUrl: API, serviceToken: null, fetchFn });
     expect(sentHeaders(fetchFn).has("x-cloud-trace-context")).toBe(false);

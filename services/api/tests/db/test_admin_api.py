@@ -1,12 +1,17 @@
-"""The admin page's API (migration 0010, routes/admin.py): who gets in, and what they see."""
+"""The admin service's overview (migrations 0010 and 0012, routes/admin.py, admin_main.py):
+who gets in, and what they see."""
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
+from popshot_api.admin_main import create_admin_app
 from popshot_api.routes.admin import RECENT_SIGN_IN
+from tests.conftest import make_settings
 from tests.db.conftest import (
     ADMIN,
     INSUFFICIENT_PRIVILEGE,
+    Admins,
     People,
     as_user,
     create,
@@ -29,10 +34,10 @@ def user_exists(owner_engine: Engine, subject: str) -> bool:
 
 
 @pytest.mark.parametrize("path", PAGES)
-def test_everyone_else_gets_not_found(admins: People, owner_engine: Engine, path: str) -> None:
-    unknown = admins.client.get("/v1/admin/nothing-here", headers=sign_in(admins, "x@example.com"))
+def test_everyone_else_gets_not_found(admins: Admins, owner_engine: Engine, path: str) -> None:
+    unknown = admins.admin.get("/v1/admin/nothing-here", headers=sign_in(admins, "x@example.com"))
     someone, subject = sign_in_as(admins, "casey@example.com")
-    response = admins.client.get(path, headers=someone)
+    response = admins.admin.get(path, headers=someone)
     # Exactly what a path that doesn't exist looks like.
     assert response.status_code == 404
     assert response.json() == unknown.json() == {"detail": "Not Found"}
@@ -41,27 +46,35 @@ def test_everyone_else_gets_not_found(admins: People, owner_engine: Engine, path
 
 
 @pytest.mark.parametrize("path", PAGES)
-def test_signed_out_is_401(admins: People, path: str) -> None:
-    assert admins.client.get(path).status_code == 401
+def test_signed_out_is_401(admins: Admins, path: str) -> None:
+    assert admins.admin.get(path).status_code == 401
 
 
-def test_nobody_is_an_admin_by_default(people: People) -> None:
-    response = people.client.get(PAGES[0], headers=sign_in(people, ADMIN.lower()))
+def test_nobody_is_an_admin_by_default(people: People, admin_engine: Engine) -> None:
+    app = create_admin_app(make_settings(), people.verifier, admin_engine)
+    with TestClient(app) as admin:
+        response = admin.get(PAGES[0], headers=sign_in(people, ADMIN.lower()))
     assert response.status_code == 404
 
 
-def test_an_admin_must_have_signed_in_recently(admins: People) -> None:
+@pytest.mark.parametrize("path", PAGES)
+def test_the_main_api_has_no_admin_pages(admins: Admins, path: str) -> None:
+    response = admins.client.get(path, headers=sign_in(admins, ADMIN.lower()))
+    assert response.status_code == 404
+
+
+def test_an_admin_must_have_signed_in_recently(admins: Admins) -> None:
     stale = sign_in(admins, ADMIN.lower(), signed_in_ago=RECENT_SIGN_IN + 60)
-    response = admins.client.get(PAGES[0], headers=stale)
+    response = admins.admin.get(PAGES[0], headers=stale)
     assert response.status_code == 403
     assert response.json() == {"detail": "Sign in again to open the admin page."}
 
 
-def test_the_overview(admins: People, owner_engine: Engine) -> None:
+def test_the_overview(admins: Admins, owner_engine: Engine) -> None:
     casey = admins.new("Casey")
     create(admins, casey, "Thursday Smashers")
     boss, subject = sign_in_as(admins, ADMIN.upper())
-    response = admins.client.get("/v1/admin/overview", headers=boss)
+    response = admins.admin.get("/v1/admin/overview", headers=boss)
     assert response.status_code == 200
     body = response.json()
     totals = body["totals"]
@@ -84,10 +97,10 @@ def test_the_overview(admins: People, owner_engine: Engine) -> None:
         assert list(pages) == ["overview"]
 
 
-def test_the_groups(admins: People) -> None:
+def test_the_groups(admins: Admins) -> None:
     casey = admins.new("Casey")
     group_id = create(admins, casey, "Thursday Smashers")["id"]
-    response = admins.client.get("/v1/admin/groups", headers=sign_in(admins, ADMIN.lower()))
+    response = admins.admin.get("/v1/admin/groups", headers=sign_in(admins, ADMIN.lower()))
     assert response.status_code == 200
     mine = next(g for g in response.json() if g["id"] == group_id)
     assert mine["name"] == "Thursday Smashers"
@@ -111,11 +124,39 @@ def test_the_groups(admins: People) -> None:
     }
 
 
-def test_the_app_can_record_its_own_views_only(people: People, app_engine: Engine) -> None:
+def test_only_the_admin_service_records_views_and_only_its_own(
+    people: People, app_engine: Engine, admin_engine: Engine
+) -> None:
     casey = people.user_id(people.new("Casey"))
     sam = people.user_id(people.new("Sam"))
     insert = "INSERT INTO admin_views (user_id, page) VALUES (:u, 'overview')"
     with as_user(app_engine, casey) as conn:
+        assert sqlstate_of(conn, insert, {"u": casey}) == INSUFFICIENT_PRIVILEGE
+    with as_user(admin_engine, casey) as conn:
         assert sqlstate_of(conn, "SELECT count(*) FROM admin_views") == INSUFFICIENT_PRIVILEGE
         assert sqlstate_of(conn, insert, {"u": sam}) == INSUFFICIENT_PRIVILEGE
         assert sqlstate_of(conn, insert, {"u": casey}) is None
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "app_admin_totals()",
+        "app_admin_groups()",
+        "app_metrics_weekly(4)",
+        "app_metrics_retention(4)",
+        "app_admin_people('x', NULL)",
+        "app_admin_person(gen_random_uuid())",
+        "app_admin_person_groups(gen_random_uuid())",
+        "app_admin_group(gen_random_uuid())",
+        "app_admin_group_members(gen_random_uuid())",
+    ],
+)
+def test_the_main_api_cannot_call_admin_functions(
+    people: People, app_engine: Engine, admin_engine: Engine, call: str
+) -> None:
+    casey = people.user_id(people.new("Casey"))
+    with as_user(app_engine, casey) as conn:
+        assert sqlstate_of(conn, f"SELECT * FROM {call}") == INSUFFICIENT_PRIVILEGE
+    with as_user(admin_engine, casey) as conn:
+        assert sqlstate_of(conn, f"SELECT * FROM {call}") is None

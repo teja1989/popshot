@@ -2,12 +2,12 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import partial
 
 from fastapi import FastAPI
 from sqlalchemy import Engine
 from starlette.concurrency import run_in_threadpool
 
-from popshot_api.accounts import IdentityPlatformLookup, NoAccountLookup
 from popshot_api.auth.emulator import EmulatorTokenVerifier
 from popshot_api.auth.google import GoogleIdTokenVerifier
 from popshot_api.auth.verifier import TokenVerifier
@@ -16,8 +16,6 @@ from popshot_api.log_config import configure_logging
 from popshot_api.middleware import RequestContextMiddleware
 from popshot_api.push import PushSender
 from popshot_api.routes import (
-    admin,
-    admin_lookup,
     board,
     focus,
     games,
@@ -38,16 +36,16 @@ def _push_sender_for(settings: Settings) -> PushSender | None:
     return PushSender(settings.push_vapid_private_key.get_secret_value(), settings.push_subject)
 
 
-def create_app(
-    settings: Settings | None = None,
-    token_verifier: TokenVerifier | None = None,
-    engine: Engine | None = None,
+def base_app(
+    settings: Settings | None,
+    token_verifier: TokenVerifier | None,
+    engine: Engine | None,
     *,
-    verify_database_role: bool = True,
-    push_sender: PushSender | None = None,
+    verify_database_role: bool,
+    admin: bool,
 ) -> FastAPI:
-    """Build the app. `verify_database_role` exists for tests that don't use a database;
-    it isn't reachable from configuration, so a deployed API always checks its role."""
+    """What the API and the admin service share: settings, the database engine (with its
+    role check at startup), token verification, request logging and /healthz."""
     settings = settings if settings is not None else Settings()
     configure_logging(settings.log_level)
     engine = (
@@ -62,13 +60,13 @@ def create_app(
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         try:
             if verify_database_role:
-                await run_in_threadpool(check_database_role, engine)
+                await run_in_threadpool(partial(check_database_role, engine, admin=admin))
             yield
         finally:
             engine.dispose()
 
     app = FastAPI(
-        title="Popshot API",
+        title="Popshot admin" if admin else "Popshot API",
         docs_url="/docs" if settings.expose_docs else None,
         redoc_url=None,
         openapi_url="/openapi.json" if settings.expose_docs else None,
@@ -76,18 +74,34 @@ def create_app(
     )
     app.state.settings = settings
     app.state.engine = engine
-    app.state.push_sender = push_sender if push_sender is not None else _push_sender_for(settings)
-    # Tests swap in a fake by setting app.state.account_lookup.
-    app.state.account_lookup = (
-        IdentityPlatformLookup(settings.firebase_project_id)
-        if settings.account_lookup
-        else NoAccountLookup()
-    )
     app.state.token_verifier = (
         token_verifier if token_verifier is not None else _token_verifier_for(settings)
     )
     app.add_middleware(RequestContextMiddleware)
     app.include_router(health.router)
+    return app
+
+
+def create_app(
+    settings: Settings | None = None,
+    token_verifier: TokenVerifier | None = None,
+    engine: Engine | None = None,
+    *,
+    verify_database_role: bool = True,
+    push_sender: PushSender | None = None,
+) -> FastAPI:
+    """Build the API. `verify_database_role` exists for tests that don't use a database;
+    it isn't reachable from configuration, so a deployed API always checks its role.
+    The admin pages are a separate service (popshot_api.admin_main)."""
+    app = base_app(
+        settings,
+        token_verifier,
+        engine,
+        verify_database_role=verify_database_role,
+        admin=False,
+    )
+    settings = app.state.settings
+    app.state.push_sender = push_sender if push_sender is not None else _push_sender_for(settings)
     app.include_router(me.router)
     app.include_router(groups.router)
     app.include_router(invites.router)
@@ -97,8 +111,6 @@ def create_app(
     app.include_router(stats.router)
     app.include_router(notifications.router)
     app.include_router(nights.router)
-    app.include_router(admin.router)
-    app.include_router(admin_lookup.router)
     return app
 
 

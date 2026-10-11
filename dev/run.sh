@@ -19,9 +19,11 @@ COMPOSE=(docker compose -f "$ROOT/dev/compose.yaml")
 
 PG_PORT=54329
 API_PORT=8000
+ADMIN_API_PORT=8001
 WEB_PORT=3000
 # The full-stack browser tests use their own ports, so they can run next to `up`.
 E2E_API_PORT=8100
+E2E_ADMIN_API_PORT=8101
 E2E_WEB_PORT=3200
 EMULATOR_HOST="127.0.0.1:9099"
 PROJECT_ID="demo-popshot"
@@ -37,7 +39,7 @@ check_tools() {
   docker compose version >/dev/null 2>&1 || die "'docker compose' is missing (brew install docker-compose)."
   command -v uv >/dev/null || die "uv isn't installed (brew install uv)."
   use_node_24
-  for port in "$API_PORT" "$WEB_PORT"; do
+  for port in "$API_PORT" "$ADMIN_API_PORT" "$WEB_PORT"; do
     if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
       die "Port $port is already in use. Stop whatever is using it, then re-run."
     fi
@@ -79,6 +81,10 @@ load_secrets() {
       } > "$STATE/secrets.env"
     )
   fi
+  # Added with the admin service; older .dev/ folders get it here.
+  if ! grep -q '^POPSHOT_DEV_ADMIN_PASSWORD=' "$STATE/secrets.env"; then
+    (umask 077 && echo "POPSHOT_DEV_ADMIN_PASSWORD=$(openssl rand -hex 24)" >> "$STATE/secrets.env")
+  fi
   # A local Web Push signing key, so notifications can be turned on in development.
   if [ ! -f "$STATE/push-vapid.pem" ]; then
     (umask 077 && openssl ecparam -name prime256v1 -genkey -noout -out "$STATE/push-vapid.pem")
@@ -90,6 +96,7 @@ load_secrets() {
   ADMIN_URL="postgresql://postgres:${POPSHOT_DEV_SUPERUSER_PASSWORD}@127.0.0.1:${PG_PORT}/postgres"
   MIGRATOR_URL="postgresql+psycopg://popshot_migrator:${POPSHOT_DEV_MIGRATOR_PASSWORD}@127.0.0.1:${PG_PORT}/popshot"
   API_DB_URL="postgresql+psycopg://popshot_api:${POPSHOT_DEV_API_PASSWORD}@127.0.0.1:${PG_PORT}/popshot"
+  ADMIN_API_DB_URL="postgresql+psycopg://popshot_admin_api:${POPSHOT_DEV_ADMIN_PASSWORD}@127.0.0.1:${PG_PORT}/popshot"
 }
 
 start_containers() {
@@ -109,12 +116,21 @@ prepare_database() {
       -v api_password="$POPSHOT_DEV_API_PASSWORD" \
       -f - < "$ROOT/services/api/db/local_login_users.sql" >/dev/null
   fi
+  exists="$("${COMPOSE[@]}" exec -T postgres psql -U postgres -tAc \
+    "SELECT 1 FROM pg_roles WHERE rolname = 'popshot_admin_api'")"
+  if [ "$exists" != "1" ]; then
+    "${COMPOSE[@]}" exec -T postgres psql -U postgres -v ON_ERROR_STOP=1 \
+      -v admin_password="$POPSHOT_DEV_ADMIN_PASSWORD" -f - >/dev/null <<'SQL'
+CREATE ROLE popshot_admin_api LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION
+  PASSWORD :'admin_password';
+SQL
+  fi
   (
     cd "$ROOT/services/api"
     uv sync --frozen --all-groups --quiet
     POPSHOT_BOOTSTRAP_ADMIN_URL="$ADMIN_URL" \
       uv run --frozen python -m popshot_api.ops.bootstrap_db \
-      --migrator popshot_migrator --api popshot_api >/dev/null
+      --migrator popshot_migrator --api popshot_api --admin popshot_admin_api >/dev/null
     POPSHOT_MIGRATION_DATABASE_URL="$MIGRATOR_URL" uv run --frozen alembic upgrade head
   )
 }
@@ -131,7 +147,7 @@ install_web() {
 }
 
 run_app() {
-  say "Starting the API on :$API_PORT and the web app on :$WEB_PORT"
+  say "Starting the API on :$API_PORT, the admin service on :$ADMIN_API_PORT and the web app on :$WEB_PORT"
   # Global, not local: the EXIT trap runs after this function has returned.
   PIDS=()
   (
@@ -141,15 +157,26 @@ run_app() {
     POPSHOT_AUTH_EMULATOR=true \
     POPSHOT_DATABASE_URL="$API_DB_URL" \
     POPSHOT_PUSH_VAPID_PRIVATE_KEY="$PUSH_KEY" \
-    POPSHOT_ADMIN_EMAILS="$ADMIN_EMAIL" \
       exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
       --host 127.0.0.1 --port "$API_PORT" --reload
+  ) &
+  PIDS+=($!)
+  (
+    cd "$ROOT/services/api"
+    POPSHOT_ENVIRONMENT=local \
+    POPSHOT_FIREBASE_PROJECT_ID="$PROJECT_ID" \
+    POPSHOT_AUTH_EMULATOR=true \
+    POPSHOT_DATABASE_URL="$ADMIN_API_DB_URL" \
+    POPSHOT_ADMIN_EMAILS="$ADMIN_EMAIL" \
+      exec uv run --frozen uvicorn --factory popshot_api.admin_main:create_admin_app \
+      --host 127.0.0.1 --port "$ADMIN_API_PORT" --reload
   ) &
   PIDS+=($!)
   (
     cd "$ROOT/apps/web"
     # Public, made-up values: the emulator accepts any API key for a demo-* project.
     API_BASE_URL="http://127.0.0.1:${API_PORT}" \
+    ADMIN_API_BASE_URL="http://127.0.0.1:${ADMIN_API_PORT}" \
     FIREBASE_API_KEY="demo-api-key" \
     FIREBASE_AUTH_DOMAIN="${PROJECT_ID}.firebaseapp.com" \
     FIREBASE_PROJECT_ID="$PROJECT_ID" \
@@ -221,7 +248,7 @@ run_e2e() {
   say "Building the web app (production build)"
   (cd "$ROOT/apps/web" && NEXT_TELEMETRY_DISABLED=1 npm run -s build)
 
-  say "Starting the API on :$E2E_API_PORT and the built web app on :$E2E_WEB_PORT"
+  say "Starting the API on :$E2E_API_PORT, the admin service on :$E2E_ADMIN_API_PORT and the built web app on :$E2E_WEB_PORT"
   PIDS=()
   (
     cd "$ROOT/services/api"
@@ -230,10 +257,20 @@ run_e2e() {
     POPSHOT_AUTH_EMULATOR=true \
     POPSHOT_DATABASE_URL="$API_DB_URL" \
     POPSHOT_PUSH_VAPID_PRIVATE_KEY="$PUSH_KEY" \
-    POPSHOT_ADMIN_EMAILS="$ADMIN_EMAIL" \
       exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
       --host 127.0.0.1 --port "$E2E_API_PORT"
   ) > "$STATE/e2e-api.log" 2>&1 &
+  PIDS+=($!)
+  (
+    cd "$ROOT/services/api"
+    POPSHOT_ENVIRONMENT=local \
+    POPSHOT_FIREBASE_PROJECT_ID="$PROJECT_ID" \
+    POPSHOT_AUTH_EMULATOR=true \
+    POPSHOT_DATABASE_URL="$ADMIN_API_DB_URL" \
+    POPSHOT_ADMIN_EMAILS="$ADMIN_EMAIL" \
+      exec uv run --frozen uvicorn --factory popshot_api.admin_main:create_admin_app \
+      --host 127.0.0.1 --port "$E2E_ADMIN_API_PORT"
+  ) > "$STATE/e2e-admin.log" 2>&1 &
   PIDS+=($!)
   (
     cd "$ROOT/apps/web"
@@ -243,6 +280,7 @@ run_e2e() {
     HOSTNAME=127.0.0.1 \
     PORT="$E2E_WEB_PORT" \
     API_BASE_URL="http://127.0.0.1:${E2E_API_PORT}" \
+    ADMIN_API_BASE_URL="http://127.0.0.1:${E2E_ADMIN_API_PORT}" \
     FIREBASE_API_KEY="demo-api-key" \
     FIREBASE_AUTH_DOMAIN="${PROJECT_ID}.firebaseapp.com" \
     FIREBASE_PROJECT_ID="$PROJECT_ID" \
@@ -253,6 +291,7 @@ run_e2e() {
   PIDS+=($!)
   trap 'kill "${PIDS[@]}" 2>/dev/null || true' INT TERM EXIT
   wait_for "http://127.0.0.1:${E2E_API_PORT}/healthz" "The API"
+  wait_for "http://127.0.0.1:${E2E_ADMIN_API_PORT}/healthz" "The admin service"
   wait_for "http://127.0.0.1:${E2E_WEB_PORT}/icons/192" "The web app"
 
   say "Running the full-stack browser tests"
@@ -264,6 +303,8 @@ run_e2e() {
   ); then
     say "Last lines of the API log (.dev/e2e-api.log):"
     tail -n 30 "$STATE/e2e-api.log" || true
+    say "Last lines of the admin service log (.dev/e2e-admin.log):"
+    tail -n 30 "$STATE/e2e-admin.log" || true
     say "Last lines of the web log (.dev/e2e-web.log):"
     tail -n 30 "$STATE/e2e-web.log" || true
     die "Full-stack browser tests failed."

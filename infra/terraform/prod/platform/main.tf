@@ -17,6 +17,7 @@ locals {
   api_db_user      = trimsuffix(google_service_account.api.email, ".gserviceaccount.com")
   migrator_db_user = trimsuffix(google_service_account.migrate.email, ".gserviceaccount.com")
   jobs_db_user     = trimsuffix(google_service_account.tick.email, ".gserviceaccount.com")
+  admin_db_user    = trimsuffix(google_service_account.admin.email, ".gserviceaccount.com")
   db_ip            = google_sql_database_instance.main.private_ip_address
   # verify-ca: the connection is encrypted and the server must present Cloud SQL's CA.
   ssl_params = "sslmode=verify-ca&sslrootcert=${urlencode(local.sql_ca_file)}"
@@ -89,6 +90,13 @@ resource "google_service_account" "api" {
   display_name = "Cloud Run: api (database login: popshot_app)"
 }
 
+# The admin pages (popshot_api.admin_main): its own identity and database login, the only
+# one in popshot_admin, so the API can't reach the admin functions or account lookups.
+resource "google_service_account" "admin" {
+  account_id   = "run-admin"
+  display_name = "Cloud Run: admin-api (database login: popshot_app + popshot_admin)"
+}
+
 resource "google_service_account" "migrate" {
   account_id   = "job-migrate"
   display_name = "Cloud Run job: migrations (database login: popshot_owner)"
@@ -115,6 +123,7 @@ resource "google_service_account_iam_member" "deploy_act_as" {
   for_each = {
     web       = google_service_account.web.name
     api       = google_service_account.api.name
+    admin     = google_service_account.admin.name
     migrate   = google_service_account.migrate.name
     db_admin  = google_service_account.db_admin.name
     tick      = google_service_account.tick.name
@@ -128,6 +137,7 @@ resource "google_service_account_iam_member" "deploy_act_as" {
 resource "google_project_iam_member" "sql_client" {
   for_each = {
     api      = google_service_account.api.member
+    admin    = google_service_account.admin.member
     migrate  = google_service_account.migrate.member
     db_admin = google_service_account.db_admin.member
     tick     = google_service_account.tick.member
@@ -141,6 +151,7 @@ resource "google_project_iam_member" "sql_client" {
 resource "google_project_iam_member" "sql_instance_user" {
   for_each = {
     api     = google_service_account.api.member
+    admin   = google_service_account.admin.member
     migrate = google_service_account.migrate.member
     tick    = google_service_account.tick.member
   }
@@ -150,11 +161,12 @@ resource "google_project_iam_member" "sql_instance_user" {
 }
 
 # The admin pages look up a person's email from Identity Platform when an admin opens them
-# (popshot_api.accounts); emails aren't stored in the database. Read-only.
-resource "google_project_iam_member" "api_account_lookup" {
+# (popshot_api.accounts); emails aren't stored in the database. Read-only, and only the
+# admin service has it (it moved here from the API).
+resource "google_project_iam_member" "admin_account_lookup" {
   project = var.project_id
   role    = "roles/firebaseauth.viewer"
-  member  = google_service_account.api.member
+  member  = google_service_account.admin.member
 }
 
 # ---------------------------------------------------------------- database
@@ -256,6 +268,12 @@ resource "google_sql_user" "migrate" {
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 }
 
+resource "google_sql_user" "admin" {
+  name     = local.admin_db_user
+  instance = google_sql_database_instance.main.name
+  type     = "CLOUD_IAM_SERVICE_ACCOUNT"
+}
+
 resource "google_sql_user" "tick" {
   name     = local.jobs_db_user
   instance = google_sql_database_instance.main.name
@@ -308,6 +326,7 @@ resource "google_secret_manager_secret_version" "sql_ca" {
 resource "google_secret_manager_secret_iam_member" "sql_ca" {
   for_each = {
     api      = google_service_account.api.member
+    admin    = google_service_account.admin.member
     migrate  = google_service_account.migrate.member
     db_admin = google_service_account.db_admin.member
     tick     = google_service_account.tick.member
@@ -397,6 +416,7 @@ resource "google_cloud_run_v2_job" "db_bootstrap" {
           "--migrator", local.migrator_db_user,
           "--api", local.api_db_user,
           "--jobs", local.jobs_db_user,
+          "--admin", local.admin_db_user,
           "--database", local.db_name,
         ]
 
@@ -435,6 +455,7 @@ resource "google_cloud_run_v2_job" "db_bootstrap" {
     google_secret_manager_secret_iam_member.db_admin_url,
     google_secret_manager_secret_iam_member.sql_ca,
     google_sql_user.api,
+    google_sql_user.admin,
     google_sql_user.migrate,
     google_sql_user.tick,
   ]
