@@ -37,7 +37,21 @@ export interface MyRating {
   form: ("W" | "L")[];
   // Matches in the last 7 days.
   week_games: number;
+  // The last 30 days: matches, change in crew points, average share of points won above
+  // expected, and how it's going once there are enough games (popshot_api.rating.trend).
+  month_games: number;
+  month_change: number;
+  month_edge: number | null;
+  trend: Trend | null;
 }
+
+export type Trend = "climbing" | "steady" | "slipping";
+
+export const TREND_LABEL: Record<Trend, string> = {
+  climbing: "Climbing",
+  steady: "Steady",
+  slipping: "Slipping",
+};
 
 export type Level = "beginner" | "intermediate" | "advanced" | "expert";
 
@@ -81,4 +95,43 @@ export function winRate(row: Pick<BoardRow, "wins" | "matches">): string {
 
 export function levelLabel(level: string | null | undefined): string | null {
   return LEVELS.find((l) => l.value === level)?.label ?? null;
+}
+
+/** "4% more of the points than expected", "as expected" or "3% fewer …". */
+export function edgeText(edge: number): string {
+  const percent = Math.round(edge * 100);
+  if (percent === 0) {
+    return "points won as expected";
+  }
+  return `${String(Math.abs(percent))}% ${percent > 0 ? "more" : "fewer"} of the points than expected`;
+}
+
+/**
+ * One line comparing your crews over the last 30 days, or null with fewer than two crews to
+ * compare. Compares points won against expected, which means the same in every crew (crew
+ * points themselves don't: each crew is its own scale).
+ */
+export function trendSummary(ratings: MyRating[]): string | null {
+  const called = ratings.filter((r) => r.trend !== null && r.month_edge !== null);
+  if (called.length < 2) {
+    return null;
+  }
+  const byEdge = [...called].sort((a, b) => (b.month_edge ?? 0) - (a.month_edge ?? 0));
+  const best = byEdge[0];
+  const worst = byEdge[byEdge.length - 1];
+  if (!best || !worst) {
+    return null;
+  }
+  const going = best.trend === "climbing";
+  const focus = worst.trend === "slipping";
+  if (going && focus) {
+    return `Going well in ${best.group_name}; ${worst.group_name} is where to focus.`;
+  }
+  if (going) {
+    return `Going well in ${best.group_name}.`;
+  }
+  if (focus) {
+    return `${worst.group_name} is where to focus.`;
+  }
+  return "Steady across your crews.";
 }

@@ -17,12 +17,16 @@ from popshot_api.rating import (
     STEADY_AFTER,
     STEP_NEW,
     STEP_SETTLED,
+    TREND_EDGE,
+    TREND_MIN_GAMES,
+    TREND_WINDOW,
     GameScore,
     PlayedMatch,
     expected_share,
     reliability,
     replay,
     step,
+    trend,
     week_change,
 )
 
@@ -125,6 +129,63 @@ def test_ratings_always_stay_in_range(
     for player in rated.values():
         assert MIN <= player.rating <= MAX
         assert len(player.history) == player.matches == len(scores)
+
+
+def test_edges_are_points_won_against_expected() -> None:
+    rated = replay([match([A, B], [C, D], (11, 9))], {})
+    # Even teams expect half the points; 11 of 20 is 5% more.
+    assert [at for at, _ in rated[A].edges] == [T0]
+    assert rated[A].edges[0][1] == pytest.approx(0.05)
+    assert rated[C].edges[0][1] == pytest.approx(-0.05)
+    # Over a best-of-three it's the average of the games, each against what was expected
+    # going into it (ratings move between games).
+    three = replay([match([A], [B], (11, 9), (7, 11))], {})
+    first = 0.05
+    after = replay([match([A], [B], (11, 9))], {})
+    second = 7 / 18 - expected_share(after[A].rating, after[B].rating)
+    assert three[A].edges[0][1] == pytest.approx((first + second) / 2)
+
+
+def test_trend_needs_enough_games_in_the_window() -> None:
+    now = T0 + timedelta(days=1)
+    few = replay([match([A], [B], (11, 3), at=T0) for _ in range(TREND_MIN_GAMES - 1)], {})
+    assert trend(few[A], now).label is None
+    assert trend(few[A], now).games == TREND_MIN_GAMES - 1
+    enough = replay([match([A], [B], (11, 3), at=T0) for _ in range(TREND_MIN_GAMES)], {})
+    assert trend(enough[A], now).label == "climbing"
+    assert trend(enough[B], now).label == "slipping"
+
+
+def test_trend_only_counts_the_window() -> None:
+    old = T0 - TREND_WINDOW - timedelta(days=1)
+    games = [match([A], [B], (11, 3), at=old) for _ in range(20)]
+    rated = replay(games, {})
+    now = T0
+    month = trend(rated[A], now)
+    assert (month.games, month.change, month.edge, month.label) == (0, 0.0, None, None)
+    # Then a month of games played as expected: steady, and points barely move.
+    recent = [match([A], [B], (11, 3), at=T0 - timedelta(days=d)) for d in range(1, 8)]
+    rated = replay(games + recent, {})
+    month = trend(rated[A], now)
+    assert month.games == len(recent)
+    assert month.change == pytest.approx(rated[A].rating - rated[A].history[19][1])
+
+
+def test_trend_change_counts_from_the_start_for_new_players() -> None:
+    rated = replay([match([A], [B], (11, 9))], {A: 4.0})
+    assert trend(rated[A], T0 + timedelta(days=1)).change == pytest.approx(rated[A].rating - 4.0)
+
+
+def test_steady_when_playing_to_your_rating() -> None:
+    a, b = 3.5, 3.0
+    share = expected_share(a, b)
+    # Scores as close to the expected split as whole points allow, at 21 points a game.
+    won = round(21 * share)
+    games = [match([A], [B], (won, 21 - won), at=T0) for _ in range(TREND_MIN_GAMES)]
+    month = trend(replay(games, {A: a, B: b})[A], T0 + timedelta(days=1))
+    assert month.edge is not None
+    assert abs(month.edge) < TREND_EDGE
+    assert month.label == "steady"
 
 
 def test_the_explanation_matches_the_maths() -> None:
