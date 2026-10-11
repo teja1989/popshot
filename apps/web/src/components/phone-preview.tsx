@@ -4,8 +4,8 @@
 const STREAK = ["W", "L", "W", "W", "W"] as const;
 
 const BOARD = [
-  { name: "Priya", value: "34.8", width: "w-[92%]" },
-  { name: "Maya", value: "32.1", width: "w-[76%]" },
+  { name: "Riley", value: "34.8", width: "w-[92%]" },
+  { name: "Casey", value: "32.1", width: "w-[76%]" },
   { name: "You", value: "31.4", width: "w-[71%]", you: true },
 ];
 
@@ -50,9 +50,9 @@ export function PhonePreview({ className = "" }: { className?: string }) {
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
             <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Waiting on you</p>
             <div className="flex items-center justify-between text-[12px] font-semibold">
-              <span>Maya &amp; Sam</span>
+              <span>Casey &amp; Sam</span>
               <span className="text-[22px] font-extrabold [font-stretch:75%]">11 – 8</span>
-              <span>You &amp; Dev</span>
+              <span>You &amp; Alex</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               <span className="rounded-lg bg-primary py-1.5 text-center text-[12px] font-bold text-on-primary">Confirm</span>

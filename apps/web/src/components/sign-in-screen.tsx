@@ -193,11 +193,11 @@ function LogVisual() {
     <div className={`${card} flex flex-col gap-4`}>
       <CourtArt rally className="w-full" />
       <div className="flex items-center justify-between">
-        <span className="text-[15px] font-bold">You &amp; Dev</span>
+        <span className="text-[15px] font-bold">You &amp; Alex</span>
         <span className="text-[44px] leading-none font-extrabold [font-stretch:72%]">11 – 9</span>
-        <span className="text-[15px] font-bold text-muted">Priya &amp; Sam</span>
+        <span className="text-[15px] font-bold text-muted">Riley &amp; Sam</span>
       </div>
-      <p className="text-[14px] font-bold text-win">✓ You &amp; Dev win 11–9. Looks right.</p>
+      <p className="text-[14px] font-bold text-win">✓ You &amp; Alex win 11–9. Looks right.</p>
     </div>
   );
 }
@@ -207,9 +207,9 @@ function ConfirmVisual() {
     <div className={`${card} flex flex-col gap-4`}>
       <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Confirmed by Sam</p>
       <div className="flex items-center justify-between">
-        <span className="text-[16px] font-bold">Maya &amp; Sam</span>
+        <span className="text-[16px] font-bold">Casey &amp; Sam</span>
         <span className="text-[44px] leading-none font-extrabold [font-stretch:72%]">11 – 8</span>
-        <span className="text-[16px] font-bold">You &amp; Dev</span>
+        <span className="text-[16px] font-bold">You &amp; Alex</span>
       </div>
       <div className="flex items-center gap-3 rounded-2xl bg-chip p-3">
         <span className="flex size-10 items-center justify-center rounded-full bg-win text-[18px] font-extrabold text-on-win">✓</span>
@@ -224,15 +224,15 @@ function RivalsVisual() {
     <div className="grid gap-4 sm:grid-cols-2">
       <div className={card}>
         <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Your nemesis</p>
-        <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Priya</p>
-        <p className="text-[15px] text-muted">2–5 against her</p>
+        <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Riley</p>
+        <p className="text-[15px] text-muted">2–5 head to head</p>
         <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-chip">
           <span className="w-[29%] origin-left animate-grow-x bg-win" />
         </div>
       </div>
       <div className={card}>
         <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Best partner</p>
-        <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Dev</p>
+        <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Alex</p>
         <p className="text-[15px] text-muted">9–2 together</p>
         <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-chip">
           <span className="w-[82%] origin-left animate-grow-x bg-win" />
@@ -244,10 +244,10 @@ function RivalsVisual() {
 
 function BoardVisual() {
   const rows = [
-    ["Priya", "34.8", "w-[92%]"],
-    ["Maya", "32.1", "w-[76%]"],
+    ["Riley", "34.8", "w-[92%]"],
+    ["Casey", "32.1", "w-[76%]"],
     ["You", "31.4", "w-[71%]"],
-    ["Dev", "29.6", "w-[60%]"],
+    ["Alex", "29.6", "w-[60%]"],
   ] as const;
   return (
     <ol className={`${card} flex flex-col gap-3`}>
