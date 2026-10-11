@@ -29,15 +29,33 @@ check_tools() {
   docker info >/dev/null 2>&1 || die "Docker isn't running. Start OrbStack or 'colima start', then re-run."
   docker compose version >/dev/null 2>&1 || die "'docker compose' is missing (brew install docker-compose)."
   command -v uv >/dev/null || die "uv isn't installed (brew install uv)."
-  command -v node >/dev/null || die "Node 24 isn't installed (brew install node@24)."
-  local major
-  major="$(node -p 'process.versions.node.split(".")[0]')"
-  [ "$major" = "24" ] || die "Node 24 is needed; found $(node --version)."
+  use_node_24
   for port in "$API_PORT" "$WEB_PORT"; do
     if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
       die "Port $port is already in use. Stop whatever is using it, then re-run."
     fi
   done
+}
+
+node_major() { node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo none; }
+
+# Production runs Node 24. If your default node is another version, use Homebrew's node@24
+# for this script only (it's keg-only, so your default node stays as it is).
+use_node_24() {
+  if [ "$(node_major)" != "24" ] && command -v brew >/dev/null; then
+    local prefix
+    prefix="$(brew --prefix node@24 2>/dev/null || true)"
+    if [ -n "$prefix" ] && [ -x "$prefix/bin/node" ]; then
+      PATH="$prefix/bin:$PATH"
+      export PATH
+    fi
+  fi
+  local major
+  major="$(node_major)"
+  if [ "$major" != "24" ]; then
+    die "Node 24 is needed (found: $(node --version 2>/dev/null || echo none)). Run: brew install node@24
+  Your default node stays as it is; this script finds node@24 by itself. (nvm/fnm users: see .nvmrc.)"
+  fi
 }
 
 # Throwaway passwords for the local database, made once and kept in .dev/ (gitignored).
@@ -174,6 +192,7 @@ case "${1:-up}" in
     run_app
     ;;
   test)
+    use_node_24
     load_secrets
     start_containers
     prepare_database

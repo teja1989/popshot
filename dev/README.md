@@ -13,7 +13,7 @@ Run all of Popshot on your machine. Nothing here touches Google Cloud.
 
 - OrbStack, Colima or Docker Desktop, running
 - [uv](https://docs.astral.sh/uv/) (`brew install uv`)
-- Node 24 (`brew install node@24`)
+- Node 24: `brew install node@24`. Your default `node` can stay on a newer version; `run.sh` finds Homebrew's node@24 by itself.
 
 ## Commands
 
