@@ -188,6 +188,7 @@ test("home counts the games you've played, and the logo goes home", async ({ pag
   await page.getByRole("textbox", { name: "Game 1, Pat" }).fill("6");
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/games$/);
+  await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
 
   // The logo is a link home from anywhere in the app.
   await page.getByRole("link", { name: "Popshot home" }).first().click();
