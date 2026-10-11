@@ -134,9 +134,9 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
         />
         <Feature
           flip
-          eyebrow="Crew rating"
+          eyebrow="Crew points"
           title="Climb your crew's board."
-          body="A rating that counts who you played with and against, from every game your crew logs. It compares you with your crew, not with strangers across the country."
+          body="Crew points from 2.00 to 6.00, updated after every game by how many points you won against what was expected. It compares you with your crew, not with strangers across the country."
           visual={<BoardVisual />}
         />
 
@@ -278,10 +278,10 @@ function RivalsVisual() {
 
 function BoardVisual() {
   const rows = [
-    ["Riley", "34.8", "w-[92%]"],
-    ["Casey", "32.1", "w-[76%]"],
-    ["You", "31.4", "w-[71%]"],
-    ["Alex", "29.6", "w-[60%]"],
+    ["Riley", "4.62", "w-[92%]"],
+    ["Casey", "4.18", "w-[76%]"],
+    ["You", "3.97", "w-[71%]"],
+    ["Alex", "3.55", "w-[60%]"],
   ] as const;
   return (
     <ol className={`${card} flex flex-col gap-3`}>

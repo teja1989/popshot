@@ -4,9 +4,9 @@
 const STREAK = ["W", "L", "W", "W", "W"] as const;
 
 const BOARD = [
-  { name: "Riley", value: "34.8", width: "w-[92%]" },
-  { name: "Casey", value: "32.1", width: "w-[76%]" },
-  { name: "You", value: "31.4", width: "w-[71%]", you: true },
+  { name: "Riley", value: "4.62", width: "w-[92%]" },
+  { name: "Casey", value: "4.18", width: "w-[76%]" },
+  { name: "You", value: "3.97", width: "w-[71%]", you: true },
 ];
 
 export function PhonePreview({ className = "" }: { className?: string }) {
@@ -27,8 +27,8 @@ export function PhonePreview({ className = "" }: { className?: string }) {
                 <p className="text-[14px] font-bold">3-game win streak</p>
               </div>
               <div className="text-right">
-                <p className="text-[30px] leading-none font-extrabold [font-stretch:75%]">31.4</p>
-                <p className="text-[11px] font-bold text-win">+1.2 this month</p>
+                <p className="text-[30px] leading-none font-extrabold [font-stretch:75%]">3.97</p>
+                <p className="text-[11px] font-bold text-win">▲ 0.14 this week</p>
               </div>
             </div>
             <div className="flex gap-1">
@@ -58,7 +58,7 @@ export function PhonePreview({ className = "" }: { className?: string }) {
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-            <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Crew rating</p>
+            <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Crew points</p>
             {BOARD.map((row, i) => (
               <div key={row.name} className="flex items-center gap-2">
                 <span className="w-3 text-[13px] font-extrabold text-muted [font-stretch:72%]">{i + 1}</span>

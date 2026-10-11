@@ -5,6 +5,7 @@ import { useState } from "react";
 import { applyTheme, readTheme, type ThemeChoice } from "@/lib/theme";
 
 import { useSignedIn } from "./auth";
+import { CrewPointsSection } from "./crew-points-section";
 import { EditNameSheet } from "./edit-name-sheet";
 import { FocusSection } from "./focus-section";
 import { SignOutButton } from "./sign-out-button";
@@ -44,6 +45,8 @@ export function YouView() {
           )}
         </div>
       </section>
+
+      <CrewPointsSection />
 
       <FocusSection />
 
