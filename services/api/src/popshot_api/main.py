@@ -13,7 +13,7 @@ from popshot_api.auth.verifier import TokenVerifier
 from popshot_api.db import check_database_role, make_engine
 from popshot_api.log_config import configure_logging
 from popshot_api.middleware import RequestContextMiddleware
-from popshot_api.routes import health, me
+from popshot_api.routes import groups, health, me
 from popshot_api.settings import Settings
 
 
@@ -60,6 +60,7 @@ def create_app(
     app.add_middleware(RequestContextMiddleware)
     app.include_router(health.router)
     app.include_router(me.router)
+    app.include_router(groups.router)
     return app
 
 

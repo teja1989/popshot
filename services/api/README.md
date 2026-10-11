@@ -99,6 +99,16 @@ All settings come from environment variables. Nothing is read from `.env` files.
 | `POPSHOT_LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR` |
 | `POPSHOT_AUTH_EMULATOR` | no | `false` | Accept unsigned Firebase Auth emulator tokens. Refused unless the environment is `local`, the project is `demo-*` and it isn't Cloud Run |
 
+## Endpoints
+
+| Method and path | What it does |
+|---|---|
+| `GET /healthz` | Liveness, no sign-in |
+| `GET /v1/me` | The signed-in user's profile (created on first sign-in) |
+| `GET /v1/groups` | Groups you're in or waiting to join; member count only once you're in |
+| `POST /v1/groups` | Create a group (`name`, optional default format, points and win-by-2); you become its lead. At most 20 led groups per person |
+| `GET /v1/groups/{id}` | One group and its roster. Leads and co-leads also see who's waiting for approval. A group you can't see is a 404, never a 403 |
+
 ## Authentication
 
 Every request except `/healthz` needs `Authorization: Bearer <Identity Platform ID token>`.
