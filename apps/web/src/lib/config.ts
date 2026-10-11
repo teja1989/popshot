@@ -9,10 +9,18 @@ export interface FirebaseWebConfig {
   appId: string;
 }
 
+export interface Upstream {
+  baseUrl: URL;
+  // Audience for the service-to-service identity token. Set on Cloud Run; unset locally.
+  audience: string | null;
+}
+
 export interface ServerConfig {
   apiBaseUrl: URL;
   // Audience for the service-to-service identity token. Set on Cloud Run; unset locally.
   apiAudience: string | null;
+  // The admin service, for /api/v1/admin/... Unset: those paths are "not found".
+  adminApi: Upstream | null;
   firebase: FirebaseWebConfig;
   // Local development only: host:port of the Firebase Auth emulator (dev/README.md).
   authEmulatorHost: string | null;
@@ -35,24 +43,29 @@ const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const EMULATOR_HOST = /^(localhost|127\.0\.0\.1):[0-9]{2,5}$/;
 
-export function parseApiBaseUrl(raw: string): URL {
+export function parseApiBaseUrl(raw: string, name = "API_BASE_URL"): URL {
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    throw new ConfigError("API_BASE_URL is not a valid URL");
+    throw new ConfigError(`${name} is not a valid URL`);
   }
   const local = LOCAL_HOSTS.has(url.hostname);
   if (url.protocol !== "https:" && !(local && url.protocol === "http:")) {
-    throw new ConfigError("API_BASE_URL must use https (http is allowed only for localhost)");
+    throw new ConfigError(`${name} must use https (http is allowed only for localhost)`);
   }
   if (url.username || url.password || url.search || url.hash) {
-    throw new ConfigError("API_BASE_URL must not contain credentials, a query or a fragment");
+    throw new ConfigError(`${name} must not contain credentials, a query or a fragment`);
   }
   if (url.pathname !== "/") {
-    throw new ConfigError("API_BASE_URL must not contain a path");
+    throw new ConfigError(`${name} must not contain a path`);
   }
   return url;
+}
+
+function optional(env: Env, name: string): string | null {
+  const value = env[name]?.trim() ?? "";
+  return value === "" ? null : value;
 }
 
 export function readServerConfig(env: Env = process.env): ServerConfig {
@@ -64,11 +77,18 @@ export function readServerConfig(env: Env = process.env): ServerConfig {
   if (!PROJECT_ID.test(projectId)) {
     throw new ConfigError("FIREBASE_PROJECT_ID is not a valid project ID");
   }
-  const audience = env.API_AUDIENCE?.trim() ?? "";
+  const adminBase = optional(env, "ADMIN_API_BASE_URL");
   return {
     authEmulatorHost: parseAuthEmulatorHost(env, projectId),
     apiBaseUrl: parseApiBaseUrl(required(env, "API_BASE_URL")),
-    apiAudience: audience === "" ? null : audience,
+    apiAudience: optional(env, "API_AUDIENCE"),
+    adminApi:
+      adminBase === null
+        ? null
+        : {
+            baseUrl: parseApiBaseUrl(adminBase, "ADMIN_API_BASE_URL"),
+            audience: optional(env, "ADMIN_API_AUDIENCE"),
+          },
     firebase: {
       apiKey: required(env, "FIREBASE_API_KEY"),
       authDomain,

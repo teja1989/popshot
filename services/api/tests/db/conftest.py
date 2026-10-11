@@ -20,14 +20,18 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
+import psycopg
 import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from psycopg import sql
 from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.pool import NullPool
 
+from popshot_api.admin_main import create_admin_app
 from popshot_api.auth.verifier import VerifiedIdentity
 from popshot_api.main import create_app
 from tests.conftest import make_settings
@@ -431,13 +435,48 @@ def create(
 ADMIN = "Boss@Example.com"
 
 
+@pytest.fixture(scope="session")
+def admin_engine(owner_engine: Engine) -> Iterator[Engine]:
+    """Logs in like the admin service: a user in popshot_app and popshot_admin."""
+    admin = os.environ.get("POPSHOT_BOOTSTRAP_ADMIN_URL")
+    if not admin:
+        if os.environ.get("POPSHOT_REQUIRE_DB") == "1":
+            pytest.fail("POPSHOT_BOOTSTRAP_ADMIN_URL is not set and POPSHOT_REQUIRE_DB=1")
+        pytest.skip("POPSHOT_BOOTSTRAP_ADMIN_URL not set")
+    password = secrets.token_hex(16)
+    with psycopg.connect(admin, autocommit=True) as conn:
+        exists = conn.execute("SELECT 1 FROM pg_roles WHERE rolname = 'popshot_admin_test'")
+        verb = sql.SQL("ALTER") if exists.fetchone() else sql.SQL("CREATE")
+        conn.execute(
+            sql.SQL("{} ROLE popshot_admin_test LOGIN PASSWORD {}").format(
+                verb, sql.Literal(password)
+            )
+        )
+        conn.execute("GRANT popshot_app, popshot_admin TO popshot_admin_test WITH SET FALSE")
+    url = make_url(str(owner_engine.url)).set(username="popshot_admin_test", password=password)
+    engine = create_engine(url, pool_size=2)
+    yield engine
+    engine.dispose()
+
+
+class Admins(People):
+    """People signed in to the API (`client`), plus the admin service (`admin`)."""
+
+    def __init__(self, client: TestClient, verifier: FakeTokenVerifier, admin: TestClient) -> None:
+        super().__init__(client, verifier)
+        self.admin = admin
+
+
 @pytest.fixture
-def admins(app_engine: Engine) -> Iterator[People]:
-    """Like `people`, with boss@example.com as the admin (set with different case)."""
+def admins(app_engine: Engine, admin_engine: Engine) -> Iterator[Admins]:
+    """boss@example.com is the admin (set with different case). Both apps share a verifier."""
     verifier = FakeTokenVerifier()
-    app = create_app(make_settings(admin_emails=f" {ADMIN} , "), verifier, app_engine)
-    with TestClient(app) as client:
-        yield People(client, verifier)
+    settings = make_settings(admin_emails=f" {ADMIN} , ")
+    with (
+        TestClient(create_app(settings, verifier, app_engine)) as client,
+        TestClient(create_admin_app(settings, verifier, admin_engine)) as admin,
+    ):
+        yield Admins(client, verifier, admin)
 
 
 def sign_in_as(

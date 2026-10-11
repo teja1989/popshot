@@ -21,6 +21,17 @@ output "api_service_account" {
   value = google_service_account.api.email
 }
 
+output "admin_service_account" {
+  value = google_service_account.admin.email
+}
+
+output "admin_database_url" {
+  value = format(
+    "postgresql+psycopg://%s@%s/%s?%s",
+    urlencode(local.admin_db_user), local.db_ip, local.db_name, local.ssl_params,
+  )
+}
+
 output "api_database_url" {
   value = format(
     "postgresql+psycopg://%s@%s/%s?%s",

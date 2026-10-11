@@ -4,6 +4,8 @@
 // decide who the user is (the API verifies the ID token itself), it only passes a small,
 // fixed set of headers through and adds the web service's own identity on Cloud Run.
 
+import type { Upstream } from "./config";
+
 const ALLOWED_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
 const SAFE_METHODS = new Set(["GET"]);
 const SEGMENT = /^[A-Za-z0-9_-]{1,64}$/;
@@ -24,6 +26,20 @@ function problem(status: number, detail: string): Response {
     { detail },
     { status, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } },
   );
+}
+
+/**
+ * Which service a path goes to: /v1/admin/... to the admin service (its own identity and
+ * database login), everything else to the API. Null when the admin service isn't set up.
+ */
+export function upstreamFor(
+  segments: readonly string[],
+  config: { apiBaseUrl: URL; apiAudience: string | null; adminApi: Upstream | null },
+): Upstream | null {
+  if (segments[0] === "v1" && segments[1] === "admin") {
+    return config.adminApi;
+  }
+  return { baseUrl: config.apiBaseUrl, audience: config.apiAudience };
 }
 
 export function upstreamPath(segments: readonly string[]): string | null {
@@ -52,11 +68,7 @@ async function readBody(request: Request): Promise<ArrayBuffer | null | "too-lar
   return body.byteLength === 0 ? null : body;
 }
 
-export async function forward(
-  request: Request,
-  segments: readonly string[],
-  deps: ForwardDeps,
-): Promise<Response> {
+export async function forward(request: Request, segments: readonly string[], deps: ForwardDeps): Promise<Response> {
   const method = request.method.toUpperCase();
   if (!ALLOWED_METHODS.has(method)) {
     return problem(405, "Method not allowed.");

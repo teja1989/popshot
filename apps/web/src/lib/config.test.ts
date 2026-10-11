@@ -18,6 +18,23 @@ describe("readServerConfig", () => {
     expect(config.firebase.projectId).toBe("ps-dev-1234");
   });
 
+  it("has no admin service unless one is set", () => {
+    expect(readServerConfig(BASE).adminApi).toBeNull();
+    const config = readServerConfig({
+      ...BASE,
+      ADMIN_API_BASE_URL: "https://admin-xyz.a.run.app",
+      ADMIN_API_AUDIENCE: "https://admin-xyz.a.run.app",
+    });
+    expect(config.adminApi?.baseUrl.href).toBe("https://admin-xyz.a.run.app/");
+    expect(config.adminApi?.audience).toBe("https://admin-xyz.a.run.app");
+  });
+
+  it("checks the admin service URL like the API's", () => {
+    expect(() => readServerConfig({ ...BASE, ADMIN_API_BASE_URL: "http://admin.example.com" })).toThrow(
+      /ADMIN_API_BASE_URL must use https/,
+    );
+  });
+
   it("treats a blank audience as unset", () => {
     expect(readServerConfig({ ...BASE, API_AUDIENCE: " " }).apiAudience).toBeNull();
   });
@@ -35,12 +52,9 @@ describe("readServerConfig", () => {
 });
 
 describe("parseApiBaseUrl", () => {
-  it.each(["http://localhost:8000", "http://127.0.0.1:4010", "https://api.example.com"])(
-    "accepts %s",
-    (value) => {
-      expect(() => parseApiBaseUrl(value)).not.toThrow();
-    },
-  );
+  it.each(["http://localhost:8000", "http://127.0.0.1:4010", "https://api.example.com"])("accepts %s", (value) => {
+    expect(() => parseApiBaseUrl(value)).not.toThrow();
+  });
 
   it.each([
     "http://api.example.com",
@@ -74,9 +88,7 @@ describe("FIREBASE_AUTH_EMULATOR_HOST", () => {
   );
 
   it("refuses a real project", () => {
-    expect(() =>
-      readServerConfig({ ...BASE, FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099" }),
-    ).toThrow(/demo-/);
+    expect(() => readServerConfig({ ...BASE, FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099" })).toThrow(/demo-/);
   });
 
   it("refuses Cloud Run", () => {

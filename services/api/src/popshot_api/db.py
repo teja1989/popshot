@@ -24,6 +24,7 @@ from popshot_api.auth.verifier import VerifiedIdentity
 
 APP_ROLE = "popshot_app"
 OWNER_ROLE = "popshot_owner"
+ADMIN_ROLE = "popshot_admin"
 DISPLAY_NAME_MAX = 80
 AVATAR_URL_MAX = 2048
 
@@ -122,20 +123,29 @@ _MEMBERSHIP_QUERY = text(
     """
     SELECT current_user AS name,
            pg_has_role(current_user, :app, 'USAGE') AS is_app,
-           pg_has_role(current_user, :owner, 'MEMBER') AS is_owner
+           pg_has_role(current_user, :owner, 'MEMBER') AS is_owner,
+           pg_has_role(current_user, :admin, 'MEMBER') AS is_admin,
+           pg_has_role(current_user, :admin, 'USAGE') AS uses_admin
     """
 )
 
 
-def check_database_role(engine: Engine) -> None:
-    """Refuse to run unless the login user gets its rights only from popshot_app."""
+def check_database_role(engine: Engine, *, admin: bool = False) -> None:
+    """Refuse to run unless the login user gets its rights only from popshot_app, plus
+    popshot_admin for the admin service (`admin`) and never for the API."""
     with engine.connect() as connection:
-        me = connection.execute(_MEMBERSHIP_QUERY, {"app": APP_ROLE, "owner": OWNER_ROLE}).one()
+        me = connection.execute(
+            _MEMBERSHIP_QUERY, {"app": APP_ROLE, "owner": OWNER_ROLE, "admin": ADMIN_ROLE}
+        ).one()
         unsafe = list(connection.execute(_UNSAFE_ROLE_QUERY).scalars())
     if not me.is_app:
         raise UnsafeDatabaseRoleError(f"{me.name!r} doesn't inherit {APP_ROLE!r}")
     if me.is_owner:
         raise UnsafeDatabaseRoleError(f"{me.name!r} is a member of {OWNER_ROLE!r}")
+    if admin and not me.uses_admin:
+        raise UnsafeDatabaseRoleError(f"{me.name!r} doesn't inherit {ADMIN_ROLE!r}")
+    if not admin and me.is_admin:
+        raise UnsafeDatabaseRoleError(f"{me.name!r} is a member of {ADMIN_ROLE!r}")
     if unsafe:
         raise UnsafeDatabaseRoleError(f"{me.name!r} has unsafe privileges via: {unsafe}")
 

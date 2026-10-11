@@ -77,3 +77,14 @@ def test_the_jobs_user_is_separate_too() -> None:
             api="popshot_api",
             jobs="popshot_api",
         )
+
+
+@pytest.mark.parametrize("admin", ["popshot_api", "popshot_migrator"])
+def test_the_admin_user_is_separate_too(admin: str) -> None:
+    with pytest.raises(ValueError, match="different"):
+        bootstrap(
+            "postgresql://unused@127.0.0.1:1/x",
+            migrator="popshot_migrator",
+            api="popshot_api",
+            admin=admin,
+        )

@@ -242,4 +242,10 @@ jobs:
           api_status="$(curl -s -o /dev/null -w '%{http_code}' "$api_url/healthz")"
           echo "API from the internet: HTTP ${api_status}"
           case "$api_status" in 2*|3*) echo "The API is reachable from the internet"; exit 1;; esac
-          echo "Smoke check passed: page served with CSP, /api/v1/me requires sign-in, API not public." >> "$GITHUB_STEP_SUMMARY"
+          admin_url="$(terraform output -raw admin_api_url)"
+          admin_status="$(curl -s -o /dev/null -w '%{http_code}' "$admin_url/healthz")"
+          echo "Admin service from the internet: HTTP ${admin_status}"
+          case "$admin_status" in 2*|3*) echo "The admin service is reachable from the internet"; exit 1;; esac
+          # Through the web app, admin pages answer only to a signed-in admin.
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$url/api/v1/admin/overview")" = "401"
+          echo "Smoke check passed: page served with CSP, /api/v1/me and /api/v1/admin require sign-in, API and admin service not public." >> "$GITHUB_STEP_SUMMARY"

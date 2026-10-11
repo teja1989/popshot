@@ -86,15 +86,6 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "POPSHOT_PUSH_SUBJECT"
         value = local.platform.web_url
       }
-      env {
-        name  = "POPSHOT_ADMIN_EMAILS"
-        value = var.admin_emails
-      }
-      env {
-        # Emails for the admin pages, from Identity Platform (platform: api_account_lookup).
-        name  = "POPSHOT_ACCOUNT_LOOKUP"
-        value = "true"
-      }
 
       volume_mounts {
         name       = "sql-ca"
@@ -127,6 +118,119 @@ resource "google_cloud_run_v2_service" "api" {
 resource "google_cloud_run_v2_service_iam_member" "api_invoker" {
   name     = google_cloud_run_v2_service.api.name
   location = google_cloud_run_v2_service.api.location
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${local.platform.web_service_account}"
+}
+
+# ---------------------------------------------------------------- admin-api (internal only)
+
+# The admin pages (popshot_api.admin_main), from the API image. Its own service account and
+# database login (popshot_admin), so the admin functions and account lookups are out of the
+# API's reach. Reached only through the web service, like the API.
+resource "google_cloud_run_v2_service" "admin_api" {
+  name                = "admin-api"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  deletion_protection = false
+
+  template {
+    service_account                  = local.platform.admin_service_account
+    execution_environment            = "EXECUTION_ENVIRONMENT_GEN2"
+    timeout                          = "30s"
+    max_instance_request_concurrency = 20
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 1
+    }
+
+    vpc_access {
+      network_interfaces {
+        network    = local.platform.network
+        subnetwork = local.platform.subnetwork
+      }
+      # Cloud SQL over the VPC; Google's sign-in keys and Identity Platform over the internet.
+      egress = "PRIVATE_RANGES_ONLY"
+    }
+
+    containers {
+      image = var.api_image
+      # Same image as the API; only the app factory differs.
+      command = ["uvicorn"]
+      args = [
+        "--factory", "popshot_api.admin_main:create_admin_app",
+        "--host", "0.0.0.0", "--port", "8080", "--no-access-log", "--no-server-header",
+      ]
+
+      ports {
+        container_port = 8080
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+        cpu_idle          = true
+        startup_cpu_boost = true
+      }
+
+      env {
+        name  = "POPSHOT_ENVIRONMENT"
+        value = "prod"
+      }
+      env {
+        name  = "POPSHOT_FIREBASE_PROJECT_ID"
+        value = local.platform.firebase.project_id
+      }
+      env {
+        name  = "POPSHOT_DATABASE_URL"
+        value = local.platform.admin_database_url
+      }
+      env {
+        name  = "POPSHOT_DATABASE_IAM_AUTH"
+        value = "true"
+      }
+      env {
+        name  = "POPSHOT_ADMIN_EMAILS"
+        value = var.admin_emails
+      }
+      env {
+        # Emails for the admin pages, from Identity Platform (platform: admin_account_lookup).
+        name  = "POPSHOT_ACCOUNT_LOOKUP"
+        value = "true"
+      }
+
+      volume_mounts {
+        name       = "sql-ca"
+        mount_path = local.platform.sql_ca_mount_path
+      }
+
+      startup_probe {
+        http_get {
+          path = "/healthz"
+        }
+        period_seconds    = 3
+        failure_threshold = 10
+      }
+    }
+
+    volumes {
+      name = "sql-ca"
+      secret {
+        secret = local.platform.sql_ca_secret
+        items {
+          version = "latest"
+          path    = "server-ca.pem"
+        }
+      }
+    }
+  }
+}
+
+resource "google_cloud_run_v2_service_iam_member" "admin_api_invoker" {
+  name     = google_cloud_run_v2_service.admin_api.name
+  location = google_cloud_run_v2_service.admin_api.location
   role     = "roles/run.invoker"
   member   = "serviceAccount:${local.platform.web_service_account}"
 }
@@ -184,6 +288,14 @@ resource "google_cloud_run_v2_service" "web" {
       env {
         name  = "API_AUDIENCE"
         value = google_cloud_run_v2_service.api.uri
+      }
+      env {
+        name  = "ADMIN_API_BASE_URL"
+        value = google_cloud_run_v2_service.admin_api.uri
+      }
+      env {
+        name  = "ADMIN_API_AUDIENCE"
+        value = google_cloud_run_v2_service.admin_api.uri
       }
       env {
         name  = "FIREBASE_API_KEY"

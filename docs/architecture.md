@@ -5,10 +5,11 @@
 ```
 Browser ──HTTPS──▶ web (Next.js, Cloud Run, public)
                      │  forwards requests with the user's ID token
-                     ▼
-                   api (FastAPI, Cloud Run, internal only)
+                     ├──────────────────────────────┐ /v1/admin only
+                     ▼                              ▼
+                   api (FastAPI, internal only)   admin-api (same image, internal only)
                      │  verifies token, sets app.user_id per transaction
-                     ▼
+                     ▼                              ▼
                    Postgres (Cloud SQL, private IP, RLS forced)
 ```
 
@@ -30,6 +31,7 @@ Sign-in is handled by Google Identity Platform. The web app gets an ID token for
 1. **Browser → web.** Public. The web app sets a strict Content Security Policy and other security headers. The browser never calls the API directly.
 2. **web → api.** The API's Cloud Run service accepts internal traffic only, and only the web service's service account may invoke it. The user's ID token rides along and is re-verified by the API; the web layer is not trusted to vouch for the user.
 3. **api → database.** The API connects as `popshot_app`, a role that owns nothing and cannot bypass RLS. Migrations run as a separate owner role.
+4. **The admin pages are a separate service.** `admin-api` (`popshot_api.admin_main`) serves only `/v1/admin`, with its own service account and database login. That login is the only one in `popshot_admin`, which can run the admin functions; it alone may look up sign-in accounts (emails) in Identity Platform. The API's login can't do either, and refuses to start if it could. Within the service, each request still has to come from an allowlisted email with a recent sign-in.
 
 ### Group isolation
 
