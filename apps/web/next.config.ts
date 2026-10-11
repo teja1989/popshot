@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Don't let `next dev` write an AGENTS.md into the repo.
   agentRules: false,
+  // Browsers and other clients ask for /favicon.ico even when a page names its icon.
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/icons/192" }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

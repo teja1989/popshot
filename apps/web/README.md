@@ -34,6 +34,10 @@ npm run build
 npm run test:e2e   # set PLAYWRIGHT_CHROMIUM_EXECUTABLE if Playwright's own browser isn't installed
 ```
 
+Signed-in screens are tested against the whole stack (real API, Postgres and the Firebase
+Auth emulator) with `./dev/run.sh e2e` from the repository root; see
+[dev/README.md](../../dev/README.md).
+
 The end-to-end tests run the production standalone server plus `e2e/stub-api.mjs`, a stand-in
 API that echoes back exactly what the web layer forwarded.
 
