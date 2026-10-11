@@ -17,6 +17,7 @@ const AppShell = dynamic(() => import("./app-shell").then((m) => m.AppShell), {
 export function ShellLoader(props: {
   firebase: FirebaseWebConfig;
   authEmulatorHost: string | null;
+  invited?: boolean;
   children: ReactNode;
 }) {
   return <AppShell {...props} />;

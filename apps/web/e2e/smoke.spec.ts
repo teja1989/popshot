@@ -53,9 +53,9 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
   }
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Your crew's games, kept between you.",
+    "Tally every rally.",
   );
-  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeEnabled();
   await page.waitForLoadState("networkidle");
   expect(problems).toEqual([]);
   // Nothing third-party loads until someone chooses to sign in.
@@ -123,32 +123,43 @@ test("/favicon.ico serves the app icon instead of a 404", async ({ request }) =>
   expect(response.headers()["content-type"]).toBe("image/png");
 });
 
-test("the example cards rotate, pause and can be picked", async ({ page }) => {
+test("the landing page explains the app and offers sign-in top and bottom", async ({ page }) => {
   await page.goto("/");
-  const carousel = page.getByRole("region", { name: "Examples of what Popshot shows you" });
-  await expect(carousel.getByText("Your form")).toBeVisible();
-  // Advances by itself.
-  await expect(carousel.getByText("Your nemesis")).toBeVisible({ timeout: 8000 });
-
-  await carousel.getByRole("button", { name: "Pause" }).click();
-  await expect(carousel.getByRole("button", { name: "Play" })).toBeVisible();
-  await page.waitForTimeout(5000);
-  await expect(carousel.getByText("Your nemesis")).toBeVisible();
-
-  await carousel.getByRole("button", { name: /Show example 3 of 3/ }).click();
-  await expect(carousel.getByText("Best partner")).toBeVisible();
-  await expect(carousel.getByRole("button", { name: /Show example 3 of 3/ })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
+  for (const title of [
+    "Logged before the next game starts.",
+    "Bragging rights, confirmed.",
+    "Know your nemesis.",
+    "Climb your crew's board.",
+    "Up and running in three steps.",
+    "Private by default.",
+  ]) {
+    await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
+  }
+  const signIn = page.getByRole("button", { name: "Continue with Google" });
+  await expect(signIn).toHaveCount(2);
+  await expect(page.getByText("Screens show example data.", { exact: false })).toBeVisible();
 });
 
-test("with reduce motion, the example cards stay put", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
-  const carousel = page.getByRole("region", { name: "Examples of what Popshot shows you" });
-  await expect(carousel.getByText("Your form")).toBeVisible();
-  await expect(carousel.getByRole("button", { name: "Pause" })).toHaveCount(0);
-  await page.waitForTimeout(5500);
-  await expect(carousel.getByText("Your form")).toBeVisible();
+test("an invite link, signed out, says why you're here and leaks nothing", async ({ page, request }) => {
+  const problems: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      problems.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => problems.push(error.message));
+
+  const token = "A".repeat(43);
+  const response = await page.goto(`/join#${token}`);
+  expect(response?.status()).toBe(200);
+  await expect(page.getByText("You've been invited")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
+  // Signed out, the token stays put for after sign-in.
+  expect(page.url()).toContain(`#${token}`);
+  expect(problems).toEqual([]);
+
+  // What a chat app's link preview sees: no group details, and not for search engines.
+  const html = await (await request.get("/join")).text();
+  expect(html).toContain("<title>You&#x27;re invited · Popshot</title>");
+  expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"/);
 });

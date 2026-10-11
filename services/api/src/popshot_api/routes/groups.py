@@ -148,7 +148,7 @@ def create_group(body: CreateGroup, user: CurrentUserSession) -> GroupDetail:
             "win_by_two": body.default_win_by_two,
         },
     ).scalar_one()
-    detail = _group_detail(user.session, user.user_id, group_id)
+    detail = group_detail(user.session, user.user_id, group_id)
     if detail is None:  # pragma: no cover - the creator is always its active lead
         raise NOT_FOUND
     return detail
@@ -156,13 +156,13 @@ def create_group(body: CreateGroup, user: CurrentUserSession) -> GroupDetail:
 
 @router.get("/{group_id}")
 def get_group(group_id: UUID, user: CurrentUserSession) -> GroupDetail:
-    detail = _group_detail(user.session, user.user_id, group_id)
+    detail = group_detail(user.session, user.user_id, group_id)
     if detail is None:
         raise NOT_FOUND
     return detail
 
 
-def _group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | None:
+def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | None:
     group = (
         session.execute(
             text(

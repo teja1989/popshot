@@ -13,8 +13,8 @@ async function startGroup(page: Page, name: string): Promise<string> {
 }
 
 test("start a group from the empty state and land on its page", async ({ page }) => {
-  const maya: TestUser = newUser("Maya");
-  await signIn(page, maya);
+  const casey: TestUser = newUser("Casey");
+  await signIn(page, casey);
   const problems = await watchProblems(page);
   await page.goto("/");
 
@@ -36,9 +36,9 @@ test("start a group from the empty state and land on its page", async ({ page })
   await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tuesday Dinkers");
   await expect(page.getByText("Singles · games to 15", { exact: true })).toBeVisible();
-  const members = page.getByRole("list").filter({ hasText: maya.name });
+  const members = page.getByRole("list").filter({ hasText: casey.name });
   await expect(members.getByRole("listitem")).toHaveCount(1);
-  await expect(members).toContainText(`${maya.name} (you)`);
+  await expect(members).toContainText(`${casey.name} (you)`);
   await expect(members).toContainText("Lead");
 
   await page.getByRole("link", { name: "Your groups" }).click();
@@ -48,7 +48,7 @@ test("start a group from the empty state and land on its page", async ({ page })
 });
 
 test("the dialog checks the name and closes cleanly", async ({ page }) => {
-  await signIn(page, newUser("Dev"));
+  await signIn(page, newUser("Alex"));
   const problems = await watchProblems(page);
   await page.goto("/");
 
@@ -71,15 +71,15 @@ test("the dialog checks the name and closes cleanly", async ({ page }) => {
 });
 
 test("someone outside a group can't open it", async ({ page, browser }) => {
-  await signIn(page, newUser("Priya"));
+  await signIn(page, newUser("Riley"));
   await page.goto("/");
-  const url = await startGroup(page, "Priya's Crew");
+  const url = await startGroup(page, "Riley's Crew");
 
   const other = await browser.newPage();
   await signIn(other, newUser("Sam"));
   await other.goto(url);
   await expect(other.getByRole("heading", { name: "We couldn't find that group." })).toBeVisible();
-  await expect(other.getByText("Priya's Crew")).toHaveCount(0);
+  await expect(other.getByText("Riley's Crew")).toHaveCount(0);
   // And it isn't in Sam's list.
   await other.goto("/");
   await expect(other.getByText("No groups yet.")).toBeVisible();

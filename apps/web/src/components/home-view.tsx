@@ -13,6 +13,7 @@ import { useApiGet } from "./use-api";
 import { Avatar, AvatarStack } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
 import { CourtArt } from "./ui/court-art";
+import { CourtPattern } from "./ui/court-pattern";
 import { ChevronIcon, PlusIcon } from "./ui/icons";
 
 // Written out in full so Tailwind can see them (it doesn't evaluate code).
@@ -50,18 +51,38 @@ export function HomeView() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-5xl lg:px-8 lg:pt-10">
 
-      <section className="relative isolate animate-rise overflow-hidden rounded-3xl border border-line bg-surface p-5 lg:p-7">
-        <CourtMotif />
+      <section className="relative isolate animate-rise overflow-hidden rounded-[28px] bg-hero p-6 text-on-hero lg:p-9">
+        <CourtPattern />
         <div className="flex items-center gap-4">
-          <Avatar name={me?.display_name} photoUrl={me?.avatar_url} size="lg" />
+          <Avatar
+            name={me?.display_name}
+            photoUrl={me?.avatar_url}
+            size="lg"
+            className="ring-4 ring-hero-line"
+          />
           <div className="min-w-0">
-            <p className="text-[14px] font-bold text-muted">{today}</p>
-            <h1 className="text-[28px] leading-tight font-extrabold tracking-[-0.01em] break-words [font-stretch:110%] lg:text-[34px]">
-              {name ? `${greeting}, ${name}.` : `${greeting}.`}
+            <p className="text-[14px] font-bold text-on-hero-muted">{today}</p>
+            <h1 className="text-[30px] leading-[1.05] font-extrabold tracking-[-0.02em] break-words [font-stretch:112%] lg:text-[42px]">
+              {greeting}
+              {name ? (
+                <>
+                  , <span className="text-ball">{name}</span>.
+                </>
+              ) : (
+                "."
+              )}
             </h1>
-            {problem && <p className="text-[15px] text-warn">{problem}</p>}
+            {problem && <p className="text-[15px] font-bold text-ball">{problem}</p>}
           </div>
         </div>
+        <dl className="mt-7 grid max-w-lg grid-cols-3 gap-4 border-t border-hero-line pt-5">
+          <HeroStat
+            label="Groups"
+            value={result.kind === "ready" ? String(result.data.filter((g) => g.my_status === "active").length) : "–"}
+          />
+          <HeroStat label="Games logged" value="0" />
+          <HeroStat label="Crew rating" value="–" hint="After your first confirmed game" />
+        </dl>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
@@ -70,17 +91,6 @@ export function HomeView() {
             <h2 id="groups-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
               Your groups
             </h2>
-            {result.kind === "ready" && result.data.length > 0 && (
-              <CreateGroupDialog
-                onCreated={openGroup}
-                trigger={
-                  <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}>
-                    <PlusIcon />
-                    Start a group
-                  </button>
-                }
-              />
-            )}
           </div>
 
           {result.kind === "loading" && <p className="text-muted">Loading your groups…</p>}
@@ -113,12 +123,28 @@ export function HomeView() {
           )}
 
           {result.kind === "ready" && result.data.length > 0 && (
-            <ul className="flex flex-col gap-2">
+            <ul className="grid gap-3 sm:grid-cols-2">
               {result.data.map((group, index) => (
                 <li key={group.id} className={`animate-rise ${STAGGER[index] ?? ""}`}>
                   <GroupCard group={group} />
                 </li>
               ))}
+              <li className="animate-rise">
+                <CreateGroupDialog
+                  onCreated={openGroup}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex h-full min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line text-[16px] font-bold text-muted transition-colors duration-150 hover:border-primary hover:text-primary"
+                    >
+                      <span className="flex size-11 items-center justify-center rounded-full bg-chip text-primary">
+                        <PlusIcon />
+                      </span>
+                      Start a group
+                    </button>
+                  }
+                />
+              </li>
             </ul>
           )}
         </section>
@@ -134,21 +160,52 @@ function GroupCard({ group }: { group: GroupSummary }) {
   return (
     <Link
       href={`/groups/${group.id}`}
-      className="flex min-h-20 items-center gap-4 rounded-2xl border border-line bg-surface p-4 text-ink no-underline transition-[translate,border-color] duration-150 ease-court hover:-translate-y-px hover:border-primary"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface text-ink no-underline transition-[translate,box-shadow] duration-200 ease-court hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgb(15_27_38/0.45)]"
     >
-      <span className="flex min-w-0 grow flex-col gap-0.5">
-        <span className="truncate text-[18px] font-bold">{group.name}</span>
-        <span className="text-[14px] text-muted">
-          {group.my_status === "pending"
-            ? "Waiting for approval"
-            : `${ROLE_LABEL[group.my_role]} · ${String(count)} ${count === 1 ? "member" : "members"}`}
-        </span>
+      <span className="relative isolate block h-20 overflow-hidden bg-hero">
+        <CourtPattern />
+        <span
+          aria-hidden="true"
+          className={`absolute top-1/2 size-4 -translate-y-1/2 rounded-full bg-ball transition-transform duration-500 ease-court group-hover:-translate-x-6 ${BALL_SPOTS[ballSpot(group.id)] ?? ""}`}
+        />
       </span>
-      {group.my_status === "active" && (
-        <AvatarStack people={group.member_preview} total={count} />
-      )}
-      <ChevronIcon />
+      <span className="flex grow flex-col gap-3 p-4">
+        <span className="flex items-start justify-between gap-3">
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-[19px] font-extrabold [font-stretch:105%]">{group.name}</span>
+            <span className="text-[14px] text-muted">
+              {group.my_status === "pending"
+                ? "Waiting for approval"
+                : `${ROLE_LABEL[group.my_role]} · ${String(count)} ${count === 1 ? "member" : "members"}`}
+            </span>
+          </span>
+          <ChevronIcon />
+        </span>
+        {group.my_status === "active" && <AvatarStack people={group.member_preview} total={count} />}
+      </span>
     </Link>
+  );
+}
+
+// Where the ball sits on a group's banner: fixed per group, so each tile looks its own.
+const BALL_SPOTS = ["left-[22%]", "left-[38%]", "left-[62%]", "left-[78%]"];
+
+function ballSpot(id: string): number {
+  let hash = 0;
+  for (const ch of id) {
+    hash = (hash * 31 + ch.charCodeAt(0)) % 997;
+  }
+  return hash % BALL_SPOTS.length;
+}
+
+function HeroStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <dt className="text-[13px] font-bold text-on-hero-muted">{label}</dt>
+      <dd className="text-[34px] leading-none font-extrabold [font-stretch:75%] lg:text-[40px]" title={hint}>
+        {value}
+      </dd>
+    </div>
   );
 }
 
@@ -187,20 +244,5 @@ function StatsPanel() {
         you&apos;re trending.
       </p>
     </aside>
-  );
-}
-
-// Faint court lines at the greeting's right edge, on screens wide enough that they never sit
-// behind the text. Decorative.
-function CourtMotif() {
-  return (
-    <svg
-      viewBox="0 0 220 140"
-      aria-hidden="true"
-      className="pointer-events-none absolute top-1/2 -right-6 -z-10 hidden w-72 -translate-y-1/2 stroke-line opacity-60 sm:block"
-    >
-      <rect x="4" y="4" width="212" height="132" rx="6" fill="none" strokeWidth="2" />
-      <path d="M110 4v132M74 4v132M146 4v132M4 70h70M146 70h70" fill="none" strokeWidth="2" />
-    </svg>
   );
 }

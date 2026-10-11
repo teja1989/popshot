@@ -24,10 +24,10 @@ test("signing out returns to the sign-in screen and stays signed out", async ({ 
   await page.goto("/you");
   // The You page's own button (on desktop the sidebar has one too).
   await page.getByRole("main").getByRole("button", { name: "Sign out" }).click();
-  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
 });
 
 test("the API rejects a request without a token, even with a session in the browser", async ({

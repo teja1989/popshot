@@ -4,8 +4,8 @@ import { firstName, greetingFor, initials, usablePhoto } from "./people";
 
 describe("initials", () => {
   it.each([
-    ["Maya Patel", "MP"],
-    ["maya", "m"],
+    ["Casey Morgan", "CM"],
+    ["casey", "c"],
     ["  Jordan   Lee  Smith ", "JS"],
     ["Émile Zola", "ÉZ"],
     ["🏓 Crew", "🏓C"],
@@ -60,8 +60,8 @@ describe("greetingFor", () => {
 
 describe("firstName", () => {
   it.each([
-    ["Maya Patel", "Maya"],
-    ["  Dev  ", "Dev"],
+    ["Casey Morgan", "Casey"],
+    ["  Alex  ", "Alex"],
     ["", null],
     ["   ", null],
     [null, null],

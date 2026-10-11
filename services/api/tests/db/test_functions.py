@@ -130,3 +130,34 @@ def test_redeem_needs_a_user(app_engine: Engine) -> None:
     with as_user(app_engine, None) as conn:
         state = sqlstate_of(conn, "SELECT * FROM app_redeem_invite(:h)", {"h": new_token_hash()})
         assert state == INSUFFICIENT_PRIVILEGE
+
+
+def _preview(conn: Connection, user: UUID | None, token_hash: bytes) -> list[tuple[object, ...]]:
+    value = "" if user is None else str(user)
+    conn.execute(text("SELECT set_config('app.user_id', :u, true)"), {"u": value})
+    rows = conn.execute(text("SELECT * FROM app_preview_invite(:h)"), {"h": token_hash})
+    return [tuple(r) for r in rows]
+
+
+def test_preview_needs_a_user_and_a_live_invite(app_engine: Engine, seed: Seed) -> None:
+    with as_user(app_engine, seed.alice) as conn:
+        live = _invite(conn, seed)
+        dead = _invite(conn, seed, revoked_at="now()")
+        assert _preview(conn, None, live) == []
+        assert _preview(conn, seed.nobody, live) == [(None, "Tuesday Crew", "Alice", None)]
+        assert _preview(conn, seed.nobody, dead) == []
+        assert _preview(conn, seed.nobody, new_token_hash()) == []
+        # Someone already in the group still sees it through a dead link, with its ID.
+        assert _preview(conn, seed.carol, dead) == [
+            (seed.group_a, "Tuesday Crew", "Alice", "active")
+        ]
+        # Someone removed sees their status but not the ID.
+        assert _preview(conn, seed.frank, dead) == [(None, "Tuesday Crew", "Alice", "removed")]
+
+
+def test_used_up_link_still_answers_the_person_who_used_it(app_engine: Engine, seed: Seed) -> None:
+    with as_user(app_engine, seed.alice) as conn:
+        token_hash = _invite(conn, seed, max_uses=1)
+        assert _redeem(conn, seed.nobody, token_hash) == [(seed.group_a, "pending")]
+        assert _redeem(conn, seed.nobody, token_hash) == [(seed.group_a, "pending")]
+        assert _redeem(conn, seed.bob, token_hash) == []

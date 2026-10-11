@@ -1,73 +1,267 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { useAuth } from "./auth";
-import { ExampleCards } from "./example-cards";
-import { ArrowIcon, HandshakeIcon, PrivateIcon, StopwatchIcon } from "./ui/icons";
+import { PhonePreview } from "./phone-preview";
 import { Brand } from "./ui/brand";
 import { buttonClass } from "./ui/button";
 import { CourtArt } from "./ui/court-art";
+import { CourtPattern } from "./ui/court-pattern";
+import { ArrowIcon, LockIcon } from "./ui/icons";
 
-const PROMISES = [
-  {
-    icon: <StopwatchIcon />,
-    title: "Log a game in 15 seconds",
-    body: "Pick who played and the score, right at the fence.",
-  },
-  {
-    icon: <HandshakeIcon />,
-    title: "Fair records",
-    body: "Someone on the other team confirms every score.",
-  },
-  {
-    icon: <PrivateIcon />,
-    title: "Private to your crew",
-    body: "No public profiles, no search. Only your group sees its games.",
-  },
-];
+// The landing page people see before signing in. Everything shown is either true of the app
+// today or an example clearly marked as one: no fake reviews, user counts or rankings.
 
-export function SignInScreen() {
-  const { busy, notice, signIn } = useAuth();
+function SignInButton({ className = "" }: { className?: string }) {
+  const { busy, signIn } = useAuth();
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-12 pb-10">
-      <Brand />
-      <CourtArt rally className="mt-9 w-full" />
-      <h1 className="mt-9 animate-rise text-[36px] leading-[1.08] font-[780] tracking-[-0.02em] [animation-delay:200ms] [font-stretch:108%]">
-        Your crew&apos;s games, kept between you.
-      </h1>
-      <p className="mt-4 animate-rise text-[17px] leading-relaxed text-muted [animation-delay:300ms]">
-        Log a game when you walk off the court. Popshot keeps the streaks, the rivalries and the
-        partner you click with.
-      </p>
-      <button
-        type="button"
-        className={buttonClass("primary", "mt-8 h-14 w-full animate-rise [animation-delay:400ms]")}
-        onClick={() => void signIn()}
-        disabled={busy}
-      >
-        Continue with Google
-        <ArrowIcon />
-      </button>
-      <p role="status" className="mt-3 min-h-6 text-center text-[15px] text-warn">
-        {notice}
-      </p>
+    <button
+      type="button"
+      className={buttonClass("action", `h-14 px-7 text-[18px] ${className}`)}
+      onClick={() => void signIn()}
+      disabled={busy}
+    >
+      Continue with Google
+      <ArrowIcon />
+    </button>
+  );
+}
 
-      <div className="mt-6 animate-rise [animation-delay:500ms]">
-        <ExampleCards />
+const HIGHLIGHTS = ["15-second logging", "Opponent-confirmed scores", "Doubles & singles"];
+
+export function SignInScreen({ invited = false }: { invited?: boolean }) {
+  const { notice } = useAuth();
+  return (
+    <div className="bg-bg">
+      <section className="relative isolate overflow-hidden bg-hero text-on-hero">
+        <CourtPattern />
+        <div className="mx-auto grid max-w-6xl gap-12 px-6 pt-8 pb-16 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-10 lg:px-10 lg:pt-10 lg:pb-24">
+          <header className="lg:col-span-2">
+            <Brand onHero />
+          </header>
+
+          <div className="flex flex-col">
+            <p className="animate-rise text-[13px] font-bold tracking-[0.14em] text-ball uppercase">
+              {invited ? "You've been invited" : "Pickleball stats for your crew"}
+            </p>
+            <h1 className="mt-4 animate-rise text-[56px] leading-[0.95] font-[820] tracking-[-0.035em] [animation-delay:80ms] [font-stretch:118%] sm:text-[68px] lg:text-[82px]">
+              Tally every <span className="text-ball">rally.</span>
+            </h1>
+            <p className="mt-6 max-w-xl animate-rise text-[18px] leading-relaxed text-on-hero-muted [animation-delay:160ms] lg:text-[20px]">
+              {invited
+                ? "Someone wants you in their Popshot group. Sign in to see which one and ask to join."
+                : "Log a game in seconds. The other team confirms it. Your crew gets the streaks, rivalries and bragging rights, kept between you."}
+            </p>
+            <div className="mt-8 flex animate-rise flex-col gap-4 [animation-delay:240ms] sm:flex-row sm:items-center">
+              <SignInButton />
+              <span className="flex items-center gap-2 text-[14px] text-on-hero-muted">
+                <LockIcon />
+                Private to your crew
+              </span>
+            </div>
+            <p role="status" className="mt-3 min-h-6 text-[15px] font-bold text-ball">
+              {notice}
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-2" aria-label="Highlights">
+              {HIGHLIGHTS.map((item) => (
+                <li
+                  key={item}
+                  className="rounded-full border border-hero-line px-3.5 py-1.5 text-[13px] font-bold text-on-hero"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <PhonePreview />
+        </div>
+      </section>
+
+      <div className="mx-auto flex max-w-6xl flex-col gap-20 px-6 py-20 lg:gap-28 lg:px-10 lg:py-28">
+        <Feature
+          eyebrow="Fast at the fence"
+          title="Logged before the next game starts."
+          body="Pick who played, tap in the score, done. Popshot checks it's a real final score (games to 11, 15 or 21, win by 2) so typos don't sneak in."
+          visual={<LogVisual />}
+        />
+        <Feature
+          flip
+          eyebrow="Fair records"
+          title="Bragging rights, confirmed."
+          body="One player logs the score and someone on the other team confirms it. No more “pretty sure we won that one.” If nobody objects, it confirms itself after 48 hours."
+          visual={<ConfirmVisual />}
+        />
+        <Feature
+          eyebrow="Rivals & partners"
+          title="Know your nemesis."
+          body="See who you beat, who beats you, and which partner makes you better. Head-to-head records, skunks, close games and streaks, all from your crew's games."
+          visual={<RivalsVisual />}
+        />
+        <Feature
+          flip
+          eyebrow="Crew rating"
+          title="Climb your crew's board."
+          body="A rating that counts who you played with and against, from confirmed games only. It compares you with your crew, not with strangers across the country."
+          visual={<BoardVisual />}
+        />
+
+        <section aria-labelledby="how-heading" className="flex flex-col gap-8">
+          <h2 id="how-heading" className="text-[34px] leading-tight font-extrabold tracking-[-0.02em] [font-stretch:110%] lg:text-[44px]">
+            Up and running in three steps.
+          </h2>
+          <ol className="grid gap-4 md:grid-cols-3">
+            {[
+              ["Start a group", "Name your crew and pick how you usually play."],
+              ["Invite your crew", "Share an invite link. You approve who joins."],
+              ["Play, log, confirm", "Log after each game; the other team confirms."],
+            ].map(([title, body], i) => (
+              <li key={title} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-6">
+                <span className="flex size-11 items-center justify-center rounded-full bg-ball text-[20px] font-extrabold text-on-ball [font-stretch:80%]">
+                  {i + 1}
+                </span>
+                <p className="text-[20px] font-extrabold">{title}</p>
+                <p className="text-[16px] text-muted">{body}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-7 sm:flex-row sm:items-center sm:gap-6 lg:p-9">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-chip text-primary">
+            <LockIcon />
+          </span>
+          <div>
+            <h2 className="text-[22px] font-extrabold">Private by default.</h2>
+            <p className="mt-1 text-[16px] text-muted">
+              No public profiles, no player search, no location sharing. A group is invisible to
+              anyone who isn&apos;t in it.
+            </p>
+          </div>
+        </section>
+
+        <section className="relative isolate flex flex-col items-start gap-6 overflow-hidden rounded-[32px] bg-hero p-8 text-on-hero lg:flex-row lg:items-center lg:justify-between lg:p-14">
+          <CourtPattern />
+          <h2 className="text-[34px] leading-[1.05] font-extrabold tracking-[-0.02em] [font-stretch:112%] lg:text-[46px]">
+            Ready when your <span className="text-ball">crew</span> is.
+          </h2>
+          <SignInButton />
+        </section>
       </div>
 
-      <ul className="mt-8 flex flex-col gap-5" aria-label="How Popshot works">
-        {PROMISES.map((promise) => (
-          <li key={promise.title} className="flex gap-4">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-chip text-primary">
-              {promise.icon}
-            </span>
-            <span className="flex flex-col">
-              <span className="text-[17px] font-bold">{promise.title}</span>
-              <span className="text-[15px] text-muted">{promise.body}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </main>
+      <footer className="mx-auto flex max-w-6xl flex-col gap-2 px-6 pb-12 text-[14px] text-muted sm:flex-row sm:items-center sm:justify-between lg:px-10">
+        <Brand />
+        <p>Pickleball stats for the people you actually play with. Screens show example data.</p>
+      </footer>
+    </div>
+  );
+}
+
+function Feature({
+  eyebrow,
+  title,
+  body,
+  visual,
+  flip = false,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  visual: ReactNode;
+  flip?: boolean;
+}) {
+  return (
+    <section className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+      <div className={flip ? "lg:order-2" : ""}>
+        <p className="text-[13px] font-bold tracking-[0.14em] text-primary uppercase">{eyebrow}</p>
+        <h2 className="mt-3 text-[34px] leading-[1.05] font-extrabold tracking-[-0.02em] [font-stretch:110%] lg:text-[44px]">
+          {title}
+        </h2>
+        <p className="mt-4 max-w-lg text-[18px] leading-relaxed text-muted">{body}</p>
+      </div>
+      <div className={flip ? "lg:order-1" : ""} aria-hidden="true">
+        {visual}
+      </div>
+    </section>
+  );
+}
+
+const card = "rounded-3xl border border-line bg-surface p-6 shadow-[0_18px_40px_-28px_rgb(15_27_38/0.35)]";
+
+function LogVisual() {
+  return (
+    <div className={`${card} flex flex-col gap-4`}>
+      <CourtArt rally className="w-full" />
+      <div className="flex items-center justify-between">
+        <span className="text-[15px] font-bold">You &amp; Alex</span>
+        <span className="text-[44px] leading-none font-extrabold [font-stretch:72%]">11 – 9</span>
+        <span className="text-[15px] font-bold text-muted">Riley &amp; Sam</span>
+      </div>
+      <p className="text-[14px] font-bold text-win">✓ You &amp; Alex win 11–9. Looks right.</p>
+    </div>
+  );
+}
+
+function ConfirmVisual() {
+  return (
+    <div className={`${card} flex flex-col gap-4`}>
+      <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Confirmed by Sam</p>
+      <div className="flex items-center justify-between">
+        <span className="text-[16px] font-bold">Casey &amp; Sam</span>
+        <span className="text-[44px] leading-none font-extrabold [font-stretch:72%]">11 – 8</span>
+        <span className="text-[16px] font-bold">You &amp; Alex</span>
+      </div>
+      <div className="flex items-center gap-3 rounded-2xl bg-chip p-3">
+        <span className="flex size-10 items-center justify-center rounded-full bg-win text-[18px] font-extrabold text-on-win">✓</span>
+        <span className="text-[15px] font-bold">On the record. Ratings updated.</span>
+      </div>
+    </div>
+  );
+}
+
+function RivalsVisual() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div className={card}>
+        <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Your nemesis</p>
+        <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Riley</p>
+        <p className="text-[15px] text-muted">2–5 head to head</p>
+        <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-chip">
+          <span className="w-[29%] origin-left animate-grow-x bg-win" />
+        </div>
+      </div>
+      <div className={card}>
+        <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Best partner</p>
+        <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Alex</p>
+        <p className="text-[15px] text-muted">9–2 together</p>
+        <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-chip">
+          <span className="w-[82%] origin-left animate-grow-x bg-win" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BoardVisual() {
+  const rows = [
+    ["Riley", "34.8", "w-[92%]"],
+    ["Casey", "32.1", "w-[76%]"],
+    ["You", "31.4", "w-[71%]"],
+    ["Alex", "29.6", "w-[60%]"],
+  ] as const;
+  return (
+    <ol className={`${card} flex flex-col gap-3`}>
+      {rows.map(([name, value, width], i) => (
+        <li key={name} className="flex items-center gap-3">
+          <span className="w-5 text-[22px] font-extrabold text-muted [font-stretch:72%]">{i + 1}</span>
+          <span className={`w-14 text-[16px] font-bold ${name === "You" ? "text-primary" : ""}`}>{name}</span>
+          <span className="h-2 grow overflow-hidden rounded-full bg-chip">
+            <span className={`block h-full origin-left animate-grow-x rounded-full ${i === 0 ? "bg-win" : "bg-primary"} ${width}`} />
+          </span>
+          <span className="w-12 text-right text-[22px] font-extrabold [font-stretch:75%]">{value}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
