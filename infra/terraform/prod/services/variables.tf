@@ -30,3 +30,9 @@ variable "web_image" {
     error_message = "Pass the web image by digest, not by tag."
   }
 }
+
+variable "admin_emails" {
+  description = "Who can open the admin page: comma-separated Google account emails. Empty: nobody. From the POPSHOT_ADMIN_EMAILS GitHub variable."
+  type        = string
+  default     = ""
+}

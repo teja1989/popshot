@@ -13,6 +13,7 @@ works. Seed data is committed once; each test runs in a transaction that is roll
 
 import os
 import secrets
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -401,6 +402,7 @@ class People:
             email=f"{name.lower()}@example.com",
             display_name=name,
             picture_url=None,
+            auth_time=int(time.time()),
         )
         return {"Authorization": f"Bearer {token}"}
 
