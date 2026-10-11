@@ -50,6 +50,17 @@ export const LEVELS: { value: Level; label: string; start: number; hint: string 
 ];
 export const DEFAULT_START = 3.0;
 
+// The rules the "How crew points work" sheet explains. Tested against shared/crew-points.json,
+// which the API's tests check against the real maths (popshot_api.rating).
+export const CREW_POINTS = {
+  min: 2.0,
+  max: 6.0,
+  steadyAfter: 15,
+  rankedAfter: 10,
+  restingAfterDays: 60,
+  example: { team: 3.5, opponents: 4.0, score: [11, 9], expectedShare: 0.44, changeSettled: 0.03, changeNew: 0.11 },
+} as const;
+
 /** "3.47" */
 export function points(value: number): string {
   return value.toFixed(2);

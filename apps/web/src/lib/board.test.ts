@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { change, levelLabel, points, winRate } from "./board";
+import { change, CREW_POINTS, DEFAULT_START, LEVELS, levelLabel, points, winRate } from "./board";
 
 describe("board formatting", () => {
   it("shows crew points with two decimals", () => {
@@ -25,5 +28,37 @@ describe("board formatting", () => {
   it("level labels", () => {
     expect(levelLabel("advanced")).toBe("Advanced");
     expect(levelLabel(null)).toBeNull();
+  });
+});
+
+describe("the crew points explanation", () => {
+  const shared = JSON.parse(
+    readFileSync(join(__dirname, "..", "..", "..", "..", "shared", "crew-points.json"), "utf8"),
+  ) as {
+    min: number;
+    max: number;
+    start: number;
+    steady_after: number;
+    ranked_after: number;
+    resting_after_days: number;
+    level_start: Record<string, number>;
+    example: { team: number; opponents: number; score: number[]; expected_share: number; change_settled: number; change_new: number };
+  };
+
+  it("matches the rules the API uses", () => {
+    expect([CREW_POINTS.min, CREW_POINTS.max, DEFAULT_START]).toEqual([shared.min, shared.max, shared.start]);
+    expect(CREW_POINTS.steadyAfter).toBe(shared.steady_after);
+    expect(CREW_POINTS.rankedAfter).toBe(shared.ranked_after);
+    expect(CREW_POINTS.restingAfterDays).toBe(shared.resting_after_days);
+    expect(Object.fromEntries(LEVELS.map((l) => [l.value, l.start]))).toEqual(shared.level_start);
+    const ex = CREW_POINTS.example;
+    expect([ex.team, ex.opponents, [...ex.score], ex.expectedShare, ex.changeSettled, ex.changeNew]).toEqual([
+      shared.example.team,
+      shared.example.opponents,
+      shared.example.score,
+      shared.example.expected_share,
+      shared.example.change_settled,
+      shared.example.change_new,
+    ]);
   });
 });

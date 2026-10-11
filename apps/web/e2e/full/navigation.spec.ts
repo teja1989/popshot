@@ -93,6 +93,24 @@ test("the board shows crew points from the first game", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
+test("the ⓘ explains crew points and how they differ from your level", async ({ page }) => {
+  await signIn(page, newUser("Ines"));
+  const problems = await watchProblems(page);
+  await startGroup(page, "Ines's Crew");
+  for (const path of ["/board", "/you"]) {
+    await page.goto(path);
+    await page.getByRole("button", { name: "How crew points work" }).first().click();
+    const sheet = page.getByRole("dialog", { name: "How crew points work" });
+    await expect(sheet).toContainText("Your level vs. your crew points");
+    await expect(sheet).toContainText("only where your crew points start");
+    await expect(sheet).toContainText("+0.03");
+    await expect(sheet).toContainText("Advanced · 4.00");
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+  }
+  expect(problems).toEqual([]);
+});
+
 test("your level sets where crew points start", async ({ page }) => {
   await signIn(page, newUser("Kai"));
   await page.goto("/you");
