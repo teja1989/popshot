@@ -48,16 +48,13 @@ export function PhonePreview({ className = "" }: { className?: string }) {
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-            <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Waiting on you</p>
+            <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Latest game</p>
             <div className="flex items-center justify-between text-[12px] font-semibold">
               <span>Casey &amp; Sam</span>
               <span className="text-[22px] font-extrabold [font-stretch:75%]">11 – 8</span>
               <span>You &amp; Alex</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <span className="rounded-lg bg-primary py-1.5 text-center text-[12px] font-bold text-on-primary">Confirm</span>
-              <span className="rounded-lg border border-line py-1.5 text-center text-[12px] font-bold">Dispute</span>
-            </div>
+            <p className="text-[11px] text-muted">Logged by Casey · 2 min ago</p>
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">

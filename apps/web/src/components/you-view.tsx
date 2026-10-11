@@ -52,7 +52,7 @@ export function YouView() {
           Your analytics
         </h2>
         <p className="text-[15px] text-muted">
-          These fill in once your crew has confirmed games. Filter by 30 days, 90 days or all time.
+          These fill in as your crew logs games. Filter by 30 days, 90 days or all time.
         </p>
         <ul className="grid gap-2 sm:grid-cols-2">
           {ANALYTICS.map((item) => (

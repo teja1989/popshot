@@ -10,7 +10,7 @@ There are plenty of score-keeping apps already. Popshot's angle is what happens 
 
 - **Private by default.** A group is invisible to anyone who isn't a member. No public profiles, no player search, no location sharing.
 - **Fast to log.** Logging a game should take under 15 seconds, standing at the fence.
-- **Fair records.** One player enters the score and the other team confirms it, so the history is something everyone agrees on.
+- **Simple, shared records.** One player logs the score and it counts straight away. Everyone in the group sees every game, and whoever logged a game can fix it.
 - **Friendly, calm tone.** Playful where it fits (skunks, nemeses), never noisy. No hype, no gimmicks.
 
 ## Decisions so far
@@ -23,7 +23,7 @@ There are plenty of score-keeping apps already. Popshot's angle is what happens 
 | Multiple groups | One person can be in any number of groups |
 | Personal view | Shows the player's own stats per group and where they're doing best |
 | Guest players | Allowed; a guest can sign up later and claim their history |
-| Confirmation | Someone on the opposing team confirms; auto-confirms after 48 hours |
+| Confirmation | None for now: a game counts when it's logged, and its scorer can edit or delete it (decided 2026-10-11 to keep logging simple) |
 | Visibility | Every group member can see every member's stats (MVP) |
 | Sign-in | Google first; Sign in with Apple before any iOS release |
 
@@ -33,7 +33,7 @@ There are plenty of score-keeping apps already. Popshot's angle is what happens 
 - Create a group, invite with expiring links (one person or up to 10, valid 7 days), lead or co-lead approves every join
 - Roles: lead, co-lead, member
 - Log a game: format, points-to (11, 15, 21), win-by-2 on/off, players, scores per game
-- Confirm or dispute a game
+- Edit or delete a game you logged
 - Group leaderboard with crew rating
 - Head-to-head records
 - Personal multi-group dashboard
@@ -65,7 +65,7 @@ Crew ratings come from different player pools, so they can't be compared between
 | 1 | MVP above |
 | 2 | Seasons and badges, weekly digest, round-robin generator for open play |
 | 3 | Live point scoring, opt-in written game recaps, native apps, Sign in with Apple |
-| 4 | DUPR: confirm partner API access and terms, link DUPR IDs with each player's consent, export confirmed games |
+| 4 | DUPR: confirm partner API access and terms, link DUPR IDs with each player's consent, export logged games |
 
 ## Open questions
 

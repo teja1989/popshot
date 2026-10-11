@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useMemo, useRef, useState, type SubmitEvent } from "react";
+import { useId, useMemo, useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
-import { apiPost, ApiError } from "@/lib/api-client";
+import { apiPost, apiPut, ApiError } from "@/lib/api-client";
 import { teamNames, toLocalInput, type LogGameBody, type Match, type Player } from "@/lib/games";
 import type { Format, GroupDetail } from "@/lib/groups";
 import { gamesToShow, validateMatch, type BestOf, type PointsTo, type Team } from "@/lib/scoring";
@@ -20,7 +20,50 @@ import { segmentOption, segmentTrack } from "./ui/segmented";
 const TEAM_SIZE: Record<Format, number> = { doubles: 2, singles: 1 };
 const TEAMS: Team[] = ["A", "B"];
 
-export function LogGameView({ groupId }: { groupId: string }) {
+/** Editing a logged game: load it, then the same form, filled in. Only its scorer can. */
+export function EditGameView({ groupId, matchId }: { groupId: string; matchId: string }) {
+  const existing = useApiGet<Match>(`/v1/groups/${groupId}/matches/${matchId}`);
+  if (existing.result.kind === "loading") {
+    return <Shell title="Edit game" note={<p className="text-muted">Loading…</p>} />;
+  }
+  if (existing.result.kind === "error") {
+    return (
+      <Shell title="Edit game" note={<Notice>We couldn&apos;t find that game. It may have been deleted.</Notice>} />
+    );
+  }
+  if (!existing.result.data.can_edit) {
+    return (
+      <Shell title="Edit game" note={<Notice>Only the person who logged this game can edit it.</Notice>} />
+    );
+  }
+  return <LogGameView groupId={groupId} initial={existing.result.data} />;
+}
+
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <section role="alert" className="rounded-2xl border border-line bg-surface p-5">
+      <p>{children}</p>
+    </section>
+  );
+}
+
+function Shell({ title, note }: { title: string; note: ReactNode }) {
+  return (
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-xl lg:px-8 lg:pt-10">
+      <Link
+        href="/games"
+        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-[15px] font-bold text-primary no-underline"
+      >
+        <BackIcon />
+        Games
+      </Link>
+      <h1 className="text-[32px] leading-tight font-extrabold tracking-[-0.02em] [font-stretch:110%]">{title}</h1>
+      {note}
+    </main>
+  );
+}
+
+export function LogGameView({ groupId, initial = null }: { groupId: string; initial?: Match | null }) {
   const group = useApiGet<GroupDetail>(`/v1/groups/${groupId}`);
   const roster = useApiGet<Player[]>(`/v1/groups/${groupId}/players`);
 
@@ -33,7 +76,9 @@ export function LogGameView({ groupId }: { groupId: string }) {
         <BackIcon />
         {group.result.kind === "ready" ? group.result.data.name : "Back to the group"}
       </Link>
-      <h1 className="text-[32px] leading-tight font-extrabold tracking-[-0.02em] [font-stretch:110%]">Log a game</h1>
+      <h1 className="text-[32px] leading-tight font-extrabold tracking-[-0.02em] [font-stretch:110%]">
+        {initial ? "Edit game" : "Log a game"}
+      </h1>
 
       {(group.result.kind === "loading" || roster.result.kind === "loading") && <p className="text-muted">Loading…</p>}
 
@@ -63,6 +108,7 @@ export function LogGameView({ groupId }: { groupId: string }) {
         <LogGameForm
           group={group.result.data}
           players={roster.result.data}
+          initial={initial}
           onGuestAdded={(guest) => {
             if (roster.result.kind === "ready") {
               roster.replace([...roster.result.data, guest]);
@@ -80,35 +126,54 @@ function parseScore(value: string): number | null {
   return /^\d{1,2}$/.test(value) ? Number(value) : null;
 }
 
+/** Team slots from a logged game, in its order. */
+function lineup(match: Match, team: Team): string[] {
+  return match.players.filter((p) => p.team === team).map((p) => p.player_id);
+}
+
 function LogGameForm({
   group,
   players,
+  initial,
   onGuestAdded,
 }: {
   group: GroupDetail;
   players: Player[];
+  // When editing a logged game.
+  initial: Match | null;
   onGuestAdded: (guest: Player) => void;
 }) {
   const { user } = useSignedIn();
   const router = useRouter();
   const ids = useId();
   const me = players.find((p) => p.is_me);
-  const [format, setFormat] = useState<Format>(group.default_format);
-  const [pointsTo, setPointsTo] = useState<PointsTo>(group.default_points_to);
-  const [winByTwo, setWinByTwo] = useState(group.default_win_by_two);
-  const [bestOf, setBestOf] = useState<BestOf>(1);
+  const [format, setFormat] = useState<Format>(initial?.format ?? group.default_format);
+  const [pointsTo, setPointsTo] = useState<PointsTo>(initial?.points_to ?? group.default_points_to);
+  const [winByTwo, setWinByTwo] = useState(initial?.win_by_two ?? group.default_win_by_two);
+  const [bestOf, setBestOf] = useState<BestOf>(initial?.best_of ?? 1);
   // You're on team A to start with; take yourself out if you're only keeping score.
-  const [teams, setTeams] = useState<Record<Team, (string | null)[]>>(() => ({
-    A: [me?.id ?? null, null].slice(0, TEAM_SIZE[group.default_format]),
-    B: [null, null].slice(0, TEAM_SIZE[group.default_format]),
-  }));
-  const [scores, setScores] = useState<Scores>([
-    ["", ""],
-    ["", ""],
-    ["", ""],
-  ]);
+  const [teams, setTeams] = useState<Record<Team, (string | null)[]>>(() =>
+    initial
+      ? { A: lineup(initial, "A"), B: lineup(initial, "B") }
+      : {
+          A: [me?.id ?? null, null].slice(0, TEAM_SIZE[group.default_format]),
+          B: [null, null].slice(0, TEAM_SIZE[group.default_format]),
+        },
+  );
+  const [scores, setScores] = useState<Scores>(() => {
+    const rows: Scores = [
+      ["", ""],
+      ["", ""],
+      ["", ""],
+    ];
+    initial?.games.forEach((g, i) => {
+      rows[i] = [String(g.team_a), String(g.team_b)];
+    });
+    return rows;
+  });
+  // When editing, the first choice keeps the time the game was logged with.
   const [earlier, setEarlier] = useState(false);
-  const [playedAt, setPlayedAt] = useState(() => toLocalInput(new Date()));
+  const [playedAt, setPlayedAt] = useState(() => toLocalInput(initial ? new Date(initial.played_at) : new Date()));
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const problemRef = useRef<HTMLParagraphElement>(null);
@@ -193,6 +258,12 @@ function LogGameForm({
     setSaving(true);
     setProblem(null);
     try {
+      if (initial) {
+        await apiPut<Match>(user, `/v1/groups/${group.id}/matches/${initial.id}`, body);
+        rememberGroup(group.id);
+        router.push("/games");
+        return;
+      }
       const logged = await apiPost<Match>(user, `/v1/groups/${group.id}/matches`, body);
       rememberGroup(group.id);
       // If you played, the Games tab offers the optional "How did it go?" right away.
@@ -371,7 +442,7 @@ function LogGameForm({
                 }}
                 className="sr-only"
               />
-              {value ? "Earlier" : "Just now"}
+              {value ? (initial ? "Change" : "Earlier") : initial ? "As logged" : "Just now"}
             </label>
           ))}
         </div>
@@ -396,10 +467,12 @@ function LogGameForm({
         {problem}
       </p>
       <button type="submit" className={buttonClass("action", "h-14 w-full")} disabled={saving}>
-        {saving ? "Logging…" : "Log game"}
+        {saving ? "Saving…" : initial ? "Save changes" : "Log game"}
       </button>
       <p className="-mt-3 text-center text-[14px] text-muted">
-        Someone on the other team confirms it. Until then it shows as waiting.
+        {initial
+          ? "Everyone in the group sees the updated score."
+          : "It counts right away. You can edit it later if something's off."}
       </p>
     </form>
   );

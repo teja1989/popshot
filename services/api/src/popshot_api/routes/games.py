@@ -1,8 +1,8 @@
 """Players (members and guests) and logging games.
 
-Any active member can add a guest and log a game, whether or not they played in it. A
-logged game starts as pending; confirming it comes later. The person who logged a game can
-delete it while it's still pending and nobody has confirmed or disputed it.
+Any active member can add a guest and log a game, whether or not they played in it. A game
+counts as soon as it's logged; there's no confirmation step. Whoever logged a game can fix
+it (edit) or delete it.
 
 Errors follow groups.py: a group you can't see is a 404.
 """
@@ -93,7 +93,6 @@ class Match(BaseModel):
     win_by_two: bool
     best_of: int
     played_at: datetime
-    status: Literal["pending", "confirmed", "disputed"]
     entered_by_name: str | None
     entered_by_me: bool
     winner: Literal["A", "B"]
@@ -102,6 +101,8 @@ class Match(BaseModel):
     # Whether you played in it, and your own reflection on it (nobody else's is ever sent).
     i_played: bool = False
     my_reflection: MyReflection | None = None
+    # Whoever logged a game can edit or delete it.
+    can_edit: bool = False
 
 
 def _require_member(session: Session, me: UUID, group_id: UUID) -> None:
@@ -198,9 +199,10 @@ def add_guest(group_id: UUID, body: NewGuest, user: CurrentUserSession) -> Playe
     )
 
 
-def _played_at(value: datetime | None, now: datetime) -> datetime:
+def _played_at(value: datetime | None, now: datetime, keep: datetime | None = None) -> datetime:
+    """When the game was played: as given (checked), else `keep` (when editing), else now."""
     if value is None:
-        return now
+        return keep or now
     if value.tzinfo is None:
         raise _unprocessable("Include a time zone with the time it was played.")
     if value > now + CLOCK_SLACK:
@@ -210,11 +212,10 @@ def _played_at(value: datetime | None, now: datetime) -> datetime:
     return value
 
 
-@router.post("/matches", status_code=status.HTTP_201_CREATED)
-def log_game(group_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
-    session, me = user.session, user.user_id
-    _require_member(session, me, group_id)
-
+def _check_game(
+    session: Session, group_id: UUID, body: LogGame, keep_played_at: datetime | None = None
+) -> datetime:
+    """Validate a game being logged or edited; return when it was played."""
     size = TEAM_SIZE[body.format]
     if len(body.team_a) != size or len(body.team_b) != size:
         raise _unprocessable(
@@ -234,12 +235,53 @@ def log_game(group_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
     except ScoreError as error:
         raise _unprocessable(str(error)) from error
 
-    now = datetime.now(UTC)
-    played_at = _played_at(body.played_at, now)
+    played_at = _played_at(body.played_at, datetime.now(UTC), keep_played_at)
 
     found = session.execute(text(_PLAYABLE_IDS), {"group_id": group_id, "ids": everyone}).scalars()
     if set(found) != set(everyone):
         raise _unprocessable("Some of those players aren't in this group.")
+    return played_at
+
+
+def _write_lineup(session: Session, group_id: UUID, match_id: UUID, body: LogGame) -> None:
+    session.execute(
+        text(
+            "INSERT INTO match_players (match_id, group_id, player_id, team) "
+            "VALUES (:match_id, :group_id, :player_id, CAST(:team AS team_side))"
+        ),
+        [
+            {"match_id": match_id, "group_id": group_id, "player_id": p, "team": team}
+            for team, players in (("A", body.team_a), ("B", body.team_b))
+            for p in players
+        ],
+    )
+    session.execute(
+        text(
+            "INSERT INTO match_games (match_id, group_id, game_number, team_a_score, "
+            "team_b_score) VALUES (:match_id, :group_id, :number, :a, :b)"
+        ),
+        [
+            {"match_id": match_id, "group_id": group_id, "number": n, "a": g.team_a, "b": g.team_b}
+            for n, g in enumerate(body.games, start=1)
+        ],
+    )
+
+
+def _audit(session: Session, group_id: UUID, me: UUID, action: str, match_id: UUID) -> None:
+    session.execute(
+        text(
+            "INSERT INTO audit_log (group_id, actor_user_id, action, target_id) "
+            "VALUES (:group_id, :me, :action, :match_id)"
+        ),
+        {"group_id": group_id, "me": me, "action": action, "match_id": match_id},
+    )
+
+
+@router.post("/matches", status_code=status.HTTP_201_CREATED)
+def log_game(group_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
+    session, me = user.session, user.user_id
+    _require_member(session, me, group_id)
+    played_at = _check_game(session, group_id, body)
 
     today = session.execute(
         text(
@@ -274,36 +316,9 @@ def log_game(group_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
             "me": me,
         },
     ).scalar_one()
-    session.execute(
-        text(
-            "INSERT INTO match_players (match_id, group_id, player_id, team) "
-            "VALUES (:match_id, :group_id, :player_id, CAST(:team AS team_side))"
-        ),
-        [
-            {"match_id": match_id, "group_id": group_id, "player_id": p, "team": team}
-            for team, players in (("A", body.team_a), ("B", body.team_b))
-            for p in players
-        ],
-    )
-    session.execute(
-        text(
-            "INSERT INTO match_games (match_id, group_id, game_number, team_a_score, "
-            "team_b_score) VALUES (:match_id, :group_id, :number, :a, :b)"
-        ),
-        [
-            {"match_id": match_id, "group_id": group_id, "number": n, "a": g.team_a, "b": g.team_b}
-            for n, g in enumerate(body.games, start=1)
-        ],
-    )
-    session.execute(
-        text(
-            "INSERT INTO audit_log (group_id, actor_user_id, action, target_id) "
-            "VALUES (:group_id, :me, 'match.logged', :match_id)"
-        ),
-        {"group_id": group_id, "me": me, "match_id": match_id},
-    )
-    logged = _matches(session, me, group_id, match_id=match_id)
-    return logged[0]
+    _write_lineup(session, group_id, match_id, body)
+    _audit(session, group_id, me, "match.logged", match_id)
+    return _matches(session, me, group_id, match_id=match_id)[0]
 
 
 @router.get("/matches")
@@ -312,47 +327,78 @@ def list_games(group_id: UUID, user: CurrentUserSession) -> list[Match]:
     return _matches(user.session, user.user_id, group_id)
 
 
+@router.get("/matches/{match_id}")
+def get_game(group_id: UUID, match_id: UUID, user: CurrentUserSession) -> Match:
+    _require_member(user.session, user.user_id, group_id)
+    found = _matches(user.session, user.user_id, group_id, match_id=match_id)
+    if not found:
+        raise MATCH_NOT_FOUND
+    return found[0]
+
+
+def _own_game(session: Session, me: UUID, group_id: UUID, match_id: UUID) -> datetime:
+    """Lock a game you logged; return when it was played. 404 if missing, 403 if not yours."""
+    row = session.execute(
+        text(
+            "SELECT entered_by, played_at FROM matches "
+            "WHERE id = :match_id AND group_id = :group_id FOR UPDATE"
+        ),
+        {"match_id": match_id, "group_id": group_id},
+    ).one_or_none()
+    if row is None:
+        raise MATCH_NOT_FOUND
+    if row.entered_by != me:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail="Only the person who logged a game can change or delete it.",
+        )
+    played_at: datetime = row.played_at
+    return played_at
+
+
+@router.put("/matches/{match_id}")
+def edit_game(group_id: UUID, match_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
+    """Fix a game you logged: players, rules and scores. Leave played_at out to keep it."""
+    session, me = user.session, user.user_id
+    _require_member(session, me, group_id)
+    kept = _own_game(session, me, group_id, match_id)
+    played_at = _check_game(session, group_id, body, keep_played_at=kept)
+    params = {"match_id": match_id, "group_id": group_id}
+    session.execute(text("DELETE FROM match_players WHERE match_id = :match_id"), params)
+    session.execute(text("DELETE FROM match_games WHERE match_id = :match_id"), params)
+    _write_lineup(session, group_id, match_id, body)
+    session.execute(
+        text(
+            """
+            UPDATE matches
+            SET format = CAST(:format AS match_format), points_to = :points_to,
+                win_by_two = :win_by_two, best_of = :best_of, played_at = :played_at
+            WHERE id = :match_id AND group_id = :group_id
+            """
+        ),
+        {
+            **params,
+            "format": body.format,
+            "points_to": body.points_to,
+            "win_by_two": body.win_by_two,
+            "best_of": body.best_of,
+            "played_at": played_at,
+        },
+    )
+    _audit(session, group_id, me, "match.edited", match_id)
+    return _matches(session, me, group_id, match_id=match_id)[0]
+
+
 @router.delete("/matches/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_game(group_id: UUID, match_id: UUID, user: CurrentUserSession) -> Response:
     session, me = user.session, user.user_id
     _require_member(session, me, group_id)
-    row = (
-        session.execute(
-            text(
-                """
-                SELECT m.entered_by, m.status,
-                       EXISTS (SELECT 1 FROM match_confirmations c WHERE c.match_id = m.id)
-                           AS decided
-                FROM matches m WHERE m.id = :match_id AND m.group_id = :group_id
-                """
-            ),
-            {"match_id": match_id, "group_id": group_id},
-        )
-        .mappings()
-        .one_or_none()
-    )
-    if row is None:
-        raise MATCH_NOT_FOUND
-    if row["entered_by"] != me:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail="Only the person who logged a game can delete it."
-        )
-    if row["status"] != "pending" or row["decided"]:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            detail="Someone has already confirmed or disputed this game, so it stays.",
-        )
+    _own_game(session, me, group_id, match_id)
     session.execute(
         text("DELETE FROM matches WHERE id = :match_id AND group_id = :group_id"),
         {"match_id": match_id, "group_id": group_id},
     )
-    session.execute(
-        text(
-            "INSERT INTO audit_log (group_id, actor_user_id, action, target_id) "
-            "VALUES (:group_id, :me, 'match.deleted', :match_id)"
-        ),
-        {"group_id": group_id, "me": me, "match_id": match_id},
-    )
+    _audit(session, group_id, me, "match.deleted", match_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -362,7 +408,7 @@ def _matches(
     rows = session.execute(
         text(
             """
-            SELECT m.id, m.format, m.points_to, m.win_by_two, m.best_of, m.played_at, m.status,
+            SELECT m.id, m.format, m.points_to, m.win_by_two, m.best_of, m.played_at,
                    u.display_name AS entered_by_name, m.entered_by = :me AS entered_by_me,
                    (SELECT json_agg(json_build_object(
                                'player_id', p.id, 'display_name', p.display_name,
@@ -395,6 +441,9 @@ def _matches(
         wins_a = sum(1 for g in games if g.team_a > g.team_b)
         winner: Literal["A", "B"] = "A" if wins_a * 2 > len(games) else "B"
         matches.append(
-            Match(**{**row, "players": row["players"] or [], "games": games, "winner": winner})
+            Match(
+                **{**row, "players": row["players"] or [], "games": games, "winner": winner},
+                can_edit=row["entered_by_me"],
+            )
         )
     return matches

@@ -85,7 +85,7 @@ export function HomeView() {
             label="Games played"
             value={result.kind === "ready" ? String(result.data.reduce((sum, g) => sum + (g.my_games ?? 0), 0)) : "–"}
           />
-          <HeroStat label="Crew rating" value="–" note="After confirmed games" />
+          <HeroStat label="Crew rating" value="–" note="Coming next" />
         </dl>
       </section>
 
@@ -245,8 +245,8 @@ function StatsPanel() {
         />
       </svg>
       <p className="text-[15px] leading-relaxed text-muted">
-        These count confirmed games only, so a typo can&apos;t skew them. Confirming games comes
-        next; until then, your logged games wait on the Games tab.
+        Win rate, crew rating and streaks are coming next. Every game you log already counts
+        toward them.
       </p>
     </aside>
   );

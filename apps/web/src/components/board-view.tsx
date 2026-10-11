@@ -11,7 +11,7 @@ export function BoardView() {
   return <GroupScoped title="Leaderboard">{(group) => <Roster key={group.id} groupId={group.id} />}</GroupScoped>;
 }
 
-// Until games are confirmed nobody has a rating, so the board lists the crew, unranked.
+// Ratings aren't built yet, so the board lists the crew, unranked.
 function Roster({ groupId }: { groupId: string }) {
   const { me } = useSignedIn();
   const { result } = useApiGet<GroupDetail>(`/v1/groups/${groupId}`);
@@ -25,8 +25,8 @@ function Roster({ groupId }: { groupId: string }) {
   return (
     <>
       <p className="text-[16px] leading-relaxed text-muted">
-        Everyone starts unranked. Crew ratings come from confirmed games only, and count who you
-        played with and against.
+        Everyone starts unranked. Crew ratings are coming next: they&apos;ll count every game
+        your crew logs, and who you played with and against.
       </p>
       <ol aria-label="Players, not yet ranked" className="animate-rise overflow-hidden rounded-2xl border border-line bg-surface">
         {active.map((member) => (

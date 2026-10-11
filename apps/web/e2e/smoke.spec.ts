@@ -128,7 +128,7 @@ test("the landing page explains the app and offers sign-in top and bottom", asyn
   for (const title of [
     "Pickleball is better together.",
     "Logged before the next game starts.",
-    "Bragging rights, confirmed.",
+    "Every game, on the record.",
     "Know your nemesis.",
     "Climb your crew's board.",
     "Up and running in three steps.",

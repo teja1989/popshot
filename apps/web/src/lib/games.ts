@@ -32,13 +32,14 @@ export interface Match {
   win_by_two: boolean;
   best_of: BestOf;
   played_at: string;
-  status: "pending" | "confirmed" | "disputed";
   entered_by_name: string | null;
   entered_by_me: boolean;
   winner: Team;
   players: MatchPlayer[];
   games: GameScore[];
   i_played: boolean;
+  // Whoever logged a game can edit or delete it.
+  can_edit: boolean;
   // Yours only. Both lists empty means you skipped it.
   my_reflection: Reflection | null;
 }
@@ -56,12 +57,6 @@ export interface LogGameBody {
 
 // Guests and your own name: the API allows up to 40 characters.
 export const NAME_MAX = 40;
-
-export const STATUS_LABEL: Record<Match["status"], string> = {
-  pending: "Waiting for confirmation",
-  confirmed: "Confirmed",
-  disputed: "Disputed",
-};
 
 /** "Casey & Sam" */
 export function teamNames(names: readonly string[]): string {
