@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { change, points, winRate, type Board, type BoardRow } from "@/lib/board";
 
+import { CrewPointsInfo } from "./crew-points-info";
 import { GroupScoped } from "./group-scoped";
 import { HighlightsStrip } from "./highlights-strip";
 import { useApiGet } from "./use-api";
@@ -50,9 +51,12 @@ function GroupBoard({ groupId }: { groupId: string }) {
 
       {!nobodyRanked && (
         <section aria-labelledby="ranked-heading" className="flex animate-rise flex-col gap-2">
-          <h2 id="ranked-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-            Ranked · crew points
-          </h2>
+          <div className="-my-2 flex items-center gap-0.5">
+            <h2 id="ranked-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+              Ranked · crew points
+            </h2>
+            <CrewPointsInfo />
+          </div>
           <ol aria-labelledby="ranked-heading" className="overflow-hidden rounded-2xl border border-line bg-surface">
             {board.ranked.map((row) => (
               <RankedRow key={row.player_id} row={row} />
@@ -92,10 +96,12 @@ function GroupBoard({ groupId }: { groupId: string }) {
         </section>
       )}
 
-      <p className="text-[14px] leading-relaxed text-muted">
-        Crew points run from 2.00 to 6.00. Every game moves them by the share of points you won
-        compared with what the ratings expected, so a close win over a stronger team counts for
-        more. They compare you with this crew, not with anyone else.
+      <p className="flex items-center gap-1 text-[14px] leading-relaxed text-muted">
+        <span>
+          Crew points run from 2.00 to 6.00 and compare you with this crew only. Every game moves them,
+          by how you did against what was expected.
+        </span>
+        <CrewPointsInfo />
       </p>
     </>
   );

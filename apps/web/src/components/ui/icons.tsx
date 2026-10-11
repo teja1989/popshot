@@ -135,3 +135,13 @@ export function YouIcon() {
     </svg>
   );
 }
+
+export function InfoIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <circle cx="9" cy="9" r="7" strokeWidth="1.8" {...stroke} />
+      <path d="M9 8v4.5" strokeWidth="2" {...stroke} />
+      <circle cx="9" cy="5.4" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}

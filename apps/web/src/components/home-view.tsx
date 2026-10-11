@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { points, type MyRating } from "@/lib/board";
 import { ROLE_LABEL, type GroupDetail, type GroupSummary } from "@/lib/groups";
@@ -10,6 +10,7 @@ import { firstName, greetingFor } from "@/lib/people";
 
 import { useSignedIn } from "./auth";
 import { CreateGroupDialog } from "./create-group-dialog";
+import { CrewPointsInfo } from "./crew-points-info";
 import { DeletedGroups } from "./deleted-groups";
 import { InstallBanner } from "./install-banner";
 import { NextNight } from "./next-night";
@@ -96,6 +97,7 @@ export function HomeView() {
           />
           <HeroStat
             label="Crew points"
+            info={<CrewPointsInfo tone="hero" />}
             value={top ? points(top.rating) : "–"}
             note={top ? (ratingsCount > 1 ? top.group_name : undefined) : "After your first game"}
           />
@@ -241,10 +243,13 @@ function ballSpot(id: string): number {
   return hash % BALL_SPOTS.length;
 }
 
-function HeroStat({ label, value, note }: { label: string; value: string; note?: string }) {
+function HeroStat({ label, value, note, info }: { label: string; value: string; note?: string; info?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-[13px] font-bold text-on-hero-muted">{label}</dt>
+      <dt className="-my-2 flex items-center gap-0.5 text-[13px] font-bold text-on-hero-muted">
+        {label}
+        {info}
+      </dt>
       <dd className="flex flex-col gap-1">
         <span className="text-[34px] leading-none font-extrabold [font-stretch:75%] lg:text-[40px]">{value}</span>
         {note && <span className="text-[12px] text-on-hero-muted">{note}</span>}
