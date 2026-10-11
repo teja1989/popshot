@@ -13,8 +13,25 @@ from popshot_api.auth.verifier import TokenVerifier
 from popshot_api.db import check_database_role, make_engine
 from popshot_api.log_config import configure_logging
 from popshot_api.middleware import RequestContextMiddleware
-from popshot_api.routes import board, focus, games, groups, health, invites, me, stats
+from popshot_api.push import PushSender
+from popshot_api.routes import (
+    board,
+    focus,
+    games,
+    groups,
+    health,
+    invites,
+    me,
+    notifications,
+    stats,
+)
 from popshot_api.settings import Settings
+
+
+def _push_sender_for(settings: Settings) -> PushSender | None:
+    if settings.push_vapid_private_key is None:
+        return None
+    return PushSender(settings.push_vapid_private_key.get_secret_value(), settings.push_subject)
 
 
 def create_app(
@@ -23,6 +40,7 @@ def create_app(
     engine: Engine | None = None,
     *,
     verify_database_role: bool = True,
+    push_sender: PushSender | None = None,
 ) -> FastAPI:
     """Build the app. `verify_database_role` exists for tests that don't use a database;
     it isn't reachable from configuration, so a deployed API always checks its role."""
@@ -54,6 +72,7 @@ def create_app(
     )
     app.state.settings = settings
     app.state.engine = engine
+    app.state.push_sender = push_sender if push_sender is not None else _push_sender_for(settings)
     app.state.token_verifier = (
         token_verifier if token_verifier is not None else _token_verifier_for(settings)
     )
@@ -66,6 +85,7 @@ def create_app(
     app.include_router(focus.router)
     app.include_router(board.router)
     app.include_router(stats.router)
+    app.include_router(notifications.router)
     return app
 
 

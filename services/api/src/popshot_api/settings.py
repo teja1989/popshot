@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     # Local development only: accept unsigned tokens from the Firebase Auth emulator.
     auth_emulator: bool = False
+    # Web Push (VAPID) signing key, PEM. Without it, push notifications are off.
+    push_vapid_private_key: SecretStr | None = None
+    # Who to contact about our push traffic, sent to push services: the app's URL.
+    push_subject: str = Field(default="https://localhost", pattern=r"^https://[^\s]+$")
 
     @model_validator(mode="after")
     def _auth_emulator_is_local_only(self) -> Self:

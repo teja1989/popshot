@@ -9,6 +9,7 @@ import { CrewPointsSection } from "./crew-points-section";
 import { EditNameSheet } from "./edit-name-sheet";
 import { FocusSection } from "./focus-section";
 import { MyStatsSection } from "./my-stats-section";
+import { NotificationsSection } from "./notifications-section";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./ui/avatar";
 
@@ -45,6 +46,8 @@ export function YouView() {
       <MyStatsSection />
 
       <FocusSection />
+
+      <NotificationsSection />
 
       <fieldset className="flex animate-rise flex-col gap-3 [animation-delay:120ms]">
         <legend className="mb-3 text-xs font-bold tracking-[0.1em] text-muted uppercase">Appearance</legend>
