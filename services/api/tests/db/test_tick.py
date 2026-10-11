@@ -2,13 +2,16 @@
 the real popshot_jobs role."""
 
 import os
+import secrets
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import psycopg
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine, event, text
+from psycopg import sql
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.pool import NullPool
@@ -37,24 +40,25 @@ def people(app_engine: Engine, sender: RecordingSender) -> Iterator[People]:
         yield People(client, app.state.token_verifier)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def jobs_engine(owner_engine: Engine) -> Iterator[Engine]:
-    """Connections as popshot_jobs (via the admin login, which may SET ROLE to it)."""
+    """A login user in popshot_jobs, like the job's IAM user on Cloud SQL. Made by the
+    bootstrap admin, which created popshot_jobs and so may grant it."""
     admin = os.environ.get("POPSHOT_BOOTSTRAP_ADMIN_URL")
     if not admin:
         pytest.skip("POPSHOT_BOOTSTRAP_ADMIN_URL not set")
-    url = make_url(admin.replace("postgresql://", "postgresql+psycopg://", 1)).set(
-        database=owner_engine.url.database
-    )
+    password = secrets.token_hex(16)
+    with psycopg.connect(admin, autocommit=True) as conn:
+        exists = conn.execute("SELECT 1 FROM pg_roles WHERE rolname = 'popshot_jobs_test'")
+        verb = sql.SQL("ALTER") if exists.fetchone() else sql.SQL("CREATE")
+        conn.execute(
+            sql.SQL("{} ROLE popshot_jobs_test LOGIN PASSWORD {}").format(
+                verb, sql.Literal(password)
+            )
+        )
+        conn.execute("GRANT popshot_jobs TO popshot_jobs_test")
+    url = make_url(str(owner_engine.url)).set(username="popshot_jobs_test", password=password)
     engine = create_engine(url, poolclass=NullPool)
-
-    @event.listens_for(engine, "connect")
-    def _as_jobs(dbapi_conn: Any, _: Any) -> None:
-        with dbapi_conn.cursor() as cur:
-            cur.execute("SET ROLE popshot_jobs")
-        # Committed, or the pool's rollback would undo it and leave us as the admin.
-        dbapi_conn.commit()
-
     yield engine
     engine.dispose()
 
