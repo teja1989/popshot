@@ -9,6 +9,7 @@ import { firstName, greetingFor } from "@/lib/people";
 
 import { useSignedIn } from "./auth";
 import { CreateGroupDialog } from "./create-group-dialog";
+import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
 import { Avatar, AvatarStack } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
@@ -95,6 +96,15 @@ export function HomeView() {
             <h2 id="groups-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
               Your groups
             </h2>
+            {result.kind === "ready" && result.data.length > 0 && (
+              <JoinByLinkSheet
+                trigger={
+                  <button type="button" className="min-h-11 cursor-pointer px-1 text-[15px] font-bold text-primary">
+                    Have an invite link?
+                  </button>
+                }
+              />
+            )}
           </div>
 
           {result.kind === "loading" && <p className="text-muted">Loading your groups…</p>}
@@ -112,17 +122,27 @@ export function HomeView() {
             <div className="flex animate-rise flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
               <CourtArt className="w-40" />
               <p className="text-[17px] leading-relaxed">
-                No groups yet. Start one for the people you play with, then invite them.
+                No groups yet. Got an invite link from your crew? Join with it. Or start a group
+                for the people you play with.
               </p>
-              <CreateGroupDialog
-                onCreated={openGroup}
-                trigger={
-                  <button type="button" className={buttonClass("primary", "self-start")}>
-                    <PlusIcon />
-                    Start a group
-                  </button>
-                }
-              />
+              <div className="flex flex-wrap gap-2">
+                <JoinByLinkSheet
+                  trigger={
+                    <button type="button" className={buttonClass("primary")}>
+                      Join with an invite link
+                    </button>
+                  }
+                />
+                <CreateGroupDialog
+                  onCreated={openGroup}
+                  trigger={
+                    <button type="button" className={buttonClass("quiet")}>
+                      <PlusIcon />
+                      Start a group
+                    </button>
+                  }
+                />
+              </div>
             </div>
           )}
 

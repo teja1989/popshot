@@ -139,3 +139,36 @@ test("declining, and links that stop working", async ({ page, browser }) => {
   await alex.close();
   await sam.close();
 });
+
+test("paste an invite link from Home", async ({ page, browser }) => {
+  await signIn(page, newUser("Casey"));
+  await startGroup(page, "Paste Crew");
+  const link = await makeLink(page, "1 person");
+
+  const jo = await browser.newPage();
+  await signIn(jo, newUser("Jo"));
+  const problems = await watchProblems(jo);
+  await jo.goto("/");
+  await expect(jo.getByText("No groups yet.")).toBeVisible();
+  await jo.getByRole("button", { name: "Join with an invite link" }).click();
+  const sheet = jo.getByRole("dialog", { name: "Join with an invite link" });
+  await expect(sheet.getByLabel("Invite link")).toBeFocused();
+
+  await sheet.getByLabel("Invite link").fill("https://example.com/not-an-invite");
+  await sheet.getByRole("button", { name: "Open invite" }).click();
+  await expect(sheet.getByRole("alert")).toContainText("doesn't look like a Popshot invite link");
+
+  // Pasted the way chat apps copy it: with words around the link.
+  await sheet.getByLabel("Invite link").fill(`Join us on Popshot: ${link}`);
+  await sheet.getByRole("button", { name: "Open invite" }).click();
+  await expect(jo.getByRole("heading", { name: "Paste Crew" })).toBeVisible();
+  await expect.poll(() => jo.url()).toMatch(/\/join$/);
+  await jo.getByRole("button", { name: "Ask to join" }).click();
+  await expect(jo.getByRole("heading", { name: "Waiting for approval" })).toBeVisible();
+
+  // Once you're in a group, the option is still there above your groups.
+  await jo.goto("/");
+  await expect(jo.getByRole("button", { name: "Have an invite link?" })).toBeVisible();
+  expect(problems).toEqual([]);
+  await jo.close();
+});
