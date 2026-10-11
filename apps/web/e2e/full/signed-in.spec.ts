@@ -1,30 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 import { newUser, signIn } from "./auth";
+import { watchProblems } from "./problems";
 
 test("a signed-in user lands on their home, with their profile from the API", async ({ page }) => {
   const alice = newUser("Alice");
   await signIn(page, alice);
 
-  // Watch the app page only (signIn's setup page is a bare image, which the browser
-  // follows with a request for /favicon.ico).
-  const problems: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      problems.push(message.text());
-    }
-  });
-  page.on("pageerror", (error) => problems.push(error.message));
-  page.on("response", (response) => {
-    if (response.status() >= 400) {
-      problems.push(`${String(response.status())} ${response.url()}`);
-    }
-  });
+  const problems = await watchProblems(page);
   await page.goto("/");
 
   // The name comes back through web -> API -> Postgres, not from the browser's session.
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Hi, ${alice.name}.`);
   await expect(page.getByText("You're signed in.")).toBeVisible();
+  await expect(page.getByText("No groups yet.")).toBeVisible();
   expect(problems).toEqual([]);
 });
 

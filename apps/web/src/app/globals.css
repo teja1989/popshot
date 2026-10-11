@@ -90,6 +90,29 @@
   --animate-rise: rise 0.5s var(--ease-court) both;
   --animate-court-draw: court-draw 0.9s var(--ease-court) forwards;
   --animate-court-ball: court-ball 0.7s 0.7s var(--ease-court) both;
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-sheet-up: sheet-up 0.35s var(--ease-court) both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  /* Animates transform, not translate: Tailwind's translate-* utilities (used to centre the
+     dialog) set the translate property, and the two compose. */
+  @keyframes sheet-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 
   @keyframes rise {
     from {
