@@ -127,6 +127,24 @@ export interface CrewMember {
   games: number;
 }
 
+export interface CrewAction {
+  created_at: string;
+  action: string;
+  admin_name: string;
+  target_user_id: string | null;
+  target_name: string | null;
+  reason: string;
+  details: Record<string, unknown>;
+}
+
+/** "Admin Test made Sam the lead". */
+export function actionSummary(a: CrewAction): string {
+  if (a.action === "crew.lead_changed") {
+    return `${a.admin_name} made ${a.target_name ?? "someone"} the lead`;
+  }
+  return `${a.admin_name}: ${a.action}`;
+}
+
 export interface Crew {
   id: string;
   name: string;
@@ -141,6 +159,8 @@ export interface Crew {
   upcoming_nights: number;
   open_invites: number;
   people: CrewMember[];
+  // Changes an admin made, newest first.
+  actions: CrewAction[];
 }
 
 const ROLE_LABEL: Record<Role, string> = { lead: "Lead", co_lead: "Co-lead", member: "Member" };

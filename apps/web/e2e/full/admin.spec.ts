@@ -98,3 +98,62 @@ test("the admin finds a person, opens them and their crew", async ({ page }) => 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Admin");
   expect(problems).toEqual([]);
 });
+
+test("the admin makes a member the lead, with a reason that's kept", async ({ page, browser }) => {
+  const problems = await watchProblems(page);
+  const casey = newUser("Casey");
+  const riley = newUser("Riley");
+  const crew = `Handover ${String(Date.now())}`;
+  await signIn(page, casey);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start a group" }).first().click();
+  await page.getByLabel("Group name").fill(crew);
+  await page.getByRole("button", { name: "Create group" }).click();
+  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
+  const crewId = page.url().split("/").pop() ?? "";
+  await page.getByRole("button", { name: "Make an invite link" }).click();
+  await page.getByRole("dialog", { name: "Make an invite link" }).getByRole("button", { name: "Make link" }).click();
+  const made = page.getByRole("dialog", { name: "Your invite link" });
+  const link = await made.getByLabel("Link").inputValue();
+  await made.getByRole("button", { name: "Close" }).click();
+
+  const guest = await browser.newPage();
+  await signIn(guest, riley);
+  await guest.goto(link);
+  await guest.getByRole("button", { name: "Ask to join" }).click();
+  await expect(guest.getByRole("heading", { name: "Waiting for approval" })).toBeVisible();
+  await guest.close();
+  await page.reload();
+  await page.getByRole("button", { name: `Let ${riley.name} in` }).click();
+
+  await signIn(page, ADMIN);
+  await page.goto(`/admin/crews/${crewId}`);
+  const people = page.getByRole("list", { name: "People in this crew" });
+  await expect(people.getByRole("listitem").filter({ hasText: casey.name })).toContainText("Lead");
+  await expect(page.getByRole("list", { name: "Support history" })).toHaveCount(0);
+  await expect(page.getByText("No changes by support.")).toBeVisible();
+  // Only members who aren't the lead can be made lead.
+  await expect(people.getByRole("button", { name: "Make lead" })).toHaveCount(1);
+  await people.getByRole("button", { name: "Make lead" }).click();
+
+  const sheet = page.getByRole("dialog", { name: `Make ${riley.name} the lead` });
+  await expect(sheet).toContainText(`${casey.name} becomes a co-lead`);
+  const submit = sheet.getByRole("button", { name: `Make ${riley.name} the lead` });
+  await sheet.getByLabel("Why").fill("Too short");
+  await sheet.getByLabel("Type the crew's name to confirm").fill(crew);
+  await expect(submit).toBeDisabled();
+  await sheet.getByLabel("Why").fill("Casey emailed support: moving away, Riley runs the nights now.");
+  await sheet.getByLabel("Type the crew's name to confirm").fill("wrong name");
+  await expect(submit).toBeDisabled();
+  await sheet.getByLabel("Type the crew's name to confirm").fill(crew.toUpperCase());
+  await submit.click();
+  await expect(sheet).toBeHidden();
+
+  await expect(people.getByRole("listitem").filter({ hasText: riley.name })).toContainText("Lead");
+  await expect(people.getByRole("listitem").filter({ hasText: casey.name })).toContainText("Co-lead");
+  const history = page.getByRole("list", { name: "Support history" });
+  await expect(history).toContainText(`Admin Test made ${riley.name} the lead`);
+  await expect(history).toContainText("Casey emailed support: moving away, Riley runs the nights now.");
+  await expect(people.getByRole("button", { name: "Make lead" })).toHaveCount(1); // now Casey
+  expect(problems).toEqual([]);
+});

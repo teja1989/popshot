@@ -5,7 +5,7 @@ come from Firebase when a person is opened (popshot_api.accounts) and are never 
 """
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -143,6 +143,16 @@ class GroupMember(BaseModel):
     games: int
 
 
+class GroupAction(BaseModel):
+    created_at: datetime
+    action: str
+    admin_name: str
+    target_user_id: UUID | None
+    target_name: str | None
+    reason: str
+    details: dict[str, Any]
+
+
 class GroupDetail(BaseModel):
     id: UUID
     name: str
@@ -157,6 +167,8 @@ class GroupDetail(BaseModel):
     upcoming_nights: int
     open_invites: int
     people: list[GroupMember]
+    # Changes an admin made to this crew (routes/admin_actions.py), newest first.
+    actions: list[GroupAction]
 
 
 @router.get("/groups/{group_id}")
@@ -170,6 +182,11 @@ def group(group_id: UUID, user: CurrentUserSession) -> GroupDetail:
     members = user.session.execute(
         text("SELECT * FROM app_admin_group_members(:id)"), {"id": group_id}
     ).all()
+    actions = user.session.execute(
+        text("SELECT * FROM app_admin_group_actions(:id)"), {"id": group_id}
+    ).all()
     return GroupDetail(
-        **row._mapping, people=[GroupMember.model_validate(m._mapping) for m in members]
+        **row._mapping,
+        people=[GroupMember.model_validate(m._mapping) for m in members],
+        actions=[GroupAction.model_validate(a._mapping) for a in actions],
     )
