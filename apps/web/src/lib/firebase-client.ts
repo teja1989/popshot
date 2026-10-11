@@ -7,9 +7,11 @@ import {
   GoogleAuthProvider,
   indexedDBLocalPersistence,
   initializeAuth,
+  reauthenticateWithPopup,
   signInWithPopup,
   signOut as firebaseSignOut,
   type Auth,
+  type User,
 } from "@firebase/auth";
 
 import type { FirebaseWebConfig } from "@/lib/config";
@@ -35,6 +37,18 @@ export async function signInWithGoogle(clientAuth: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
   await signInWithPopup(clientAuth, provider, browserPopupRedirectResolver);
+}
+
+/**
+ * Signs the same Google account in again, for pages that need a recent sign-in. Picking a
+ * different account fails (Firebase checks it's the same user). Then refreshes the ID token
+ * so the API sees the new sign-in time.
+ */
+export async function reauthenticate(user: User): Promise<void> {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  await reauthenticateWithPopup(user, provider, browserPopupRedirectResolver);
+  await user.getIdToken(true);
 }
 
 export async function signOut(clientAuth: Auth): Promise<void> {
