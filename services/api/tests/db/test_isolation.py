@@ -262,6 +262,44 @@ TABLES: list[TableSpec] = [
     ),
 ]
 
+TABLES += [
+    TableSpec(
+        name="play_nights",
+        a_row="id = :id",
+        a_params=lambda s: {"id": s.night_a},
+        b_params=lambda s: {"id": s.night_b},
+        noop_update="venue = venue",
+        deletable=False,
+        insert_into_a=(
+            "INSERT INTO play_nights (group_id, starts_at, venue, created_by) "
+            "VALUES (:g, now() + interval '1 day', 'Sneaky', :u)",
+            lambda s: {"g": s.group_a, "u": s.bob},
+        ),
+        cross_refs=[],
+    ),
+    TableSpec(
+        name="play_night_rsvps",
+        a_row="night_id = :n AND user_id = :u",
+        a_params=lambda s: {"n": s.night_a, "u": s.alice},
+        b_params=lambda s: {"n": s.night_b, "u": s.bob},
+        noop_update="answer = answer",
+        deletable=True,
+        insert_into_a=(
+            "INSERT INTO play_night_rsvps (night_id, group_id, user_id, answer) "
+            "VALUES (:n, :g, :u, 'out')",
+            lambda s: {"n": s.night_a, "g": s.group_a, "u": s.bob},
+        ),
+        cross_refs=[
+            # Bob's own group B, but group A's night.
+            (
+                "INSERT INTO play_night_rsvps (night_id, group_id, user_id, answer) "
+                "VALUES (:n, :g, :u, 'out')",
+                lambda s: {"n": s.night_a, "g": s.group_b, "u": s.bob},
+            ),
+        ],
+    ),
+]
+
 TABLE_IDS = [t.name for t in TABLES]
 
 

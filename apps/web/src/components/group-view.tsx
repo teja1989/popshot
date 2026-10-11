@@ -11,6 +11,7 @@ import { useSignedIn } from "./auth";
 import { GroupExit } from "./group-exit";
 import { GroupSettingsSheet } from "./group-settings-sheet";
 import { InvitePanel } from "./invite-panel";
+import { PlayNightsSection } from "./play-nights-section";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
@@ -130,6 +131,8 @@ function Group({
           <p role="alert" className="empty:hidden rounded-xl border border-line bg-surface p-3 text-warn">
             {problem}
           </p>
+
+          <PlayNightsSection groupId={group.id} />
 
           {waiting.length > 0 && (
             <section aria-labelledby="waiting-heading" className="flex animate-rise flex-col gap-2">

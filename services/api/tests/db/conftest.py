@@ -141,6 +141,8 @@ class Seed:
     rating_history_b: int
     audit_a: int
     audit_b: int
+    night_a: UUID
+    night_b: UUID
 
 
 def new_token_hash() -> bytes:
@@ -344,6 +346,26 @@ def seed(app_engine: Engine) -> Seed:
                 {"m": match, "g": group, "u": user},
             )
 
+    # A play night in each group, its planner going.
+    nights = {}
+    for user, group in ((users["alice"], group_a), (users["bob"], group_b)):
+        with committed_as(app_engine, user) as conn:
+            night = _scalar(
+                conn,
+                """INSERT INTO play_nights (group_id, starts_at, venue, created_by)
+                   VALUES (:g, now() + interval '2 days', 'Riverside courts', :u) RETURNING id""",
+                g=group,
+                u=user,
+            )
+            conn.execute(
+                text(
+                    "INSERT INTO play_night_rsvps (night_id, group_id, user_id, answer, in_since) "
+                    "VALUES (:n, :g, :u, 'in', now())"
+                ),
+                {"n": night, "g": group, "u": user},
+            )
+            nights[group] = night
+
     return Seed(
         **users,
         group_a=group_a,
@@ -360,6 +382,8 @@ def seed(app_engine: Engine) -> Seed:
         rating_history_b=history_b,
         audit_a=audit_a,
         audit_b=audit_b,
+        night_a=nights[group_a],
+        night_b=nights[group_b],
     )
 
 
