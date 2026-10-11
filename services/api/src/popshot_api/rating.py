@@ -89,12 +89,15 @@ def clamp(value: float) -> float:
 
 
 def replay(
-    matches: Iterable[PlayedMatch], starts: Mapping[UUID, float]
+    matches: Iterable[PlayedMatch],
+    starts: Mapping[UUID, float],
+    pregame: dict[UUID, tuple[float, float]] | None = None,
 ) -> dict[UUID, PlayerRating]:
     """Ratings for every player after all `matches`, played in time order.
 
     `starts` gives a player's starting rating (from a self-rated level); anyone missing
-    starts at START.
+    starts at START. If `pregame` is given, it's filled with each match's team ratings
+    (team A, team B) going into that match.
     """
     players: dict[UUID, PlayerRating] = {}
 
@@ -106,13 +109,13 @@ def replay(
     for match in sorted(matches, key=lambda m: (m.played_at, str(m.id))):
         side_a = [player(p) for p in match.team_a]
         side_b = [player(p) for p in match.team_b]
+        if pregame is not None:
+            pregame[match.id] = (_average(side_a), _average(side_b))
         for game in match.games:
             total = game.team_a + game.team_b
             if total == 0:
                 continue
-            rating_a = sum(p.rating for p in side_a) / len(side_a)
-            rating_b = sum(p.rating for p in side_b) / len(side_b)
-            surprise = game.team_a / total - expected_share(rating_a, rating_b)
+            surprise = game.team_a / total - expected_share(_average(side_a), _average(side_b))
             # Step sizes from before this match, so game order within it doesn't matter.
             for p in side_a:
                 p.rating = clamp(p.rating + step(p.matches) * surprise)
@@ -128,6 +131,10 @@ def replay(
                 p.results.append("W" if won else "L")
                 p.history.append((match.played_at, p.rating))
     return players
+
+
+def _average(side: Sequence[PlayerRating]) -> float:
+    return sum(p.rating for p in side) / len(side)
 
 
 def reliability(rated: PlayerRating, now: datetime) -> int:

@@ -110,7 +110,13 @@ def group_matches(session: Session, group_id: UUID) -> list[PlayedMatch]:
     ]
 
 
-def group_ratings(session: Session, group_id: UUID) -> dict[UUID, PlayerRating]:
+def group_ratings(
+    session: Session,
+    group_id: UUID,
+    matches: list[PlayedMatch] | None = None,
+    pregame: dict[UUID, tuple[float, float]] | None = None,
+) -> dict[UUID, PlayerRating]:
+    """Everyone's crew points in the group. Pass `matches` if you've already loaded them."""
     starts = {
         row.player_id: LEVEL_START[row.self_level]
         for row in session.execute(
@@ -118,7 +124,9 @@ def group_ratings(session: Session, group_id: UUID) -> dict[UUID, PlayerRating]:
         )
         if row.self_level in LEVEL_START
     }
-    return replay(group_matches(session, group_id), starts)
+    if matches is None:
+        matches = group_matches(session, group_id)
+    return replay(matches, starts, pregame)
 
 
 def build_board(session: Session, me: UUID, group_id: UUID, now: datetime) -> Board:
