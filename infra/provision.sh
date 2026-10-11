@@ -302,7 +302,10 @@ ok "Deploy finished"
 
 step "7/7 Last step: turn on Google sign-in"
 
-web_url="$(gcloud run services describe web --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)' 2>/dev/null || true)"
+# The deterministic Cloud Run URL: the only one sign-in is allowed from (not the hash-style
+# URL Cloud Run also serves).
+project_number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)' 2>/dev/null || true)"
+web_url="${project_number:+https://web-${project_number}.${REGION}.run.app}"
 firebase_url="https://console.firebase.google.com/project/${PROJECT_ID}/authentication/providers"
 cat <<EOF
 Popshot is live${web_url:+ at $web_url}.
