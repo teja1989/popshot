@@ -5,6 +5,7 @@ import Link from "next/link";
 import { change, points, winRate, type Board, type BoardRow } from "@/lib/board";
 
 import { GroupScoped } from "./group-scoped";
+import { HighlightsStrip } from "./highlights-strip";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
@@ -33,6 +34,8 @@ function GroupBoard({ groupId }: { groupId: string }) {
 
   return (
     <>
+      <HighlightsStrip groupId={groupId} />
+
       {nobodyRanked && (
         <section className="flex animate-rise flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
           <h2 className="text-[20px] font-extrabold">Nobody&apos;s ranked yet</h2>

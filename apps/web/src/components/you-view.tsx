@@ -8,6 +8,7 @@ import { useSignedIn } from "./auth";
 import { CrewPointsSection } from "./crew-points-section";
 import { EditNameSheet } from "./edit-name-sheet";
 import { FocusSection } from "./focus-section";
+import { MyStatsSection } from "./my-stats-section";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./ui/avatar";
 
@@ -19,8 +20,6 @@ const THEMES: { value: ThemeChoice; label: string }[] = [
 
 const ANALYTICS = [
   { title: "Rating & form", body: "Your crew rating over time, last-10 form, streaks and where you rank." },
-  { title: "Partners & rivals", body: "Who lifts your game, head-to-head records, your nemesis and upsets." },
-  { title: "Scoring patterns", body: "Winning and losing margins, close games, skunks and deciding game 3s." },
   { title: "Activity", body: "Games per week, your most active days, doubles and singles." },
 ];
 
@@ -48,15 +47,14 @@ export function YouView() {
 
       <CrewPointsSection />
 
+      <MyStatsSection />
+
       <FocusSection />
 
       <section aria-labelledby="analytics-heading" className="flex animate-rise flex-col gap-3 [animation-delay:60ms]">
         <h2 id="analytics-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-          Your analytics
+          Coming next
         </h2>
-        <p className="text-[15px] text-muted">
-          These fill in as your crew logs games. Filter by 30 days, 90 days or all time.
-        </p>
         <ul className="grid gap-2 sm:grid-cols-2">
           {ANALYTICS.map((item) => (
             <li key={item.title} className="rounded-2xl border border-dashed border-line p-4">

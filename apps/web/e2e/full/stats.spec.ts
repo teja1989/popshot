@@ -1,0 +1,63 @@
+import { expect, test, type Page } from "@playwright/test";
+
+import { newUser, signIn } from "./auth";
+import { watchProblems } from "./problems";
+
+async function logSingles(page: Page, groupUrl: string, me: string, guest: string, score: [string, string], isNew: boolean) {
+  await page.goto(`${groupUrl}/log`);
+  await page.getByText("Singles", { exact: true }).click();
+  await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
+  const picker = page.getByRole("dialog", { name: "Pick a player" });
+  if (isNew) {
+    await picker.getByRole("button", { name: "Add a guest" }).click();
+    await page.getByRole("dialog", { name: "Add a guest" }).getByLabel("Guest's name").fill(guest);
+    await page.getByRole("dialog", { name: "Add a guest" }).getByRole("button", { name: "Add guest" }).click();
+  } else {
+    await picker.getByRole("button", { name: new RegExp(`^${guest}`) }).click();
+  }
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.getByLabel(`Game 1, ${me}`).fill(score[0]);
+  await page.getByLabel(`Game 1, ${guest}`).fill(score[1]);
+  await page.getByRole("button", { name: "Log game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+}
+
+test("your stats and the crew's highlights fill in as games are logged", async ({ page }) => {
+  test.setTimeout(120_000);
+  const user = newUser("Rio");
+  await signIn(page, user);
+  const problems = await watchProblems(page);
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start a group" }).first().click();
+  await page.getByLabel("Group name").fill("Rio's Crew");
+  await page.getByRole("button", { name: "Create group" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rio's Crew");
+  const groupUrl = page.url();
+
+  const stats = page.getByRole("region", { name: "Your stats" });
+  await page.goto("/you");
+  await expect(stats).toContainText("Your stats in Rio's Crew show up after your first game.");
+
+  // A skunk, a close win, then a loss.
+  await logSingles(page, groupUrl, user.name, "Lou", ["11", "2"], true);
+  await logSingles(page, groupUrl, user.name, "Lou", ["12", "10"], false);
+  await logSingles(page, groupUrl, user.name, "Lou", ["5", "11"], false);
+
+  await page.goto("/you");
+  await expect(stats).toContainText("3 games · 2–1 · Lost the last one");
+  await expect(stats.getByRole("definition").filter({ hasText: /^\d+–\d+$/ }).first()).toHaveText("1–0"); // close games
+  await expect(stats).toContainText("Nobody has your number yet.");
+  await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("Lou");
+  await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("2–1");
+
+  await page.goto("/board");
+  const highlights = page.getByRole("region", { name: "Highlights" });
+  await expect(highlights).toContainText("Longest win streak");
+  await expect(highlights).toContainText("2 wins");
+  await expect(highlights).toContainText(user.name);
+  await expect(highlights).toContainText("3 games");
+  // Lou came back from behind after two losses: an upset.
+  await expect(highlights).toContainText(`Lou beat ${user.name}`);
+  expect(problems).toEqual([]);
+});

@@ -13,7 +13,7 @@ from popshot_api.auth.verifier import TokenVerifier
 from popshot_api.db import check_database_role, make_engine
 from popshot_api.log_config import configure_logging
 from popshot_api.middleware import RequestContextMiddleware
-from popshot_api.routes import board, focus, games, groups, health, invites, me
+from popshot_api.routes import board, focus, games, groups, health, invites, me, stats
 from popshot_api.settings import Settings
 
 
@@ -65,6 +65,7 @@ def create_app(
     app.include_router(games.router)
     app.include_router(focus.router)
     app.include_router(board.router)
+    app.include_router(stats.router)
     return app
 
 
