@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { membership, reachedWeeks, share, shortDate } from "./admin";
+import { actionSummary, membership, reachedWeeks, share, shortDate } from "./admin";
 
 describe("admin formatting", () => {
   it("shares", () => {
@@ -31,5 +31,17 @@ describe("membership labels", () => {
     [{ role: "member", status: "removed", left_on_own: false }, "Removed"],
   ] as const)("%o is %s", (m, label) => {
     expect(membership(m)).toBe(label);
+  });
+});
+
+describe("support history", () => {
+  it("says what happened", () => {
+    const base = { created_at: "2026-10-11T20:00:00Z", admin_name: "Admin", reason: "x", details: {} };
+    expect(actionSummary({ ...base, action: "crew.lead_changed", target_user_id: "u", target_name: "Sam" })).toBe(
+      "Admin made Sam the lead",
+    );
+    expect(actionSummary({ ...base, action: "crew.something_new", target_user_id: null, target_name: null })).toBe(
+      "Admin: crew.something_new",
+    );
   });
 });

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 
-import { membership, shortDate, type Crew } from "@/lib/admin";
+import { actionSummary, membership, shortDate, type Crew } from "@/lib/admin";
 
+import { MakeLeadSheet } from "./admin-make-lead";
 import { AdminGate, AdminMain, Section, Stat } from "./admin-ui";
 import { plural } from "./admin-view";
 import { Avatar } from "./ui/avatar";
@@ -24,13 +25,14 @@ export function AdminCrewView({ crewId }: { crewId: string }) {
             We couldn&apos;t load this crew just now.
           </p>
         )}
-        {result.kind === "ready" && <CrewDetail crew={result.data} />}
+        {result.kind === "ready" && <CrewDetail crew={result.data} onChanged={reload} />}
       </AdminMain>
     </AdminGate>
   );
 }
 
-function CrewDetail({ crew: c }: { crew: Crew }) {
+function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void }) {
+  const lead = c.people.find((m) => m.status === "active" && m.role === "lead");
   return (
     <>
       <header className="flex animate-rise flex-col gap-1">
@@ -64,10 +66,10 @@ function CrewDetail({ crew: c }: { crew: Crew }) {
       <Section title="People">
         <ul aria-label="People in this crew" className="flex flex-col rounded-2xl border border-line bg-surface">
           {c.people.map((m) => (
-            <li key={m.user_id} className="border-b border-line last:border-b-0">
+            <li key={m.user_id} className="flex items-center gap-2 border-b border-line pr-3 last:border-b-0">
               <Link
                 href={`/admin/people/${m.user_id}`}
-                className="flex items-center gap-3 px-4 py-3 text-ink no-underline"
+                className="flex min-w-0 grow items-center gap-3 px-4 py-3 text-ink no-underline"
               >
                 <Avatar name={m.display_name} photoUrl={m.avatar_url} size="sm" />
                 <span className="flex min-w-0 flex-col">
@@ -78,9 +80,37 @@ function CrewDetail({ crew: c }: { crew: Crew }) {
                   </span>
                 </span>
               </Link>
+              {!c.deleted_at && m.status === "active" && m.role !== "lead" && (
+                <MakeLeadSheet
+                  crewId={c.id}
+                  crewName={c.name}
+                  person={{ id: m.user_id, name: m.display_name }}
+                  currentLead={lead?.display_name ?? null}
+                  onDone={onChanged}
+                />
+              )}
             </li>
           ))}
         </ul>
+      </Section>
+      <Section title="Support history">
+        {c.actions.length === 0 ? (
+          <p className="text-muted">No changes by support.</p>
+        ) : (
+          <ul aria-label="Support history" className="flex flex-col rounded-2xl border border-line bg-surface">
+            {c.actions.map((a) => (
+              <li
+                key={a.created_at + a.action}
+                className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0"
+              >
+                <span className="font-bold">{actionSummary(a)}</span>
+                <span className="text-[14px] text-muted">
+                  {shortDate(a.created_at)} · {a.reason}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
     </>
   );
