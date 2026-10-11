@@ -174,6 +174,14 @@ def user_session(
             text("SELECT set_config('app.user_id', :user_id, true)"),
             {"user_id": str(user_id)},
         )
+        # Usage metrics (migration 0009): who used the app on which day, nothing more.
+        session.execute(
+            text(
+                "INSERT INTO user_activity (user_id, day) VALUES (:user_id, current_date) "
+                "ON CONFLICT DO NOTHING"
+            ),
+            {"user_id": user_id},
+        )
         yield UserSession(session=session, user_id=user_id)
 
 
