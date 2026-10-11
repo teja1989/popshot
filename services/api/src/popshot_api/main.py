@@ -22,6 +22,7 @@ from popshot_api.routes import (
     health,
     invites,
     me,
+    nights,
     notifications,
     stats,
 )
@@ -86,6 +87,7 @@ def create_app(
     app.include_router(board.router)
     app.include_router(stats.router)
     app.include_router(notifications.router)
+    app.include_router(nights.router)
     return app
 
 

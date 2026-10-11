@@ -117,7 +117,11 @@ def test_a_device_belongs_to_whoever_turned_it_on_last(crew: People) -> None:
 
 def test_muting_a_category(crew: People) -> None:
     casey = crew.new("Casey")
-    assert settings(crew, casey) == {"categories": ["games"], "muted": [], "devices": 0}
+    assert settings(crew, casey) == {
+        "categories": ["play_nights", "games"],
+        "muted": [],
+        "devices": 0,
+    }
     muted = crew.client.put("/v1/me/notifications", json={"muted": ["games"]}, headers=casey)
     assert muted.json()["muted"] == ["games"]
     assert (

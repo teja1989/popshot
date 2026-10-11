@@ -12,6 +12,7 @@ import { useSignedIn } from "./auth";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { DeletedGroups } from "./deleted-groups";
 import { InstallBanner } from "./install-banner";
+import { NextNight } from "./next-night";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
 import { Avatar, AvatarStack } from "./ui/avatar";
@@ -103,7 +104,12 @@ export function HomeView() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <section aria-labelledby="groups-heading" className="flex flex-col gap-3">
-          {result.kind === "ready" && result.data.some((g) => g.my_status === "active") && <InstallBanner />}
+          {result.kind === "ready" && result.data.some((g) => g.my_status === "active") && (
+            <>
+              <NextNight />
+              <InstallBanner />
+            </>
+          )}
           <div className="flex min-h-11 items-center justify-between">
             <h2 id="groups-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
               Your groups
