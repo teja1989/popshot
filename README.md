@@ -4,7 +4,7 @@ Pickleball crew stats for the people you actually play with.
 
 Log a game when you walk off the court, and Popshot keeps the running story of your crew: who's on a streak, who your toughest opponent is, which partner you click with, and who got skunked this week. Groups are private by default. Nobody outside a group sees anything inside it unless the group lead lets them in.
 
-> Status: early build (Phase 0). Nothing is deployed yet.
+> Status: Phase 0 is done: it's deployed on Google Cloud and Google sign-in works. Phase 1 (groups, games, stats) is next.
 
 ## What it does (MVP)
 
@@ -17,12 +17,22 @@ Log a game when you walk off the court, and Popshot keeps the running story of y
 
 See [docs/product.md](docs/product.md) for the full scope and roadmap.
 
+## Run it locally
+
+```sh
+./dev/run.sh
+```
+
+Starts Postgres and a Firebase Auth emulator in containers, and the API and web app with live
+reload, at http://127.0.0.1:3000. Nothing touches Google Cloud. See [dev/README.md](dev/README.md).
+
 ## Repository layout
 
 ```
 apps/web/          Next.js web app (UI + server-side proxy to the API)
 services/api/      FastAPI service (data, rules, stats)
 infra/terraform/   Google Cloud infrastructure
+dev/               Local development: containers and one script to run everything
 docs/              Product notes, architecture and decision records
 .github/           CI, security scanning, templates
 ```

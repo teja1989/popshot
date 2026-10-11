@@ -49,3 +49,43 @@ def test_iam_auth_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     monkeypatch.setenv("POPSHOT_DATABASE_IAM_AUTH", "true")
     assert Settings().database_iam_auth is True
+
+
+def _emulator_settings(
+    environment: str = "local", firebase_project_id: str = "demo-popshot"
+) -> Settings:
+    return Settings(
+        environment=Environment(environment),
+        firebase_project_id=firebase_project_id,
+        database_url="postgresql+psycopg://u:p@h/db",
+        auth_emulator=True,
+    )
+
+
+def test_auth_emulator_off_by_default() -> None:
+    settings = Settings(
+        firebase_project_id="demo-popshot", database_url="postgresql+psycopg://u:p@h/db"
+    )
+    assert settings.auth_emulator is False
+
+
+def test_auth_emulator_allowed_locally_with_a_demo_project(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("K_SERVICE", raising=False)
+    assert _emulator_settings().auth_emulator is True
+
+
+@pytest.mark.parametrize("environment", ["test", "dev", "prod"])
+def test_auth_emulator_refused_outside_local(environment: str) -> None:
+    with pytest.raises(ValidationError, match="local"):
+        _emulator_settings(environment=environment)
+
+
+def test_auth_emulator_refused_for_a_real_project() -> None:
+    with pytest.raises(ValidationError, match="demo"):
+        _emulator_settings(firebase_project_id="popshot-511218")
+
+
+def test_auth_emulator_refused_on_cloud_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("K_SERVICE", "api")
+    with pytest.raises(ValidationError, match="Cloud Run"):
+        _emulator_settings()

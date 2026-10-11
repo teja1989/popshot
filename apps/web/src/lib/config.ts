@@ -14,6 +14,8 @@ export interface ServerConfig {
   // Audience for the service-to-service identity token. Set on Cloud Run; unset locally.
   apiAudience: string | null;
   firebase: FirebaseWebConfig;
+  // Local development only: host:port of the Firebase Auth emulator (dev/README.md).
+  authEmulatorHost: string | null;
 }
 
 export class ConfigError extends Error {}
@@ -31,6 +33,7 @@ function required(env: Env, name: string): string {
 const HOSTNAME = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const EMULATOR_HOST = /^(localhost|127\.0\.0\.1):[0-9]{2,5}$/;
 
 export function parseApiBaseUrl(raw: string): URL {
   let url: URL;
@@ -63,6 +66,7 @@ export function readServerConfig(env: Env = process.env): ServerConfig {
   }
   const audience = env.API_AUDIENCE?.trim() ?? "";
   return {
+    authEmulatorHost: parseAuthEmulatorHost(env, projectId),
     apiBaseUrl: parseApiBaseUrl(required(env, "API_BASE_URL")),
     apiAudience: audience === "" ? null : audience,
     firebase: {
@@ -72,4 +76,23 @@ export function readServerConfig(env: Env = process.env): ServerConfig {
       appId: required(env, "FIREBASE_APP_ID"),
     },
   };
+}
+
+// The emulator accepts made-up sign-ins, so it's refused anywhere but a developer's machine:
+// loopback only, a demo-* project (Firebase's offline-only kind), and never on Cloud Run.
+function parseAuthEmulatorHost(env: Env, projectId: string): string | null {
+  const host = env.FIREBASE_AUTH_EMULATOR_HOST?.trim() ?? "";
+  if (host === "") {
+    return null;
+  }
+  if (!EMULATOR_HOST.test(host)) {
+    throw new ConfigError("FIREBASE_AUTH_EMULATOR_HOST must be localhost:<port> or 127.0.0.1:<port>");
+  }
+  if (!projectId.startsWith("demo-")) {
+    throw new ConfigError("FIREBASE_AUTH_EMULATOR_HOST needs a demo-* FIREBASE_PROJECT_ID");
+  }
+  if (env.K_SERVICE) {
+    throw new ConfigError("FIREBASE_AUTH_EMULATOR_HOST can't be used on Cloud Run");
+  }
+  return host;
 }

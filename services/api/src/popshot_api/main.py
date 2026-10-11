@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 from starlette.concurrency import run_in_threadpool
 
+from popshot_api.auth.emulator import EmulatorTokenVerifier
 from popshot_api.auth.google import GoogleIdTokenVerifier
 from popshot_api.auth.verifier import TokenVerifier
 from popshot_api.db import check_database_role, make_engine
@@ -54,14 +55,22 @@ def create_app(
     app.state.settings = settings
     app.state.engine = engine
     app.state.token_verifier = (
-        token_verifier
-        if token_verifier is not None
-        else GoogleIdTokenVerifier(
-            project_id=settings.firebase_project_id,
-            allowed_providers=settings.allowed_sign_in_providers,
-        )
+        token_verifier if token_verifier is not None else _token_verifier_for(settings)
     )
     app.add_middleware(RequestContextMiddleware)
     app.include_router(health.router)
     app.include_router(me.router)
     return app
+
+
+def _token_verifier_for(settings: Settings) -> TokenVerifier:
+    if settings.auth_emulator:
+        # Settings already refused this outside local development.
+        return EmulatorTokenVerifier(
+            project_id=settings.firebase_project_id,
+            allowed_providers=settings.allowed_sign_in_providers,
+        )
+    return GoogleIdTokenVerifier(
+        project_id=settings.firebase_project_id,
+        allowed_providers=settings.allowed_sign_in_providers,
+    )

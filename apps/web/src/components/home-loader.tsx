@@ -21,6 +21,9 @@ const Home = dynamic(() => import("@/components/home").then((m) => m.Home), {
   ),
 });
 
-export function HomeLoader({ firebase }: { firebase: FirebaseWebConfig }) {
-  return <Home firebase={firebase} />;
+export function HomeLoader(props: {
+  firebase: FirebaseWebConfig;
+  authEmulatorHost: string | null;
+}) {
+  return <Home {...props} />;
 }

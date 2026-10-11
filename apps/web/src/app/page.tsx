@@ -6,6 +6,6 @@ import { readServerConfig } from "@/lib/config";
 export default async function Page() {
   // Render per request: the CSP nonce changes every time, and config is read at runtime.
   await connection();
-  const { firebase } = readServerConfig();
-  return <HomeLoader firebase={firebase} />;
+  const { firebase, authEmulatorHost } = readServerConfig();
+  return <HomeLoader firebase={firebase} authEmulatorHost={authEmulatorHost} />;
 }

@@ -1,0 +1,46 @@
+# Local development only: Postgres and the Firebase Auth emulator. Start everything with
+# ./dev/run.sh, which also sets the passwords this file reads. See dev/README.md.
+name: popshot-dev
+
+services:
+  postgres:
+    # postgres:16, pinned by digest (16.15). The same image CI tests against.
+    image: postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+    environment:
+      POSTGRES_PASSWORD: ${POPSHOT_DEV_SUPERUSER_PASSWORD:?run ./dev/run.sh instead}
+    ports:
+      # Loopback only, and not 5432, so it can't clash with a Postgres you already run.
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  auth-emulator:
+    build: ./auth-emulator
+    image: popshot-auth-emulator:local
+    ports:
+      - "127.0.0.1:9099:9099"
+    read_only: true
+    # Writable scratch space for the CLI, owned by the image's node user (uid 1000).
+    tmpfs:
+      - /emulator:uid=1000,gid=1000,mode=0700
+      - /home/node:uid=1000,gid=1000,mode=0700
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:9099/').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+volumes:
+  pgdata:

@@ -72,6 +72,9 @@ Set `HYPOTHESIS_PROFILE=ci` to run the property tests with more examples.
 
 ## Running locally
 
+The easy way is `./dev/run.sh` from the repository root (see [dev/README.md](../../dev/README.md)):
+it sets up the database and runs the API against the Firebase Auth emulator. By hand:
+
 ```sh
 POPSHOT_FIREBASE_PROJECT_ID=<your-dev-project-id> \
 POPSHOT_DATABASE_URL=postgresql+psycopg://popshot_api:...@localhost/popshot \
@@ -94,6 +97,7 @@ All settings come from environment variables. Nothing is read from `.env` files.
 | `POPSHOT_ENVIRONMENT` | no | `local` | `local`, `test`, `dev` or `prod` |
 | `POPSHOT_ALLOWED_SIGN_IN_PROVIDERS` | no | `["google.com"]` | JSON list of accepted sign-in providers |
 | `POPSHOT_LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR` |
+| `POPSHOT_AUTH_EMULATOR` | no | `false` | Accept unsigned Firebase Auth emulator tokens. Refused unless the environment is `local`, the project is `demo-*` and it isn't Cloud Run |
 
 ## Authentication
 
@@ -104,6 +108,9 @@ claims from the web layer.
 
 On Cloud Run the web service proves who it is with the `X-Serverless-Authorization` header, so
 `Authorization` stays free for the user's token.
+
+Locally, with `POPSHOT_AUTH_EMULATOR=true`, `EmulatorTokenVerifier` takes the emulator's
+unsigned tokens instead and runs every other check above.
 
 Tests use `tests/fakes.py:FakeTokenVerifier`, which lives under `tests/` so it can't ship.
 

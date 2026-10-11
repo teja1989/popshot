@@ -29,7 +29,22 @@ describe("buildCsp", () => {
   it("relaxes only what dev tooling needs", () => {
     const dev = buildCsp({ nonce: "n", authDomain: "a.example.com", dev: true });
     expect(directive(dev, "script-src")).toContain("'unsafe-eval'");
+    expect(directive(dev, "style-src")).toEqual(["'self'", "'unsafe-inline'"]);
+    expect(directive(prod, "style-src")).toEqual(["'self'", "'nonce-abc123'"]);
     expect(dev).not.toContain("upgrade-insecure-requests");
+  });
+
+  it("allows the Auth emulator only when one is configured", () => {
+    expect(prod).not.toContain("127.0.0.1");
+    const local = buildCsp({
+      nonce: "n",
+      authDomain: "a.example.com",
+      dev: true,
+      authEmulatorHost: "127.0.0.1:9099",
+    });
+    expect(directive(local, "connect-src")).toContain("http://127.0.0.1:9099");
+    expect(directive(local, "frame-src")).toEqual(["https://a.example.com", "http://127.0.0.1:9099"]);
+    expect(directive(local, "script-src")).not.toContain("http://127.0.0.1:9099");
   });
 });
 

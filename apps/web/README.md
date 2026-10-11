@@ -5,6 +5,9 @@ forwards API calls to the private API. The browser never calls the API directly.
 
 ## Setup
 
+The easy way is `./dev/run.sh` from the repository root (see [dev/README.md](../../dev/README.md)).
+It runs this app with the API and a Firebase Auth emulator. By hand:
+
 Needs Node 24 (see `.nvmrc`).
 
 ```sh
@@ -46,6 +49,7 @@ Read at runtime, so the same build runs in every environment.
 | `FIREBASE_AUTH_DOMAIN` | yes | Firebase auth domain; also allowed as a CSP `frame-src` |
 | `FIREBASE_PROJECT_ID` | yes | Firebase / Identity Platform project |
 | `FIREBASE_APP_ID` | yes | Firebase web app ID |
+| `FIREBASE_AUTH_EMULATOR_HOST` | no | Local only: `127.0.0.1:<port>` of the Auth emulator. Refused unless the project is `demo-*` and it isn't Cloud Run |
 
 ## How requests flow
 
