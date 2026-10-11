@@ -12,7 +12,7 @@ import { InvitePanel } from "./invite-panel";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
-import { BackIcon } from "./ui/icons";
+import { BackIcon, PlusIcon } from "./ui/icons";
 import { Sheet } from "./ui/sheet";
 
 export function GroupView({ groupId }: { groupId: string }) {
@@ -115,6 +115,11 @@ function Group({
         </section>
       ) : (
         <>
+          <Link href={`/groups/${group.id}/log`} className={buttonClass("action", "h-14 animate-rise")}>
+            <PlusIcon />
+            Log a game
+          </Link>
+
           <p role="alert" className="empty:hidden rounded-xl border border-line bg-surface p-3 text-warn">
             {problem}
           </p>

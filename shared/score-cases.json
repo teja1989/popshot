@@ -1,0 +1,39 @@
+{
+  "about": "Score cases both validators must agree on: services/api/src/popshot_api/scoring.py and apps/web/src/lib/scoring.ts. Both test suites read this file.",
+  "games": [
+    { "points_to": 11, "win_by_two": true, "a": 11, "b": 9, "ok": true },
+    { "points_to": 11, "win_by_two": true, "a": 11, "b": 0, "ok": true },
+    { "points_to": 11, "win_by_two": true, "a": 0, "b": 11, "ok": true },
+    { "points_to": 11, "win_by_two": true, "a": 11, "b": 10, "ok": false },
+    { "points_to": 11, "win_by_two": true, "a": 12, "b": 10, "ok": true },
+    { "points_to": 11, "win_by_two": true, "a": 13, "b": 11, "ok": true },
+    { "points_to": 11, "win_by_two": true, "a": 12, "b": 9, "ok": false },
+    { "points_to": 11, "win_by_two": true, "a": 14, "b": 11, "ok": false },
+    { "points_to": 11, "win_by_two": true, "a": 10, "b": 8, "ok": false },
+    { "points_to": 11, "win_by_two": true, "a": 5, "b": 5, "ok": false },
+    { "points_to": 11, "win_by_two": true, "a": 100, "b": 98, "ok": false },
+    { "points_to": 11, "win_by_two": false, "a": 11, "b": 10, "ok": true },
+    { "points_to": 11, "win_by_two": false, "a": 12, "b": 10, "ok": false },
+    { "points_to": 15, "win_by_two": true, "a": 15, "b": 13, "ok": true },
+    { "points_to": 15, "win_by_two": true, "a": 17, "b": 15, "ok": true },
+    { "points_to": 15, "win_by_two": true, "a": 15, "b": 14, "ok": false },
+    { "points_to": 21, "win_by_two": true, "a": 21, "b": 19, "ok": true },
+    { "points_to": 21, "win_by_two": true, "a": 22, "b": 20, "ok": true },
+    { "points_to": 21, "win_by_two": false, "a": 21, "b": 20, "ok": true },
+    { "points_to": 21, "win_by_two": false, "a": 20, "b": 18, "ok": false }
+  ],
+  "matches": [
+    { "points_to": 11, "win_by_two": true, "best_of": 1, "games": [[11, 7]], "winner": "A" },
+    { "points_to": 11, "win_by_two": true, "best_of": 1, "games": [[4, 11]], "winner": "B" },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[11, 7], [11, 9]], "winner": "A" },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[11, 7], [9, 11], [8, 11]], "winner": "B" },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[3, 11], [12, 10], [11, 0]], "winner": "A" },
+    { "points_to": 11, "win_by_two": true, "best_of": 1, "games": [], "winner": null },
+    { "points_to": 11, "win_by_two": true, "best_of": 1, "games": [[11, 7], [11, 7]], "winner": null },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[11, 7]], "winner": null },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[11, 7], [7, 11]], "winner": null },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[11, 7], [11, 7], [11, 7]], "winner": null },
+    { "points_to": 11, "win_by_two": true, "best_of": 3, "games": [[11, 7], [11, 10]], "winner": null },
+    { "points_to": 15, "win_by_two": false, "best_of": 3, "games": [[15, 14], [13, 15], [15, 0]], "winner": "A" }
+  ]
+}

@@ -42,6 +42,13 @@ GroupName = Annotated[
     AfterValidator(_no_control_characters),
 ]
 
+# A player's or your own display name.
+PersonName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=40),
+    AfterValidator(_no_control_characters),
+]
+
 
 class CreateGroup(BaseModel):
     model_config = ConfigDict(extra="forbid")

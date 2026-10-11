@@ -24,6 +24,8 @@ interface AuthContextValue {
   notice: string | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  // After you edit your profile, so every screen shows the new name.
+  updateMe: (me: Me) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -91,6 +93,9 @@ export function AuthProvider({
         } finally {
           setBusy(false);
         }
+      },
+      updateMe: (me: Me) => {
+        setState((current) => (current.kind === "signed-in" ? { ...current, me, problem: null } : current));
       },
     }),
     [auth, state, busy, notice],

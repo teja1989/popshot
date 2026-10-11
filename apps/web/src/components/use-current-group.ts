@@ -17,6 +17,15 @@ function readSaved(): string | null {
   }
 }
 
+/** Make `groupId` the group Games and Board open on (say, after logging a game there). */
+export function rememberGroup(groupId: string): void {
+  try {
+    localStorage.setItem(KEY, groupId);
+  } catch {
+    // Storage blocked: Games falls back to your first group.
+  }
+}
+
 export function useCurrentGroup(groups: GroupSummary[]): {
   current: GroupSummary | null;
   choose: (groupId: string) => void;
@@ -26,11 +35,7 @@ export function useCurrentGroup(groups: GroupSummary[]): {
 
   const choose = useCallback((groupId: string) => {
     setSaved(groupId);
-    try {
-      localStorage.setItem(KEY, groupId);
-    } catch {
-      // Storage blocked: the choice holds until the page closes.
-    }
+    rememberGroup(groupId);
   }, []);
 
   const current = groups.find((g) => g.id === saved) ?? groups[0] ?? null;

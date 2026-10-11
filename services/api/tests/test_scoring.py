@@ -1,4 +1,7 @@
+import json
 from functools import cache
+from pathlib import Path
+from typing import Any
 
 import pytest
 from hypothesis import given
@@ -153,3 +156,30 @@ def test_best_of_three_winner_has_exactly_two_games(
     assert winners.count(winner) == 2
     assert winners[-1] is winner
     assert len(games) in (2, 3)
+
+
+# Cases the web app's validator (apps/web/src/lib/scoring.ts) is tested against too.
+SHARED = json.loads(
+    (Path(__file__).resolve().parents[3] / "shared" / "score-cases.json").read_text()
+)
+
+
+@pytest.mark.parametrize("case", SHARED["games"], ids=lambda c: f"{c['a']}-{c['b']}")
+def test_shared_game_cases(case: dict[str, Any]) -> None:
+    rules = GameRules(case["points_to"], case["win_by_two"])
+    if case["ok"]:
+        validate_game(rules, case["a"], case["b"])
+    else:
+        with pytest.raises(ScoreError):
+            validate_game(rules, case["a"], case["b"])
+
+
+@pytest.mark.parametrize("case", SHARED["matches"])
+def test_shared_match_cases(case: dict[str, Any]) -> None:
+    rules = GameRules(case["points_to"], case["win_by_two"])
+    games = [(a, b) for a, b in case["games"]]
+    if case["winner"] is None:
+        with pytest.raises(ScoreError):
+            validate_match(rules, case["best_of"], games)
+    else:
+        assert validate_match(rules, case["best_of"], games) == case["winner"]
