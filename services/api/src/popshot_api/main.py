@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 from starlette.concurrency import run_in_threadpool
 
+from popshot_api.accounts import IdentityPlatformLookup, NoAccountLookup
 from popshot_api.auth.emulator import EmulatorTokenVerifier
 from popshot_api.auth.google import GoogleIdTokenVerifier
 from popshot_api.auth.verifier import TokenVerifier
@@ -16,6 +17,7 @@ from popshot_api.middleware import RequestContextMiddleware
 from popshot_api.push import PushSender
 from popshot_api.routes import (
     admin,
+    admin_lookup,
     board,
     focus,
     games,
@@ -75,6 +77,12 @@ def create_app(
     app.state.settings = settings
     app.state.engine = engine
     app.state.push_sender = push_sender if push_sender is not None else _push_sender_for(settings)
+    # Tests swap in a fake by setting app.state.account_lookup.
+    app.state.account_lookup = (
+        IdentityPlatformLookup(settings.firebase_project_id)
+        if settings.account_lookup
+        else NoAccountLookup()
+    )
     app.state.token_verifier = (
         token_verifier if token_verifier is not None else _token_verifier_for(settings)
     )
@@ -90,6 +98,7 @@ def create_app(
     app.include_router(notifications.router)
     app.include_router(nights.router)
     app.include_router(admin.router)
+    app.include_router(admin_lookup.router)
     return app
 
 

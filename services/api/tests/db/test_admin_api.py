@@ -1,53 +1,23 @@
 """The admin page's API (migration 0010, routes/admin.py): who gets in, and what they see."""
 
-import secrets
-import time
-from collections.abc import Iterator
-
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from popshot_api.auth.verifier import VerifiedIdentity
-from popshot_api.main import create_app
 from popshot_api.routes.admin import RECENT_SIGN_IN
-from tests.conftest import make_settings
-from tests.db.conftest import INSUFFICIENT_PRIVILEGE, People, as_user, create, sqlstate_of
-from tests.fakes import FakeTokenVerifier
+from tests.db.conftest import (
+    ADMIN,
+    INSUFFICIENT_PRIVILEGE,
+    People,
+    as_user,
+    create,
+    sign_in,
+    sign_in_as,
+    sqlstate_of,
+)
 
 pytestmark = pytest.mark.db
 
-ADMIN = "Boss@Example.com"
 PAGES = ["/v1/admin/overview", "/v1/admin/groups"]
-
-
-@pytest.fixture
-def admins(app_engine: Engine) -> Iterator[People]:
-    """Like `people`, with boss@example.com as the admin (set with different case)."""
-    verifier = FakeTokenVerifier()
-    app = create_app(make_settings(admin_emails=f" {ADMIN} , "), verifier, app_engine)
-    with TestClient(app) as client:
-        yield People(client, verifier)
-
-
-def sign_in_as(
-    people: People, email: str, *, signed_in_ago: int = 60
-) -> tuple[dict[str, str], str]:
-    """Headers for a new person with this email, and their token subject."""
-    token = f"token-{secrets.token_hex(8)}"
-    subject = f"admin-test-{secrets.token_hex(8)}"
-    people.verifier.identities[token] = VerifiedIdentity(
-        subject=subject,
-        email=email,
-        display_name="Admin Test",
-        picture_url=None,
-        auth_time=int(time.time()) - signed_in_ago,
-    )
-    return {"Authorization": f"Bearer {token}"}, subject
-
-
-def sign_in(people: People, email: str, *, signed_in_ago: int = 60) -> dict[str, str]:
-    return sign_in_as(people, email, signed_in_ago=signed_in_ago)[0]
 
 
 def user_exists(owner_engine: Engine, subject: str) -> bool:

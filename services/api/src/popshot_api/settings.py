@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # Who can open the admin page: Google account emails, comma-separated. Empty: nobody.
     # Set from the POPSHOT_ADMIN_EMAILS GitHub variable at deploy, so it isn't in the repo.
     admin_emails: str = ""
+    # Look up emails from Identity Platform for the admin pages (popshot_api.accounts). Needs
+    # the service account to have roles/firebaseauth.viewer, so it's on in prod only.
+    account_lookup: bool = False
 
     @model_validator(mode="after")
     def _auth_emulator_is_local_only(self) -> Self:
