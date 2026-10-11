@@ -1,0 +1,23 @@
+{
+  "_comment": "The crew points rules the app explains to people. Checked against services/api/src/popshot_api/rating.py and apps/web/src/lib/board.ts by both test suites, so the explanation can't drift from the maths.",
+  "min": 2.0,
+  "max": 6.0,
+  "start": 3.0,
+  "steady_after": 15,
+  "ranked_after": 10,
+  "resting_after_days": 60,
+  "level_start": {
+    "beginner": 2.5,
+    "intermediate": 3.25,
+    "advanced": 4.0,
+    "expert": 4.75
+  },
+  "example": {
+    "team": 3.5,
+    "opponents": 4.0,
+    "score": [11, 9],
+    "expected_share": 0.44,
+    "change_settled": 0.03,
+    "change_new": 0.11
+  }
+}

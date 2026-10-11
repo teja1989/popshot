@@ -1,4 +1,6 @@
+import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
@@ -6,9 +8,15 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from popshot_api.rating import (
+    LEVEL_START,
     MAX,
     MIN,
+    RANKED_AFTER,
+    RESTING_AFTER,
     START,
+    STEADY_AFTER,
+    STEP_NEW,
+    STEP_SETTLED,
     TREND_EDGE,
     TREND_MIN_GAMES,
     TREND_WINDOW,
@@ -178,3 +186,22 @@ def test_steady_when_playing_to_your_rating() -> None:
     assert month.edge is not None
     assert abs(month.edge) < TREND_EDGE
     assert month.label == "steady"
+
+
+def test_the_explanation_matches_the_maths() -> None:
+    """shared/crew-points.json is what the app tells people; it must be true."""
+    told = json.loads(
+        (Path(__file__).resolve().parents[3] / "shared" / "crew-points.json").read_text()
+    )
+    assert (told["min"], told["max"], told["start"]) == (MIN, MAX, START)
+    assert told["steady_after"] == STEADY_AFTER
+    assert told["ranked_after"] == RANKED_AFTER
+    assert told["resting_after_days"] == RESTING_AFTER.days
+    assert told["level_start"] == dict(LEVEL_START)
+    ex = told["example"]
+    expected = expected_share(ex["team"], ex["opponents"])
+    won, lost = ex["score"]
+    surprise = won / (won + lost) - expected
+    assert round(expected, 2) == ex["expected_share"]
+    assert round(STEP_SETTLED * surprise, 2) == ex["change_settled"]
+    assert round(STEP_NEW * surprise, 2) == ex["change_new"]

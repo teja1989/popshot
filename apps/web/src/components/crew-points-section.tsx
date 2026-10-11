@@ -18,6 +18,7 @@ import {
 } from "@/lib/board";
 
 import { useAuth, useSignedIn } from "./auth";
+import { CrewPointsInfo } from "./crew-points-info";
 import { useApiGet } from "./use-api";
 
 /** Your crew points in each group, and the self-rated level they started from. */
@@ -49,9 +50,12 @@ export function CrewPointsSection() {
 
   return (
     <section aria-labelledby="points-heading" className="flex animate-rise flex-col gap-3 [animation-delay:30ms]">
-      <h2 id="points-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-        Crew points
-      </h2>
+      <div className="-my-2 flex items-center gap-0.5">
+        <h2 id="points-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+          Crew points
+        </h2>
+        <CrewPointsInfo />
+      </div>
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
         {ratings.result.kind === "ready" && ratings.result.data.length === 0 && (
           <p className="text-muted">Your crew points show up after your first game.</p>
