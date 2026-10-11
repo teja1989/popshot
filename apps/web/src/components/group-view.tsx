@@ -109,7 +109,11 @@ function Group({ group }: { group: GroupDetail }) {
 function MemberRow({ member, isMe }: { member: Member; isMe: boolean }) {
   return (
     <li className="flex min-h-16 items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
-      <Avatar name={member.display_name} tone={member.role === "lead" ? "ball" : "chip"} />
+      <Avatar
+        name={member.display_name}
+        photoUrl={member.avatar_url}
+        tone={member.role === "lead" ? "ball" : "chip"}
+      />
       <span className="min-w-0 grow truncate text-[17px] font-bold">
         {member.display_name}
         {isMe && <span className="font-normal text-muted"> (you)</span>}

@@ -11,8 +11,10 @@ test("a signed-in user lands on their home, with their profile from the API", as
   await page.goto("/");
 
   // The name comes back through web -> API -> Postgres, not from the browser's session.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Hi, ${alice.name}.`);
-  await expect(page.getByText("You're signed in.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    /^Good (morning|afternoon|evening), Alice\.$/,
+  );
+  await expect(page.getByRole("heading", { name: "Your stats" })).toBeVisible();
   await expect(page.getByText("No groups yet.")).toBeVisible();
   expect(problems).toEqual([]);
 });

@@ -55,3 +55,46 @@ export function LockIcon() {
     </svg>
   );
 }
+
+export function StopwatchIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="12.5" r="7" strokeWidth="1.8" {...stroke} />
+      <path d="M11 12.5V9M9 2.5h4M16.5 6l1.2-1.2" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+export function HandshakeIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" strokeWidth="1.8" {...stroke} />
+      <path d="M7.5 11.2l2.4 2.4 4.6-4.8" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+export function PrivateIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <rect x="4.5" y="9.5" width="13" height="9" rx="2" strokeWidth="1.8" {...stroke} />
+      <path d="M7.5 9.5V7a3.5 3.5 0 0 1 7 0v2.5" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+export function PauseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <path d="M4.5 3v8M9.5 3v8" strokeWidth="2" {...stroke} />
+    </svg>
+  );
+}
+
+export function PlayIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <path d="M4.5 3l6 4-6 4z" strokeWidth="1.6" {...stroke} />
+    </svg>
+  );
+}
