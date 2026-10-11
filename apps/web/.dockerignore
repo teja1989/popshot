@@ -4,6 +4,7 @@
 !package-lock.json
 !.npmrc
 !next.config.ts
+!postcss.config.mjs
 !tsconfig.json
 !src/
 src/**/*.test.ts

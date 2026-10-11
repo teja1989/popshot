@@ -55,7 +55,7 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Your crew's games, kept between you.",
   );
-  await expect(page.getByRole("button", { name: "Sign in with Google" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
   await page.waitForLoadState("networkidle");
   expect(problems).toEqual([]);
   // Nothing third-party loads until someone chooses to sign in.
