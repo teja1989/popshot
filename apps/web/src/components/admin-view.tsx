@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
-import { reachedWeeks, share, shortDate, type AdminGroup, type Overview } from "@/lib/admin";
-import { reauthenticate } from "@/lib/firebase-client";
+import { reachedWeeks, share, shortDate, type AdminGroup, type Overview, type PeopleResults } from "@/lib/admin";
 
-import { useSignedIn } from "./auth";
-import { buttonClass } from "./ui/button";
+import { AdminGate, AdminMain, Section, Stat, Table } from "./admin-ui";
+import { Avatar } from "./ui/avatar";
 import { useApiGet } from "./use-api";
 
 /**
@@ -19,136 +18,32 @@ export function AdminView() {
   const groups = useApiGet<AdminGroup[]>("/v1/admin/groups");
   const status = overview.result.kind === "error" ? overview.result.status : null;
 
-  if (status === 404) {
-    return <NotFound />;
-  }
-  if (status === 403) {
-    return (
-      <SignInAgain
-        onDone={() => {
-          overview.reload();
-          groups.reload();
-        }}
-      />
-    );
-  }
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-4xl lg:px-8 lg:pt-10">
-      <header className="flex animate-rise flex-col gap-1">
-        <h1 className="text-[28px] leading-tight font-extrabold [font-stretch:110%]">Admin</h1>
-        <p className="text-[15px] text-muted">
-          Across all of Popshot: counts, and crew names. Nothing about the people in them.
-        </p>
-      </header>
-      {overview.result.kind === "loading" && <p className="text-muted">Loading the numbers…</p>}
-      {overview.result.kind === "error" && (
-        <p role="alert" className="text-warn">
-          We couldn&apos;t load the numbers just now.
-        </p>
-      )}
-      {overview.result.kind === "ready" && <OverviewSections overview={overview.result.data} />}
-      {groups.result.kind === "ready" && <GroupsSection groups={groups.result.data} />}
-    </main>
-  );
-}
-
-function NotFound() {
-  return (
-    <main className="mx-auto flex w-full max-w-md flex-col px-5 pt-10 pb-12">
-      <h1 className="text-[28px] leading-[1.1] font-extrabold">That page is out of bounds.</h1>
-      <p className="mt-3 text-[17px] text-muted">The link may be old, or the page may have moved.</p>
-      <Link className={buttonClass("primary", "mt-8 self-start")} href="/">
-        Back to Popshot
-      </Link>
-    </main>
-  );
-}
-
-function SignInAgain({ onDone }: { onDone: () => void }) {
-  const { user } = useSignedIn();
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-  return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-5 pt-10 pb-12">
-      <h1 className="text-[28px] leading-tight font-extrabold">Sign in again</h1>
-      <p className="text-[17px] text-muted">
-        The admin page needs a sign-in from the last 12 hours. Sign in with the same Google account to carry on.
-      </p>
-      <button
-        type="button"
-        className={buttonClass("primary", "self-start")}
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          setProblem(null);
-          reauthenticate(user)
-            .then(onDone)
-            .catch(() => {
-              setProblem("That didn't finish. Use the same Google account you're signed in with.");
-            })
-            .finally(() => {
-              setBusy(false);
-            });
-        }}
-      >
-        Sign in with Google
-      </button>
-      <p role="alert" className="text-[15px] text-warn empty:hidden">
-        {problem}
-      </p>
-    </main>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  const id = `admin-${title.toLowerCase().replace(/\W+/g, "-")}`;
-  return (
-    <section aria-labelledby={id} className="flex animate-rise flex-col gap-3">
-      <h2 id={id} className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
-      <dt className="text-[14px] text-muted">{label}</dt>
-      <dd className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">{value}</dd>
-      {note && <dd className="text-[13px] text-muted">{note}</dd>}
-    </div>
-  );
-}
-
-/** A table that scrolls sideways inside its card on narrow screens, never the page. */
-function Table({ label, head, rows }: { label: string; head: string[]; rows: (string | number)[][] }) {
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-      <table aria-label={label} className="w-full text-left text-[14px] tabular-nums">
-        <thead>
-          <tr className="border-b border-line text-muted">
-            {head.map((h) => (
-              <th key={h} scope="col" className="px-3 py-2 font-bold whitespace-nowrap first:pl-4">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={String(row[0]) + String(row[1])} className="border-b border-line last:border-b-0">
-              {row.map((cell, i) => (
-                <td key={i} className="px-3 py-2 whitespace-nowrap first:pl-4 first:font-bold">
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <AdminGate
+      status={status}
+      onSignedIn={() => {
+        overview.reload();
+        groups.reload();
+      }}
+    >
+      <AdminMain>
+        <header className="flex animate-rise flex-col gap-1">
+          <h1 className="text-[28px] leading-tight font-extrabold [font-stretch:110%]">Admin</h1>
+          <p className="text-[15px] text-muted">
+            Across all of Popshot. Find a person or open a crew to help with an issue.
+          </p>
+        </header>
+        {overview.result.kind === "loading" && <p className="text-muted">Loading the numbers…</p>}
+        {overview.result.kind === "error" && (
+          <p role="alert" className="text-warn">
+            We couldn&apos;t load the numbers just now.
+          </p>
+        )}
+        {overview.result.kind === "ready" && <OverviewSections overview={overview.result.data} />}
+        <PeopleSearch />
+        {groups.result.kind === "ready" && <GroupsSection groups={groups.result.data} />}
+      </AdminMain>
+    </AdminGate>
   );
 }
 
@@ -216,7 +111,9 @@ function GroupsSection({ groups }: { groups: AdminGroup[] }) {
         >
           {groups.map((g) => (
             <li key={g.id} className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0">
-              <span className="truncate font-bold">{g.name}</span>
+              <Link href={`/admin/crews/${g.id}`} className="truncate font-bold text-ink">
+                {g.name}
+              </Link>
               <span className="text-[14px] text-muted tabular-nums">{crewLine(g)}</span>
             </li>
           ))}
@@ -234,6 +131,86 @@ function crewLine(g: AdminGroup): string {
   return `${plural(g.members, "member")} · ${games}${nights} · started ${shortDate(g.created_at)}`;
 }
 
-function plural(n: number, word: string): string {
+export function plural(n: number, word: string): string {
   return `${String(n)} ${word}${n === 1 ? "" : "s"}`;
+}
+
+/** Find someone by any part of their name, their id, or their exact email. */
+function PeopleSearch() {
+  const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState<string | null>(null);
+  return (
+    <Section title="Find a person">
+      <form
+        role="search"
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const q = draft.trim();
+          setQuery(q.length >= 2 ? q : null);
+        }}
+      >
+        <label htmlFor="admin-people-q" className="sr-only">
+          Name, email or id
+        </label>
+        <input
+          id="admin-people-q"
+          type="search"
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+          }}
+          placeholder="Name, email or id"
+          minLength={2}
+          maxLength={100}
+          autoComplete="off"
+          className="min-h-12 min-w-0 grow rounded-xl border border-line bg-surface px-4 text-[17px]"
+        />
+        <button type="submit" className="min-h-12 shrink-0 rounded-xl bg-primary px-5 font-bold text-on-primary">
+          Find
+        </button>
+      </form>
+      {query && <PeopleResultsList query={query} />}
+    </Section>
+  );
+}
+
+function PeopleResultsList({ query }: { query: string }) {
+  const { result } = useApiGet<PeopleResults>(`/v1/admin/people?q=${encodeURIComponent(query)}`);
+  if (result.kind === "loading") {
+    return <p className="text-muted">Looking…</p>;
+  }
+  if (result.kind === "error") {
+    return (
+      <p role="alert" className="text-warn">
+        That search didn&apos;t work just now.
+      </p>
+    );
+  }
+  const { people, email_search } = result.data;
+  if (people.length === 0) {
+    return (
+      <p className="text-muted">
+        {email_search ? "Nobody matches that." : "Email search isn't available here. Try a name."}
+      </p>
+    );
+  }
+  return (
+    <ul aria-label="People found" className="flex flex-col rounded-2xl border border-line bg-surface">
+      {people.map((p) => (
+        <li key={p.id} className="border-b border-line last:border-b-0">
+          <Link href={`/admin/people/${p.id}`} className="flex items-center gap-3 px-4 py-3 text-ink no-underline">
+            <Avatar name={p.display_name} photoUrl={p.avatar_url} size="sm" />
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate font-bold">{p.display_name}</span>
+              <span className="text-[14px] text-muted">
+                {plural(p.groups, "crew")} · joined {shortDate(p.created_at)} · last active{" "}
+                {p.last_active ? shortDate(p.last_active) : "never"}
+              </span>
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
 }
