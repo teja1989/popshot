@@ -180,11 +180,34 @@ def test_a_member_can_log_a_game_they_didnt_play(people: People, crew: dict[str,
     assert response.json()["winner"] == "A"
 
 
+def test_best_of_five_goes_the_distance(people: People, crew: dict[str, Any]) -> None:
+    ids = crew["ids"]
+    five = [(11, 7), (9, 11), (11, 9), (5, 11), (10, 12)]
+    response = log(
+        people,
+        crew["sam"],
+        crew["group_id"],
+        team_a=[ids["Sam"], ids["Gary"]],
+        team_b=[ids["Casey"], ids["Jo"]],
+        best_of=5,
+        games=[{"team_a": a, "team_b": b} for a, b in five],
+    )
+    assert response.status_code == 201, response.text
+    match = response.json()
+    assert (match["best_of"], match["winner"]) == (5, "B")
+    assert [(g["team_a"], g["team_b"]) for g in match["games"]] == five
+    # Each game counts towards crew points; the match is one W/L.
+    board = people.client.get(f"/v1/groups/{crew['group_id']}/board", headers=crew["sam"]).json()
+    casey = next(r for r in board["getting_started"] if r["display_name"] == "Casey")
+    assert (casey["matches"], casey["wins"]) == (1, 1)
+
+
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
         ({"games": [{"team_a": 11, "team_b": 10}]}, "two points ahead"),
         ({"best_of": 3}, "isn't finished"),
+        ({"best_of": 5, "games": [{"team_a": 11, "team_b": 7}] * 2}, "isn't finished"),
         ({"format": "singles"}, "one player on each side"),
         ({"team_b": ["Sam", "Jo"]}, "only be in a game once"),
         ({"team_b": ["Casey"]}, "two players on each team"),

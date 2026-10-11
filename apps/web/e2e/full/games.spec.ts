@@ -120,6 +120,42 @@ test("best of three shows a third game only when it's one each", async ({ page }
   await expect(card.getByRole("cell")).toHaveCount(6);
 });
 
+test("a best of 5 adds game rows only while the match is still open", async ({ page }) => {
+  const kai = newUser("Kai");
+  await signIn(page, kai);
+  const groupUrl = await startGroup(page, "Long Matches");
+  await page.goto(`${groupUrl}/log`);
+
+  await page.getByText("Singles", { exact: true }).click();
+  await page.getByText("Best of 5", { exact: true }).click();
+  await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Lee");
+
+  // Three rows to start: the fewest that could decide it.
+  await expect(page.getByLabel(/^Game \d, Lee$/)).toHaveCount(3);
+  const scores: [string, string][] = [
+    ["11", "7"],
+    ["9", "11"],
+    ["11", "9"],
+    ["5", "11"],
+  ];
+  for (const [index, [mine, theirs]] of scores.entries()) {
+    await page.getByLabel(`Game ${String(index + 1)}, ${kai.name}`).fill(mine);
+    await page.getByLabel(`Game ${String(index + 1)}, Lee`).fill(theirs);
+  }
+  // 2–2: the fifth game appears, and logging waits for it.
+  await expect(page.getByLabel(/^Game \d, Lee$/)).toHaveCount(5);
+  await expect(page.getByText(/^✓/)).toHaveCount(0);
+  await page.getByLabel(`Game 5, ${kai.name}`).fill("12");
+  await page.getByLabel("Game 5, Lee").fill("10");
+  await expect(page.getByText(`✓ ${kai.name} wins 11–7, 9–11, 11–9, 5–11, 12–10.`)).toBeVisible();
+
+  await page.getByRole("button", { name: "Log game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+  await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
+  const card = page.getByRole("listitem").filter({ hasText: "Lee" });
+  await expect(card.getByRole("cell")).toHaveCount(10);
+});
+
 test("you can't log a game until both teams are picked", async ({ page }) => {
   await signIn(page, newUser("Robin"));
   const groupUrl = await startGroup(page, "Early Birds");
@@ -197,7 +233,10 @@ test("home counts the games you've played, and the logo goes home", async ({ pag
   await page.goto(`${groupUrl}/log`);
   await page.getByText("Singles", { exact: true }).click();
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Pat");
-  await page.getByRole("textbox", { name: /^Game 1,/ }).first().fill("11");
+  await page
+    .getByRole("textbox", { name: /^Game 1,/ })
+    .first()
+    .fill("11");
   await page.getByRole("textbox", { name: "Game 1, Pat" }).fill("6");
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/games$/);
@@ -234,7 +273,10 @@ test("other players see a logged game straight away, but only the scorer can edi
   await page.goto(`${groupUrl}/log`);
   await page.getByText("Singles", { exact: true }).click();
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
-  await page.getByRole("dialog", { name: "Pick a player" }).getByRole("button", { name: new RegExp(sam.name) }).click();
+  await page
+    .getByRole("dialog", { name: "Pick a player" })
+    .getByRole("button", { name: new RegExp(sam.name) })
+    .click();
   await page.getByLabel(`Game 1, ${casey.name}`).fill("11");
   await page.getByLabel(`Game 1, ${sam.name}`).fill("8");
   await page.getByRole("button", { name: "Log game" }).click();

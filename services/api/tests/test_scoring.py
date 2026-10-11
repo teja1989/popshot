@@ -133,7 +133,7 @@ def test_valid_matches(best_of: int, games: list[tuple[int, int]], winner: Team)
         (3, [(11, 7), (11, 7), (11, 7)]),
         (3, [(11, 7), (11, 10)]),
         (2, [(11, 7), (11, 7)]),
-        (5, [(11, 7), (11, 7), (11, 7)]),
+        (7, [(11, 7), (11, 7), (11, 7), (11, 7)]),
     ],
 )
 def test_invalid_matches(best_of: int, games: list[tuple[int, int]]) -> None:

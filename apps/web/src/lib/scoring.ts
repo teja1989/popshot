@@ -4,7 +4,7 @@
 
 export type Team = "A" | "B";
 export type PointsTo = 11 | 15 | 21;
-export type BestOf = 1 | 3;
+export type BestOf = 1 | 3 | 5;
 
 export interface GameRules {
   pointsTo: PointsTo;
@@ -49,7 +49,11 @@ export function validateGame(rules: GameRules, a: number, b: number): Checked<Te
   return { ok: true, value: a > b ? "A" : "B" };
 }
 
-export function validateMatch(rules: GameRules, bestOf: BestOf, games: readonly (readonly [number, number])[]): Checked<Team> {
+export function validateMatch(
+  rules: GameRules,
+  bestOf: BestOf,
+  games: readonly (readonly [number, number])[],
+): Checked<Team> {
   if (games.length === 0) {
     return fail("Enter at least one game.");
   }
@@ -74,16 +78,23 @@ export function validateMatch(rules: GameRules, bestOf: BestOf, games: readonly 
   return fail("The match isn't finished yet.");
 }
 
-/** How many score rows to show for a best-of-3 so far: 2, or 3 once it's one game each. */
+/**
+ * How many score rows to show so far: the fewest games that could decide the match, then
+ * one more for each finished game while it's still undecided (best of 3: 2, or 3 at one
+ * game each; best of 5: 3, then up to 5).
+ */
 export function gamesToShow(bestOf: BestOf, rules: GameRules, games: readonly (readonly [number, number])[]): number {
-  if (bestOf === 1) {
-    return 1;
+  const needed = Math.floor(bestOf / 2) + 1;
+  const wins = { A: 0, B: 0 };
+  let played = 0;
+  for (const [a, b] of games) {
+    const game = validateGame(rules, a, b);
+    if (!game.ok || Math.max(wins.A, wins.B) === needed) {
+      break;
+    }
+    wins[game.value] += 1;
+    played += 1;
   }
-  const [first, second] = games;
-  if (!first || !second) {
-    return 2;
-  }
-  const one = validateGame(rules, first[0], first[1]);
-  const two = validateGame(rules, second[0], second[1]);
-  return one.ok && two.ok && one.value !== two.value ? 3 : 2;
+  const decided = Math.max(wins.A, wins.B) === needed;
+  return Math.min(bestOf, Math.max(needed, decided ? played : played + 1));
 }
