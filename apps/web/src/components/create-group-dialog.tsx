@@ -3,12 +3,14 @@
 import { useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { apiPost, ApiError } from "@/lib/api-client";
-import { GROUP_NAME_MAX, type Format, type GroupDetail, type PointsTo } from "@/lib/groups";
+import { GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
 
 import { useSignedIn } from "./auth";
+import { GroupRulesFields, type Rules } from "./group-rules-fields";
 import { buttonClass } from "./ui/button";
-import { segmentOption } from "./ui/segmented";
 import { Sheet } from "./ui/sheet";
+
+const DEFAULT_RULES: Rules = { format: "doubles", pointsTo: 11, winByTwo: true };
 
 export function CreateGroupDialog({
   trigger,
@@ -21,17 +23,13 @@ export function CreateGroupDialog({
   const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
-  const [format, setFormat] = useState<Format>("doubles");
-  const [pointsTo, setPointsTo] = useState<PointsTo>(11);
-  const [winByTwo, setWinByTwo] = useState(true);
+  const [rules, setRules] = useState<Rules>(DEFAULT_RULES);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
   function reset() {
     setName("");
-    setFormat("doubles");
-    setPointsTo(11);
-    setWinByTwo(true);
+    setRules(DEFAULT_RULES);
     setProblem(null);
   }
 
@@ -47,9 +45,9 @@ export function CreateGroupDialog({
     try {
       const group = await apiPost<GroupDetail>(user, "/v1/groups", {
         name,
-        default_format: format,
-        default_points_to: pointsTo,
-        default_win_by_two: winByTwo,
+        default_format: rules.format,
+        default_points_to: rules.pointsTo,
+        default_win_by_two: rules.winByTwo,
       });
       reset();
       setOpen(false);
@@ -103,64 +101,7 @@ export function CreateGroupDialog({
           />
         </label>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-[15px] font-bold">Usual format</legend>
-          <div className="grid grid-cols-2 gap-1 rounded-xl bg-chip p-1">
-            {(["doubles", "singles"] as const).map((value) => (
-              <label key={value} className={segmentOption}>
-                <input
-                  type="radio"
-                  name="format"
-                  value={value}
-                  checked={format === value}
-                  onChange={() => {
-                    setFormat(value);
-                  }}
-                  className="sr-only"
-                />
-                {value === "doubles" ? "Doubles" : "Singles"}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <fieldset>
-            <legend className="mb-2 text-[15px] font-bold">Games to</legend>
-            <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
-              {([11, 15, 21] as const).map((value) => (
-                <label key={value} className={`${segmentOption} w-12`}>
-                  <input
-                    type="radio"
-                    name="points_to"
-                    value={value}
-                    checked={pointsTo === value}
-                    onChange={() => {
-                      setPointsTo(value);
-                    }}
-                    className="sr-only"
-                  />
-                  {value}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] font-bold">
-            <input
-              type="checkbox"
-              role="switch"
-              checked={winByTwo}
-              onChange={(event) => {
-                setWinByTwo(event.target.checked);
-              }}
-              className="relative h-[26px] w-11 cursor-pointer appearance-none rounded-full bg-line transition-colors duration-200 before:absolute before:top-[3px] before:left-[3px] before:size-5 before:rounded-full before:bg-surface before:shadow-sm before:transition-transform before:duration-200 before:ease-court checked:bg-primary checked:before:translate-x-[18px]"
-            />
-            Win by 2
-          </label>
-        </div>
-        <p className="-mt-2 text-[14px] text-muted">
-          These are the starting choices when someone logs a game. They can change them each time.
-        </p>
+        <GroupRulesFields rules={rules} onChange={setRules} />
 
         <p id="create-group-problem" role="alert" className="min-h-6 text-[15px] text-warn">
           {problem}

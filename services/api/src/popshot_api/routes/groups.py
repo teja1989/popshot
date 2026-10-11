@@ -1,4 +1,4 @@
-"""Groups: create one, list yours, open one.
+"""Groups: create one, list yours, open one, change its settings, leave it, delete it.
 
 Every query filters explicitly by the signed-in user; row-level security is the backstop,
 not the filter. A group you can't see is a 404, never a 403, so the API doesn't confirm that
@@ -6,11 +6,11 @@ a group exists to someone outside it.
 """
 
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -86,12 +86,44 @@ class Member(BaseModel):
     status: MemberStatus
 
 
+class FormerMember(BaseModel):
+    user_id: UUID
+    display_name: str
+    avatar_url: str | None
+    # When they were removed or declined.
+    since: datetime
+
+
 class GroupDetail(GroupSummary):
     default_format: Format
     default_points_to: int
     default_win_by_two: bool
     created_at: datetime
     members: list[Member]
+    # Leads and co-leads only: people removed or declined, who can be restored.
+    former_members: list[FormerMember] = []
+
+
+class GroupSettings(BaseModel):
+    """What a lead or co-lead can change. Leave a field out to keep it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: GroupName | None = None
+    default_format: Format | None = None
+    default_points_to: Literal[11, 15, 21] | None = None
+    default_win_by_two: bool | None = None
+
+
+class DeletedGroup(BaseModel):
+    id: UUID
+    name: str
+    deleted_at: datetime
+    # The last moment it can be restored.
+    restorable_until: datetime
+
+
+RESTORE_DAYS = 30
 
 
 @router.get("")
@@ -172,6 +204,21 @@ def create_group(body: CreateGroup, user: CurrentUserSession) -> GroupDetail:
     return detail
 
 
+@router.get("/deleted")
+def deleted_groups(user: CurrentUserSession) -> list[DeletedGroup]:
+    """Groups you lead that were deleted in the last RESTORE_DAYS days."""
+    rows = user.session.execute(text("SELECT * FROM app_deleted_groups()")).mappings()
+    return [
+        DeletedGroup(
+            id=row["group_id"],
+            name=row["name"],
+            deleted_at=row["deleted_at"],
+            restorable_until=row["deleted_at"] + timedelta(days=RESTORE_DAYS),
+        )
+        for row in rows
+    ]
+
+
 @router.get("/{group_id}")
 def get_group(group_id: UUID, user: CurrentUserSession) -> GroupDetail:
     detail = group_detail(user.session, user.user_id, group_id)
@@ -223,9 +270,154 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
         ).mappings()
         members = [Member(**row) for row in rows]
 
+    former: list[FormerMember] = []
+    if group["my_status"] == "active" and group["my_role"] in ("lead", "co_lead"):
+        former = [
+            FormerMember(**row)
+            for row in session.execute(
+                text("SELECT * FROM app_former_members(:group_id)"), {"group_id": group_id}
+            ).mappings()
+        ]
+
     active = sum(1 for m in members if m.status == "active")
     return GroupDetail(
         **group,
         member_count=active if group["my_status"] == "active" else None,
         members=members,
+        former_members=former,
     )
+
+
+def _my_membership(session: Session, me: UUID, group_id: UUID) -> Role:
+    """Your role in a group you're an active member of; a 404 otherwise."""
+    role: Role | None = session.execute(
+        text(
+            "SELECT role FROM group_members "
+            "JOIN groups ON groups.id = group_members.group_id "
+            "WHERE group_id = :group_id AND user_id = :me AND status = 'active'"
+        ),
+        {"group_id": group_id, "me": me},
+    ).scalar_one_or_none()
+    if role is None:
+        raise NOT_FOUND
+    return role
+
+
+def _log(session: Session, group_id: UUID, me: UUID, action: str, target: UUID) -> None:
+    session.execute(
+        text(
+            "INSERT INTO audit_log (group_id, actor_user_id, action, target_id) "
+            "VALUES (:group_id, :me, :action, :target)"
+        ),
+        {"group_id": group_id, "me": me, "action": action, "target": target},
+    )
+
+
+def _detail_or_404(session: Session, me: UUID, group_id: UUID) -> GroupDetail:
+    detail = group_detail(session, me, group_id)
+    if detail is None:  # pragma: no cover - checked by the caller already
+        raise NOT_FOUND
+    return detail
+
+
+@router.patch("/{group_id}")
+def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) -> GroupDetail:
+    """Rename the group or change the rules new games start with. Leads and co-leads."""
+    session, me = user.session, user.user_id
+    if _my_membership(session, me, group_id) not in ("lead", "co_lead"):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail="Only the group's lead or a co-lead can do that."
+        )
+    changes = body.model_dump(exclude_none=True)
+    if changes:
+        # Each column is set only when given; the statement itself never changes.
+        session.execute(
+            text(
+                """
+                UPDATE groups SET
+                    name = coalesce(:name, name),
+                    default_format = coalesce(CAST(:default_format AS match_format),
+                                              default_format),
+                    default_points_to = coalesce(CAST(:default_points_to AS smallint),
+                                                 default_points_to),
+                    default_win_by_two = coalesce(:default_win_by_two, default_win_by_two)
+                WHERE id = :group_id
+                """
+            ),
+            {
+                "group_id": group_id,
+                "name": body.name,
+                "default_format": body.default_format,
+                "default_points_to": body.default_points_to,
+                "default_win_by_two": body.default_win_by_two,
+            },
+        )
+        _log(session, group_id, me, "group.updated", group_id)
+    return _detail_or_404(session, me, group_id)
+
+
+@router.post("/{group_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+def leave_group(group_id: UUID, user: CurrentUserSession) -> Response:
+    """Leave a group, or cancel your request to join one. The lead hands over first.
+
+    Your games stay in the group's history. You can ask to join again with a new invite.
+    """
+    session, me = user.session, user.user_id
+    membership = (
+        session.execute(
+            text(
+                "SELECT role, status FROM group_members "
+                "JOIN groups ON groups.id = group_members.group_id "
+                "WHERE group_id = :group_id AND user_id = :me AND status IN ('active', 'pending')"
+            ),
+            {"group_id": group_id, "me": me},
+        )
+        .mappings()
+        .one_or_none()
+    )
+    if membership is None:
+        raise NOT_FOUND
+    if membership["role"] == "lead":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Make someone else the lead before you leave, or delete the group.",
+        )
+    if membership["status"] == "active":
+        # Logged first: once you've left, you can't write to the group's log.
+        _log(session, group_id, me, "member.left", me)
+    session.execute(
+        text(
+            """
+            UPDATE group_members
+            SET status = 'removed', role = 'member', left_at = now(), updated_at = now()
+            WHERE group_id = :group_id AND user_id = :me
+            """
+        ),
+        {"group_id": group_id, "me": me},
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_group(group_id: UUID, user: CurrentUserSession) -> Response:
+    """Delete the group. Lead only. It can be restored for RESTORE_DAYS days."""
+    session, me = user.session, user.user_id
+    if _my_membership(session, me, group_id) != "lead":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Only the group's lead can do that.")
+    deleted = session.execute(
+        text("SELECT app_delete_group(:group_id)"), {"group_id": group_id}
+    ).scalar_one()
+    if not deleted:  # pragma: no cover - only under a concurrent hand-over
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Something changed. Try again.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{group_id}/restore")
+def restore_group(group_id: UUID, user: CurrentUserSession) -> GroupDetail:
+    """Bring back a group you lead, deleted in the last RESTORE_DAYS days."""
+    restored = user.session.execute(
+        text("SELECT app_restore_group(:group_id)"), {"group_id": group_id}
+    ).scalar_one()
+    if not restored:
+        raise NOT_FOUND
+    return _detail_or_404(user.session, user.user_id, group_id)

@@ -8,6 +8,8 @@ import { describeRules, ROLE_LABEL, type GroupDetail, type Member, type Role } f
 import type { MemberAction } from "@/lib/invites";
 
 import { useSignedIn } from "./auth";
+import { GroupExit } from "./group-exit";
+import { GroupSettingsSheet } from "./group-settings-sheet";
 import { InvitePanel } from "./invite-panel";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
@@ -77,7 +79,7 @@ function Group({
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
-  async function act(member: Member, action: MemberAction): Promise<boolean> {
+  async function act(member: Pick<Member, "user_id">, action: MemberAction): Promise<boolean> {
     setBusy(member.user_id);
     setProblem(null);
     try {
@@ -104,6 +106,11 @@ function Group({
           {group.name}
         </h1>
         <p className="text-[15px] text-muted">{describeRules(group)}</p>
+        {isAdmin && (
+          <div className="mt-2">
+            <GroupSettingsSheet group={group} onSaved={onChange} />
+          </div>
+        )}
       </section>
 
       {group.my_status === "pending" ? (
@@ -178,6 +185,35 @@ function Group({
             </ul>
           </section>
 
+          {isAdmin && group.former_members.length > 0 && (
+            <section aria-labelledby="former-heading" className="flex animate-rise flex-col gap-2 [animation-delay:90ms]">
+              <h2 id="former-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+                Removed or declined · {group.former_members.length}
+              </h2>
+              <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+                {group.former_members.map((person) => (
+                  <li
+                    key={person.user_id}
+                    className="flex min-h-16 items-center gap-3 border-b border-line px-4 py-3 last:border-b-0"
+                  >
+                    <Avatar name={person.display_name} photoUrl={person.avatar_url} />
+                    <span className="min-w-0 grow truncate text-[17px] font-bold text-muted">{person.display_name}</span>
+                    <button
+                      type="button"
+                      aria-label={`Restore ${person.display_name}`}
+                      className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-[15px]")}
+                      disabled={busy === person.user_id}
+                      onClick={() => void act(person, "restore")}
+                    >
+                      Restore
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[14px] text-muted">Restoring puts them straight back in as a member.</p>
+            </section>
+          )}
+
           {isAdmin ? (
             <InvitePanel groupId={group.id} groupName={group.name} />
           ) : (
@@ -187,6 +223,8 @@ function Group({
           )}
         </>
       )}
+
+      <GroupExit group={group} />
     </>
   );
 }
@@ -224,6 +262,7 @@ function ManageSheet({
 }) {
   const [open, setOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [confirmLead, setConfirmLead] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function run(action: MemberAction) {
@@ -249,6 +288,7 @@ function ManageSheet({
       open={open}
       onOpenChange={(next) => {
         setConfirmRemove(false);
+        setConfirmLead(false);
         setOpen(next);
       }}
       title={member.display_name}
@@ -271,12 +311,49 @@ function ManageSheet({
             onClick={() => void run("make_member")}
           />
         )}
+        {myRole === "lead" &&
+          (confirmLead ? (
+            <div className="flex flex-col gap-3 rounded-2xl border border-line p-4">
+              <p className="font-bold">Make {member.display_name} the lead?</p>
+              <p className="text-[15px] text-muted">
+                You become a co-lead. Only the new lead can change that, delete the group or hand it on again.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className={buttonClass("quiet")}
+                  onClick={() => {
+                    setConfirmLead(false);
+                  }}
+                >
+                  Not now
+                </button>
+                <button
+                  type="button"
+                  className={buttonClass("primary")}
+                  disabled={busy}
+                  onClick={() => void run("make_lead")}
+                >
+                  Make lead
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ActionButton
+              title="Make lead"
+              body="Hand the group over. You'll stay on as a co-lead."
+              disabled={busy}
+              onClick={() => {
+                setConfirmLead(true);
+              }}
+            />
+          ))}
         {confirmRemove ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-warn p-4">
             <p className="font-bold">Remove {member.display_name} from the group?</p>
             <p className="text-[15px] text-muted">
-              Their past games stay on the record. They lose access, and can&apos;t rejoin with an
-              invite link.
+              Their past games stay on the record. They lose access and can&apos;t rejoin with an
+              invite link, but a lead or co-lead can restore them later.
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
