@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { describeExpiry, describeJoined, describeUses, inviteUrl, tokenFromHash } from "./invites";
+import { describeExpiry, tokenFromPasted, describeJoined, describeUses, inviteUrl, tokenFromHash } from "./invites";
 
 const TOKEN = "Ab3_-".repeat(8) + "xyz";
 
@@ -54,5 +54,28 @@ describe("describeExpiry", () => {
     ["2026-10-10T12:00:00Z", "Expires within the hour"],
   ])("%s -> %s", (expiresAt, expected) => {
     expect(describeExpiry(expiresAt, now)).toBe(expected);
+  });
+});
+
+describe("tokenFromPasted", () => {
+  it.each([
+    [TOKEN, TOKEN],
+    [`  ${TOKEN}\n`, TOKEN],
+    [`https://popshot.example/join#${TOKEN}`, TOKEN],
+    [`http://127.0.0.1:3000/join/#${TOKEN}`, TOKEN],
+    [`Join my group: https://popshot.example/join#${TOKEN}`, TOKEN],
+  ])("reads %j", (pasted, expected) => {
+    expect(tokenFromPasted(pasted)).toBe(expected);
+  });
+
+  it.each([
+    "",
+    "hello",
+    `https://popshot.example/join#${TOKEN}x`,
+    `https://popshot.example/groups#${TOKEN}`,
+    `https://popshot.example/join?t=${TOKEN}`,
+    `javascript:alert(1)//join#${TOKEN.slice(1)}`,
+  ])("rejects %j", (pasted) => {
+    expect(tokenFromPasted(pasted)).toBeNull();
   });
 });
