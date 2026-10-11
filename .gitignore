@@ -54,3 +54,6 @@ crash.log
 
 # Local tool downloads (infra/provision.sh)
 .tools/
+
+# Local development state (dev/run.sh): throwaway database passwords
+.dev/

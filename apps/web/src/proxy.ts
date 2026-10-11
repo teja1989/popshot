@@ -7,10 +7,12 @@ import { buildCsp, newNonce } from "@/lib/csp";
 // request's CSP header and stamps it on the scripts it renders.
 export function proxy(request: NextRequest): NextResponse {
   const nonce = newNonce();
+  const config = readServerConfig();
   const csp = buildCsp({
     nonce,
-    authDomain: readServerConfig().firebase.authDomain,
+    authDomain: config.firebase.authDomain,
     dev: process.env.NODE_ENV === "development",
+    authEmulatorHost: config.authEmulatorHost,
   });
 
   const requestHeaders = new Headers(request.headers);

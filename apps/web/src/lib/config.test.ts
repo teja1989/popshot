@@ -53,3 +53,35 @@ describe("parseApiBaseUrl", () => {
     expect(() => parseApiBaseUrl(value)).toThrow(ConfigError);
   });
 });
+
+describe("FIREBASE_AUTH_EMULATOR_HOST", () => {
+  const LOCAL = { ...BASE, FIREBASE_PROJECT_ID: "demo-popshot", API_BASE_URL: "http://127.0.0.1:8000" };
+
+  it("is off unless set", () => {
+    expect(readServerConfig(LOCAL).authEmulatorHost).toBeNull();
+    expect(readServerConfig({ ...LOCAL, FIREBASE_AUTH_EMULATOR_HOST: " " }).authEmulatorHost).toBeNull();
+  });
+
+  it.each(["127.0.0.1:9099", "localhost:9099"])("accepts %s for a demo project", (host) => {
+    expect(readServerConfig({ ...LOCAL, FIREBASE_AUTH_EMULATOR_HOST: host }).authEmulatorHost).toBe(host);
+  });
+
+  it.each(["emulator:9099", "10.0.0.5:9099", "127.0.0.1", "http://127.0.0.1:9099", "127.0.0.1:9099/x"])(
+    "rejects host %j",
+    (host) => {
+      expect(() => readServerConfig({ ...LOCAL, FIREBASE_AUTH_EMULATOR_HOST: host })).toThrow(ConfigError);
+    },
+  );
+
+  it("refuses a real project", () => {
+    expect(() =>
+      readServerConfig({ ...BASE, FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099" }),
+    ).toThrow(/demo-/);
+  });
+
+  it("refuses Cloud Run", () => {
+    expect(() =>
+      readServerConfig({ ...LOCAL, FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099", K_SERVICE: "web" }),
+    ).toThrow(/Cloud Run/);
+  });
+});

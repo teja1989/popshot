@@ -48,7 +48,7 @@ updates:
       prefix: "chore(deps)"
 
   - package-ecosystem: docker
-    directories: ["/services/api", "/apps/web"]
+    directories: ["/services/api", "/apps/web", "/dev/auth-emulator"]
     schedule:
       interval: weekly
       day: monday

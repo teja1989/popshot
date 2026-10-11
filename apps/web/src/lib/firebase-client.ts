@@ -3,6 +3,7 @@
 import { getApps, initializeApp, type FirebaseApp } from "@firebase/app";
 import {
   browserPopupRedirectResolver,
+  connectAuthEmulator,
   GoogleAuthProvider,
   indexedDBLocalPersistence,
   initializeAuth,
@@ -15,7 +16,7 @@ import type { FirebaseWebConfig } from "@/lib/config";
 
 let auth: Auth | null = null;
 
-export function getClientAuth(config: FirebaseWebConfig): Auth {
+export function getClientAuth(config: FirebaseWebConfig, emulatorHost: string | null): Auth {
   if (auth) {
     return auth;
   }
@@ -23,6 +24,10 @@ export function getClientAuth(config: FirebaseWebConfig): Auth {
   // No popupRedirectResolver here: it would load Google's sign-in scripts on every page
   // view. It's passed only when someone actually signs in.
   auth = initializeAuth(app, { persistence: indexedDBLocalPersistence });
+  if (emulatorHost) {
+    // Local development only; the server refuses this setting anywhere else.
+    connectAuthEmulator(auth, `http://${emulatorHost}`, { disableWarnings: true });
+  }
   return auth;
 }
 

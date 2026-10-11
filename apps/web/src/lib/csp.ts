@@ -9,8 +9,15 @@ export function newNonce(): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-export function buildCsp(options: { nonce: string; authDomain: string; dev: boolean }): string {
-  const { nonce, authDomain, dev } = options;
+export function buildCsp(options: {
+  nonce: string;
+  authDomain: string;
+  dev: boolean;
+  // Local development: the Firebase Auth emulator's host:port, already validated in config.
+  authEmulatorHost?: string | null;
+}): string {
+  const { nonce, authDomain, dev, authEmulatorHost } = options;
+  const emulator = authEmulatorHost ? [`http://${authEmulatorHost}`] : [];
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": [
@@ -21,16 +28,19 @@ export function buildCsp(options: { nonce: string; authDomain: string; dev: bool
       "https://apis.google.com",
       ...(dev ? ["'unsafe-eval'"] : []),
     ],
-    "style-src": ["'self'", `'nonce-${nonce}'`],
+    // Dev only: Next's dev tooling injects inline styles without the nonce. Browsers ignore
+    // 'unsafe-inline' when a nonce is present, so dev drops the nonce instead.
+    "style-src": dev ? ["'self'", "'unsafe-inline'"] : ["'self'", `'nonce-${nonce}'`],
     "img-src": ["'self'", "data:", "blob:", "https://lh3.googleusercontent.com"],
     "font-src": ["'self'"],
     "connect-src": [
       "'self'",
       "https://identitytoolkit.googleapis.com",
       "https://securetoken.googleapis.com",
+      ...emulator,
       ...(dev ? ["ws:"] : []),
     ],
-    "frame-src": [`https://${authDomain}`],
+    "frame-src": [`https://${authDomain}`, ...emulator],
     "manifest-src": ["'self'"],
     "worker-src": ["'self'"],
     "object-src": ["'none'"],

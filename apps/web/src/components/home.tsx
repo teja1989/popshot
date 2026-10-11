@@ -18,9 +18,18 @@ type State =
   | { kind: "signed-out" }
   | { kind: "signed-in"; user: User; me: Me | null; problem: string | null };
 
-export function Home({ firebase }: { firebase: FirebaseWebConfig }) {
+export function Home({
+  firebase,
+  authEmulatorHost,
+}: {
+  firebase: FirebaseWebConfig;
+  authEmulatorHost: string | null;
+}) {
   // Browser-only: this component is loaded with ssr: false (see home-loader.tsx).
-  const auth = useMemo(() => getClientAuth(firebase), [firebase]);
+  const auth = useMemo(
+    () => getClientAuth(firebase, authEmulatorHost),
+    [firebase, authEmulatorHost],
+  );
   const [state, setState] = useState<State>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);

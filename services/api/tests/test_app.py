@@ -3,9 +3,11 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from popshot_api.auth.emulator import EmulatorTokenVerifier
+from popshot_api.auth.google import GoogleIdTokenVerifier
 from popshot_api.main import create_app
-from popshot_api.settings import Environment
-from tests.conftest import make_settings
+from popshot_api.settings import Environment, Settings
+from tests.conftest import UNUSED_DATABASE_URL, make_settings
 from tests.fakes import FakeTokenVerifier
 
 
@@ -86,3 +88,19 @@ def test_malformed_trace_header_is_ignored(
     client.get("/healthz", headers={"X-Cloud-Trace-Context": '"}\ninjected'})
     lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
     assert all("trace_id" not in line for line in lines)
+
+
+def test_uses_the_emulator_verifier_only_when_asked(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("K_SERVICE", raising=False)
+
+    def settings(*, auth_emulator: bool) -> Settings:
+        return Settings(
+            firebase_project_id="demo-popshot",
+            database_url=UNUSED_DATABASE_URL,
+            auth_emulator=auth_emulator,
+        )
+
+    emulated = create_app(settings(auth_emulator=True), verify_database_role=False)
+    assert isinstance(emulated.state.token_verifier, EmulatorTokenVerifier)
+    real = create_app(settings(auth_emulator=False), verify_database_role=False)
+    assert isinstance(real.state.token_verifier, GoogleIdTokenVerifier)

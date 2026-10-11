@@ -1,9 +1,10 @@
 """Runtime configuration, read from POPSHOT_* environment variables."""
 
+import os
 from enum import StrEnum
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,6 +33,21 @@ class Settings(BaseSettings):
     # the metadata server as the password. The URL then carries no password.
     database_iam_auth: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    # Local development only: accept unsigned tokens from the Firebase Auth emulator.
+    auth_emulator: bool = False
+
+    @model_validator(mode="after")
+    def _auth_emulator_is_local_only(self) -> Self:
+        if not self.auth_emulator:
+            return self
+        if self.environment is not Environment.LOCAL:
+            raise ValueError("auth_emulator is allowed only when environment is local")
+        if not self.firebase_project_id.startswith("demo-"):
+            raise ValueError("auth_emulator needs a demo-* Firebase project")
+        # Cloud Run sets K_SERVICE in every container.
+        if os.environ.get("K_SERVICE"):
+            raise ValueError("auth_emulator can't be used on Cloud Run")
+        return self
 
     @property
     def expose_docs(self) -> bool:

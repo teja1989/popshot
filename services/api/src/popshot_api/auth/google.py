@@ -95,36 +95,40 @@ class GoogleIdTokenVerifier:
         # PyJWT accepts a list that contains our audience; Firebase only ever sends a string.
         if claims["aud"] != self._project_id:
             raise InvalidTokenError("unexpected audience")
-        return self._identity_from(claims)
+        return identity_from_claims(claims, self._allowed_providers)
 
-    def _identity_from(self, claims: dict[str, Any]) -> VerifiedIdentity:
-        auth_time = claims["auth_time"]
-        if not isinstance(auth_time, int) or isinstance(auth_time, bool):
-            raise InvalidTokenError("invalid auth_time")
-        if auth_time > time.time() + CLOCK_SKEW_SECONDS:
-            raise InvalidTokenError("auth_time in the future")
 
-        subject = claims["sub"]
-        if not isinstance(subject, str) or not 0 < len(subject) <= MAX_SUBJECT_LENGTH:
-            raise InvalidTokenError("invalid subject")
+def identity_from_claims(
+    claims: dict[str, Any], allowed_providers: frozenset[str]
+) -> VerifiedIdentity:
+    """Checks shared by every verifier, run after signature, issuer, audience and expiry."""
+    auth_time = claims["auth_time"]
+    if not isinstance(auth_time, int) or isinstance(auth_time, bool):
+        raise InvalidTokenError("invalid auth_time")
+    if auth_time > time.time() + CLOCK_SKEW_SECONDS:
+        raise InvalidTokenError("auth_time in the future")
 
-        firebase = claims.get("firebase")
-        provider = firebase.get("sign_in_provider") if isinstance(firebase, dict) else None
-        if provider not in self._allowed_providers:
-            raise InvalidTokenError("sign-in provider not allowed")
+    subject = claims["sub"]
+    if not isinstance(subject, str) or not 0 < len(subject) <= MAX_SUBJECT_LENGTH:
+        raise InvalidTokenError("invalid subject")
 
-        # Must be the JSON boolean true, not a truthy string.
-        if claims.get("email_verified") is not True:
-            raise InvalidTokenError("email not verified")
-        email = claims.get("email")
-        if not isinstance(email, str) or not email:
-            raise InvalidTokenError("missing email")
+    firebase = claims.get("firebase")
+    provider = firebase.get("sign_in_provider") if isinstance(firebase, dict) else None
+    if provider not in allowed_providers:
+        raise InvalidTokenError("sign-in provider not allowed")
 
-        name = claims.get("name")
-        picture = claims.get("picture")
-        return VerifiedIdentity(
-            subject=subject,
-            email=email,
-            display_name=name if isinstance(name, str) and name else None,
-            picture_url=picture if isinstance(picture, str) and picture else None,
-        )
+    # Must be the JSON boolean true, not a truthy string.
+    if claims.get("email_verified") is not True:
+        raise InvalidTokenError("email not verified")
+    email = claims.get("email")
+    if not isinstance(email, str) or not email:
+        raise InvalidTokenError("missing email")
+
+    name = claims.get("name")
+    picture = claims.get("picture")
+    return VerifiedIdentity(
+        subject=subject,
+        email=email,
+        display_name=name if isinstance(name, str) and name else None,
+        picture_url=picture if isinstance(picture, str) and picture else None,
+    )
