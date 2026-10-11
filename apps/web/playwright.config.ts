@@ -6,6 +6,8 @@ const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
 
 export default defineConfig({
   testDir: "./e2e",
+  // Full-stack tests have their own config (playwright.full.config.ts).
+  testIgnore: "full/**",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,

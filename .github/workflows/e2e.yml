@@ -1,0 +1,71 @@
+name: Full-stack e2e
+
+# Browser tests against the whole stack: the production web build, the real API and
+# Postgres, and the Firebase Auth emulator, started by ./dev/run.sh e2e exactly as on a
+# laptop. No secrets: every account is made up and lives only in the emulator.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Full-stack browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_VERSION: 24.21.0
+      NODE_SHA256: fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6
+      UV_VERSION: 0.11.32
+      UV_SHA256: aab924fd522efd06f1c5f3b93a243864fc453132c94b2dc49f1371b528a4b967
+      UV_PYTHON_DOWNLOADS: never
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Install uv (checksum verified)
+        run: |
+          set -euo pipefail
+          tarball="uv-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$tarball" "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${tarball}"
+          echo "${UV_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" --strip-components=1
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Install Node.js (checksum verified)
+        run: |
+          set -euo pipefail
+          tarball="node-v${NODE_VERSION}-linux-x64.tar.xz"
+          curl -fsSLo "$RUNNER_TEMP/$tarball" "https://nodejs.org/dist/v${NODE_VERSION}/${tarball}"
+          echo "${NODE_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/node"
+          tar -xJf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP/node" --strip-components=1
+          echo "$RUNNER_TEMP/node/bin" >> "$GITHUB_PATH"
+      - name: Full-stack browser tests
+        env:
+          CI: "1"
+          # The runner's preinstalled Chrome, so no unverified browser download.
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE: /usr/bin/google-chrome
+        run: ./dev/run.sh e2e
+      - name: Keep the Playwright report and server logs on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: full-stack-e2e
+          path: |
+            apps/web/test-results/
+            .dev/e2e-api.log
+            .dev/e2e-web.log
+          retention-days: 7
+          include-hidden-files: true

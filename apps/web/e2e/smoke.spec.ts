@@ -116,3 +116,9 @@ test("unknown pages get a friendly 404 that also follows the CSP", async ({ page
   await expect(page).toHaveURL("/");
   expect(problems).toEqual([]);
 });
+
+test("/favicon.ico serves the app icon instead of a 404", async ({ request }) => {
+  const response = await request.get("/favicon.ico");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toBe("image/png");
+});

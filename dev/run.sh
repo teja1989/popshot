@@ -4,6 +4,8 @@
 #
 #   ./dev/run.sh          start everything; Ctrl-C stops the API and web app
 #   ./dev/run.sh test     run the API tests (including the database isolation tests) and web unit tests
+#   ./dev/run.sh e2e      browser tests against the whole stack (production web build, API,
+#                         Postgres, Auth emulator); extra arguments go to Playwright
 #   ./dev/run.sh stop     stop the containers (data is kept)
 #   ./dev/run.sh reset    stop the containers and delete the local database
 #
@@ -18,6 +20,9 @@ COMPOSE=(docker compose -f "$ROOT/dev/compose.yaml")
 PG_PORT=54329
 API_PORT=8000
 WEB_PORT=3000
+# The full-stack browser tests use their own ports, so they can run next to `up`.
+E2E_API_PORT=8100
+E2E_WEB_PORT=3200
 EMULATOR_HOST="127.0.0.1:9099"
 PROJECT_ID="demo-popshot"
 
@@ -182,6 +187,78 @@ run_tests() {
   )
 }
 
+wait_for() {
+  local url="$1" name="$2" _
+  for _ in $(seq 1 90); do
+    if curl -fsS -o /dev/null "$url" 2>/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+  die "$name didn't start within 90 seconds (logs in .dev/)."
+}
+
+run_e2e() {
+  if [ -z "${PLAYWRIGHT_CHROMIUM_EXECUTABLE:-}" ]; then
+    local mac_chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    if [ -x "$mac_chrome" ]; then
+      export PLAYWRIGHT_CHROMIUM_EXECUTABLE="$mac_chrome"
+    else
+      say "No PLAYWRIGHT_CHROMIUM_EXECUTABLE and no Chrome found; Playwright uses its own browser"
+      say "(install it once with: cd apps/web && npx playwright install chromium)"
+    fi
+  fi
+
+  say "Building the web app (production build)"
+  (cd "$ROOT/apps/web" && NEXT_TELEMETRY_DISABLED=1 npm run -s build)
+
+  say "Starting the API on :$E2E_API_PORT and the built web app on :$E2E_WEB_PORT"
+  PIDS=()
+  (
+    cd "$ROOT/services/api"
+    POPSHOT_ENVIRONMENT=local \
+    POPSHOT_FIREBASE_PROJECT_ID="$PROJECT_ID" \
+    POPSHOT_AUTH_EMULATOR=true \
+    POPSHOT_DATABASE_URL="$API_DB_URL" \
+      exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
+      --host 127.0.0.1 --port "$E2E_API_PORT"
+  ) > "$STATE/e2e-api.log" 2>&1 &
+  PIDS+=($!)
+  (
+    cd "$ROOT/apps/web"
+    # Run the standalone server exactly as the container does.
+    rm -rf .next/standalone/.next/static
+    cp -r .next/static .next/standalone/.next/static
+    HOSTNAME=127.0.0.1 \
+    PORT="$E2E_WEB_PORT" \
+    API_BASE_URL="http://127.0.0.1:${E2E_API_PORT}" \
+    FIREBASE_API_KEY="demo-api-key" \
+    FIREBASE_AUTH_DOMAIN="${PROJECT_ID}.firebaseapp.com" \
+    FIREBASE_PROJECT_ID="$PROJECT_ID" \
+    FIREBASE_APP_ID="1:000000000000:web:0000000000000000" \
+    FIREBASE_AUTH_EMULATOR_HOST="$EMULATOR_HOST" \
+      exec node .next/standalone/server.js
+  ) > "$STATE/e2e-web.log" 2>&1 &
+  PIDS+=($!)
+  trap 'kill "${PIDS[@]}" 2>/dev/null || true' INT TERM EXIT
+  wait_for "http://127.0.0.1:${E2E_API_PORT}/healthz" "The API"
+  wait_for "http://127.0.0.1:${E2E_WEB_PORT}/icons/192" "The web app"
+
+  say "Running the full-stack browser tests"
+  if ! (
+    cd "$ROOT/apps/web"
+    POPSHOT_E2E_WEB_URL="http://127.0.0.1:${E2E_WEB_PORT}" \
+    POPSHOT_E2E_EMULATOR_URL="http://${EMULATOR_HOST}" \
+      npx playwright test -c playwright.full.config.ts "$@"
+  ); then
+    say "Last lines of the API log (.dev/e2e-api.log):"
+    tail -n 30 "$STATE/e2e-api.log" || true
+    say "Last lines of the web log (.dev/e2e-web.log):"
+    tail -n 30 "$STATE/e2e-web.log" || true
+    die "Full-stack browser tests failed."
+  fi
+}
+
 case "${1:-up}" in
   up)
     check_tools
@@ -199,6 +276,15 @@ case "${1:-up}" in
     install_web
     run_tests
     ;;
+  e2e)
+    shift
+    use_node_24
+    load_secrets
+    start_containers
+    prepare_database
+    install_web
+    run_e2e "$@"
+    ;;
   stop)
     load_secrets
     "${COMPOSE[@]}" stop
@@ -213,6 +299,6 @@ case "${1:-up}" in
     esac
     ;;
   *)
-    die "Unknown command '$1'. Use: up (default), test, stop or reset."
+    die "Unknown command '$1'. Use: up (default), test, e2e, stop or reset."
     ;;
 esac

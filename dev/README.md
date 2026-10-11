@@ -20,6 +20,7 @@ Run all of Popshot on your machine. Nothing here touches Google Cloud.
 ```sh
 ./dev/run.sh          # start everything; Ctrl-C stops the API and web app
 ./dev/run.sh test     # API checks and tests (with the database) and web checks and unit tests
+./dev/run.sh e2e      # browser tests against the whole stack (see below)
 ./dev/run.sh stop     # stop the containers; your local data is kept
 ./dev/run.sh reset    # delete the local database (asks first)
 ```
@@ -35,6 +36,21 @@ second person, use a private window and another email, such as `bob@example.com`
 
 These accounts exist only inside the emulator and disappear when it restarts. The rows
 Popshot created for them stay in the local database.
+
+## Full-stack browser tests
+
+`./dev/run.sh e2e` builds the web app for production, starts it and the API on their own
+ports (3200 and 8100, so it can run next to `./dev/run.sh`), and runs the Playwright tests in
+`apps/web/e2e/full/` against them, the database and the emulator. CI runs the same command.
+Extra arguments go to Playwright, for example `./dev/run.sh e2e --project=chromium -g groups`.
+
+Tests sign in as made-up users through the emulator and hand the session to the app the way
+Firebase restores a returning user, so the app has no test-only code. The Google popup
+itself isn't exercised; it's Google's code, and production sign-in is checked by hand.
+
+It uses Google Chrome if it's installed in /Applications; otherwise run
+`cd apps/web && npx playwright install chromium` once. If a run fails, the server logs are in
+`.dev/e2e-api.log` and `.dev/e2e-web.log`.
 
 ## How it stays local-only
 
