@@ -1,60 +1,15 @@
 """The groups endpoints end to end against the real database, with fake tokens."""
 
-import secrets
-from collections.abc import Iterator
 from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import Engine
 
-from popshot_api.auth.verifier import VerifiedIdentity
-from popshot_api.main import create_app
 from popshot_api.routes.groups import MAX_LED_GROUPS, MEMBER_PREVIEW
-from tests.conftest import make_settings
-from tests.db.conftest import _create_invite, _redeem, committed_as
-from tests.fakes import FakeTokenVerifier
+from tests.db.conftest import People, _create_invite, _redeem, committed_as, create
 
 pytestmark = pytest.mark.db
-
-
-class People:
-    """Signs people in with fresh identities, so tests never share users or groups."""
-
-    def __init__(self, client: TestClient, verifier: FakeTokenVerifier) -> None:
-        self.client = client
-        self.verifier = verifier
-
-    def new(self, name: str) -> dict[str, str]:
-        token = f"token-{secrets.token_hex(8)}"
-        self.verifier.identities[token] = VerifiedIdentity(
-            subject=f"groups-test-{secrets.token_hex(8)}",
-            email=f"{name.lower()}@example.com",
-            display_name=name,
-            picture_url=None,
-        )
-        return {"Authorization": f"Bearer {token}"}
-
-    def user_id(self, headers: dict[str, str]) -> UUID:
-        return UUID(self.client.get("/v1/me", headers=headers).json()["id"])
-
-
-@pytest.fixture
-def people(app_engine: Engine) -> Iterator[People]:
-    verifier = FakeTokenVerifier()
-    app = create_app(make_settings(), verifier, app_engine)
-    with TestClient(app) as client:
-        yield People(client, verifier)
-
-
-def create(
-    people: People, headers: dict[str, str], name: str = "Tuesday Dinkers"
-) -> dict[str, Any]:
-    response = people.client.post("/v1/groups", json={"name": name}, headers=headers)
-    assert response.status_code == 201, response.text
-    body: dict[str, Any] = response.json()
-    return body
 
 
 def test_create_makes_you_the_lead(people: People) -> None:
@@ -152,12 +107,12 @@ def test_pending_and_member_views(people: People, app_engine: Engine) -> None:
     casey, sam, riley = people.new("Casey"), people.new("Sam"), people.new("Riley")
     group = create(people, casey)
     group_id = UUID(group["id"])
-    maya_id = people.user_id(casey)
+    casey_id = people.user_id(casey)
 
     # Sam joins straight away; Riley has to wait for approval.
-    with committed_as(app_engine, maya_id) as conn:
-        _, open_invite = _create_invite(conn, group_id, maya_id, approval=False)
-        _, approval_invite = _create_invite(conn, group_id, maya_id, approval=True)
+    with committed_as(app_engine, casey_id) as conn:
+        _, open_invite = _create_invite(conn, group_id, casey_id, approval=False)
+        _, approval_invite = _create_invite(conn, group_id, casey_id, approval=True)
     _redeem(app_engine, people.user_id(sam), open_invite)
     _redeem(app_engine, people.user_id(riley), approval_invite)
 
@@ -183,13 +138,13 @@ def test_pending_and_member_views(people: People, app_engine: Engine) -> None:
     assert as_sam["member_count"] == 2
 
     # Casey, the lead: also sees who is waiting, listed after the active members.
-    as_maya = people.client.get(f"/v1/groups/{group_id}", headers=casey).json()
-    assert [(m["display_name"], m["role"], m["status"]) for m in as_maya["members"]] == [
+    as_casey = people.client.get(f"/v1/groups/{group_id}", headers=casey).json()
+    assert [(m["display_name"], m["role"], m["status"]) for m in as_casey["members"]] == [
         ("Casey", "lead", "active"),
         ("Sam", "member", "active"),
         ("Riley", "member", "pending"),
     ]
-    assert as_maya["member_count"] == 2
+    assert as_casey["member_count"] == 2
 
     # The group card's faces: active members only, the lead first.
     card = people.client.get("/v1/groups", headers=sam).json()[0]
@@ -202,9 +157,9 @@ def test_pending_and_member_views(people: People, app_engine: Engine) -> None:
 def test_member_preview_is_capped(people: People, app_engine: Engine) -> None:
     casey = people.new("Casey")
     group_id = UUID(create(people, casey)["id"])
-    maya_id = people.user_id(casey)
-    with committed_as(app_engine, maya_id) as conn:
-        _, invite = _create_invite(conn, group_id, maya_id, approval=False)
+    casey_id = people.user_id(casey)
+    with committed_as(app_engine, casey_id) as conn:
+        _, invite = _create_invite(conn, group_id, casey_id, approval=False)
     for n in range(MEMBER_PREVIEW + 2):
         _redeem(app_engine, people.user_id(people.new(f"Player{n}")), invite)
 

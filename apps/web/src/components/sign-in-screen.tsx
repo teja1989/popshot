@@ -30,7 +30,7 @@ function SignInButton({ className = "" }: { className?: string }) {
 
 const HIGHLIGHTS = ["15-second logging", "Opponent-confirmed scores", "Doubles & singles"];
 
-export function SignInScreen() {
+export function SignInScreen({ invited = false }: { invited?: boolean }) {
   const { notice } = useAuth();
   return (
     <div className="bg-bg">
@@ -43,14 +43,15 @@ export function SignInScreen() {
 
           <div className="flex flex-col">
             <p className="animate-rise text-[13px] font-bold tracking-[0.14em] text-ball uppercase">
-              Pickleball stats for your crew
+              {invited ? "You've been invited" : "Pickleball stats for your crew"}
             </p>
             <h1 className="mt-4 animate-rise text-[56px] leading-[0.95] font-[820] tracking-[-0.035em] [animation-delay:80ms] [font-stretch:118%] sm:text-[68px] lg:text-[82px]">
               Tally every <span className="text-ball">rally.</span>
             </h1>
             <p className="mt-6 max-w-xl animate-rise text-[18px] leading-relaxed text-on-hero-muted [animation-delay:160ms] lg:text-[20px]">
-              Log a game in seconds. The other team confirms it. Your crew gets the streaks,
-              rivalries and bragging rights, kept between you.
+              {invited
+                ? "Someone wants you in their Popshot group. Sign in to see which one and ask to join."
+                : "Log a game in seconds. The other team confirms it. Your crew gets the streaks, rivalries and bragging rights, kept between you."}
             </p>
             <div className="mt-8 flex animate-rise flex-col gap-4 [animation-delay:240ms] sm:flex-row sm:items-center">
               <SignInButton />
@@ -113,7 +114,7 @@ export function SignInScreen() {
           <ol className="grid gap-4 md:grid-cols-3">
             {[
               ["Start a group", "Name your crew and pick how you usually play."],
-              ["Invite your crew", "Share a single-use link. You approve who joins."],
+              ["Invite your crew", "Share an invite link. You approve who joins."],
               ["Play, log, confirm", "Log after each game; the other team confirms."],
             ].map(([title, body], i) => (
               <li key={title} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-6">

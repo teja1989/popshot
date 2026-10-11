@@ -21,26 +21,29 @@ if (pageNonce) {
 export function AppShell({
   firebase,
   authEmulatorHost,
+  invited = false,
   children,
 }: {
   firebase: FirebaseWebConfig;
   authEmulatorHost: string | null;
+  // An invite link: signed-out visitors are told why they're here.
+  invited?: boolean;
   children: ReactNode;
 }) {
   return (
     <AuthProvider firebase={firebase} authEmulatorHost={authEmulatorHost}>
-      <Gate>{children}</Gate>
+      <Gate invited={invited}>{children}</Gate>
     </AuthProvider>
   );
 }
 
-function Gate({ children }: { children: ReactNode }) {
+function Gate({ invited, children }: { invited: boolean; children: ReactNode }) {
   const { state } = useAuth();
   if (state.kind === "loading") {
     return <LoadingScreen />;
   }
   if (state.kind === "signed-out") {
-    return <SignInScreen />;
+    return <SignInScreen invited={invited} />;
   }
   return <AppFrame>{children}</AppFrame>;
 }

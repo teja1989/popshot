@@ -25,6 +25,9 @@ async function request<T>(user: User, path: ApiPath, init: RequestInit = {}): Pr
   if (!response.ok) {
     throw new ApiError(response.status, await readDetail(response));
   }
+  if (response.status === 204) {
+    return undefined as T;
+  }
   return (await response.json()) as T;
 }
 
@@ -48,4 +51,16 @@ export function apiPost<T>(user: User, path: ApiPath, body: unknown): Promise<T>
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+export function apiPatch<T>(user: User, path: ApiPath, body: unknown): Promise<T> {
+  return request<T>(user, path, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function apiDelete(user: User, path: ApiPath): Promise<void> {
+  return request<undefined>(user, path, { method: "DELETE" });
 }

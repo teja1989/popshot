@@ -139,3 +139,27 @@ test("the landing page explains the app and offers sign-in top and bottom", asyn
   await expect(signIn).toHaveCount(2);
   await expect(page.getByText("Screens show example data.", { exact: false })).toBeVisible();
 });
+
+test("an invite link, signed out, says why you're here and leaks nothing", async ({ page, request }) => {
+  const problems: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      problems.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => problems.push(error.message));
+
+  const token = "A".repeat(43);
+  const response = await page.goto(`/join#${token}`);
+  expect(response?.status()).toBe(200);
+  await expect(page.getByText("You've been invited")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
+  // Signed out, the token stays put for after sign-in.
+  expect(page.url()).toContain(`#${token}`);
+  expect(problems).toEqual([]);
+
+  // What a chat app's link preview sees: no group details, and not for search engines.
+  const html = await (await request.get("/join")).text();
+  expect(html).toContain("<title>You&#x27;re invited · Popshot</title>");
+  expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"/);
+});

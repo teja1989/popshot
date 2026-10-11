@@ -9,7 +9,7 @@ Log a game when you walk off the court, and Popshot keeps the running story of y
 ## What it does (MVP)
 
 - Sign in with Google
-- Create private groups and invite people with single-use, expiring links that the group lead approves
+- Create private groups and invite people with expiring links (for one person or up to 10) that the lead or a co-lead approves
 - Log doubles (default) or singles games after they finish; someone on the other team confirms the score
 - Group leaderboard, head-to-head records and a crew rating
 - A personal view across every group you belong to, showing where you're playing your best

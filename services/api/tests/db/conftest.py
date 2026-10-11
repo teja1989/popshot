@@ -22,9 +22,15 @@ from uuid import UUID
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.pool import NullPool
+
+from popshot_api.auth.verifier import VerifiedIdentity
+from popshot_api.main import create_app
+from tests.conftest import make_settings
+from tests.fakes import FakeTokenVerifier
 
 API_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -341,3 +347,41 @@ def seed(app_engine: Engine) -> Seed:
         audit_a=audit_a,
         audit_b=audit_b,
     )
+
+
+class People:
+    """Signs people in with fresh identities, so tests never share users or groups."""
+
+    def __init__(self, client: TestClient, verifier: FakeTokenVerifier) -> None:
+        self.client = client
+        self.verifier = verifier
+
+    def new(self, name: str) -> dict[str, str]:
+        token = f"token-{secrets.token_hex(8)}"
+        self.verifier.identities[token] = VerifiedIdentity(
+            subject=f"groups-test-{secrets.token_hex(8)}",
+            email=f"{name.lower()}@example.com",
+            display_name=name,
+            picture_url=None,
+        )
+        return {"Authorization": f"Bearer {token}"}
+
+    def user_id(self, headers: dict[str, str]) -> UUID:
+        return UUID(self.client.get("/v1/me", headers=headers).json()["id"])
+
+
+@pytest.fixture
+def people(app_engine: Engine) -> Iterator[People]:
+    verifier = FakeTokenVerifier()
+    app = create_app(make_settings(), verifier, app_engine)
+    with TestClient(app) as client:
+        yield People(client, verifier)
+
+
+def create(
+    people: People, headers: dict[str, str], name: str = "Tuesday Dinkers"
+) -> dict[str, Any]:
+    response = people.client.post("/v1/groups", json={"name": name}, headers=headers)
+    assert response.status_code == 201, response.text
+    body: dict[str, Any] = response.json()
+    return body

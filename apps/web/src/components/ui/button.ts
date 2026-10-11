@@ -1,7 +1,7 @@
 // Button looks for <button> and <Link>. Classes only, so it works in server components and
 // never needs inline styles (which the CSP blocks).
 
-export type ButtonVariant = "primary" | "action" | "quiet";
+export type ButtonVariant = "primary" | "action" | "quiet" | "danger";
 
 const base =
   "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 " +
@@ -15,6 +15,8 @@ const variants: Record<ButtonVariant, string> = {
   // The one thing you came to do (log a game): the ball-yellow accent.
   action: "bg-ball text-on-ball",
   quiet: "border border-line bg-transparent text-ink",
+  // Confirming something that can't be undone from the app.
+  danger: "border-2 border-warn bg-transparent text-warn",
 };
 
 export function buttonClass(variant: ButtonVariant = "primary", extra = ""): string {

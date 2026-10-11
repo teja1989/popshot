@@ -30,7 +30,7 @@ There are plenty of score-keeping apps already. Popshot's angle is what happens 
 ## MVP scope (Phase 1)
 
 - Google sign-in
-- Create a group, invite with single-use expiring links, lead approves joins
+- Create a group, invite with expiring links (one person or up to 10, valid 7 days), lead or co-lead approves every join
 - Roles: lead, co-lead, member
 - Log a game: format, points-to (11, 15, 21), win-by-2 on/off, players, scores per game
 - Confirm or dispute a game
