@@ -43,6 +43,19 @@ export function inviteUrl(origin: string, token: string): string {
   return `${origin}${INVITE_PATH}#${token}`;
 }
 
+/**
+ * The token from something pasted: a whole invite link (any host: only the token is kept,
+ * and we never follow the pasted address) or the bare token. Null if it's neither.
+ */
+export function tokenFromPasted(text: string): string | null {
+  const value = text.trim();
+  if (TOKEN.test(value)) {
+    return value;
+  }
+  const match = /\/join\/?#([A-Za-z0-9_-]{43})$/.exec(value);
+  return match?.[1] ?? null;
+}
+
 /** The token from a location hash like "#abc…", or null if it isn't one. */
 export function tokenFromHash(hash: string): string | null {
   const token = hash.startsWith("#") ? hash.slice(1) : hash;
