@@ -20,12 +20,14 @@ async function logSingles(page: Page, groupUrl: string, firstTime: boolean): Pro
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
   const picker = page.getByRole("dialog", { name: "Pick a player" });
   if (firstTime) {
-    await picker.getByPlaceholder("Their name").fill("Gary");
-    await picker.getByRole("button", { name: "Add guest" }).click();
+    await picker.getByRole("button", { name: "Add a guest" }).click();
+    const guest = page.getByRole("dialog", { name: "Add a guest" });
+    await guest.getByLabel("Guest's name").fill("Gary");
+    await guest.getByRole("button", { name: "Add guest" }).click();
   } else {
     await picker.getByRole("button", { name: /^Gary/ }).click();
   }
-  await expect(picker).toBeHidden();
+  await expect(page.getByRole("dialog")).toBeHidden();
   await page.getByRole("textbox", { name: /^Game 1,/ }).first().fill("11");
   await page.getByRole("textbox", { name: "Game 1, Gary" }).fill("4");
   await page.getByRole("button", { name: "Log game" }).click();
