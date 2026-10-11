@@ -73,6 +73,9 @@ class GroupSummary(BaseModel):
     member_count: int | None
     # Up to MEMBER_PREVIEW active members, the lead first, for the faces on a group card.
     member_preview: list[MemberPreview] = []
+    # Games logged in the group, and how many of them you played in. Active members only.
+    games_logged: int | None = None
+    my_games: int | None = None
 
 
 class Member(BaseModel):
@@ -117,7 +120,15 @@ def list_groups(user: CurrentUserSession) -> list[GroupSummary]:
                            WHERE a.group_id = g.id AND a.status = 'active'
                        ) p
                        WHERE p.ord <= :preview
-                   ) END AS member_preview
+                   ) END AS member_preview,
+                   CASE WHEN m.status = 'active' THEN (
+                       SELECT count(*) FROM matches x WHERE x.group_id = g.id
+                   ) END AS games_logged,
+                   CASE WHEN m.status = 'active' THEN (
+                       SELECT count(DISTINCT mp.match_id)
+                       FROM match_players mp JOIN players p ON p.id = mp.player_id
+                       WHERE mp.group_id = g.id AND p.user_id = :me
+                   ) END AS my_games
             FROM group_members m
             JOIN groups g ON g.id = m.group_id
             WHERE m.user_id = :me AND m.status IN ('active', 'pending')

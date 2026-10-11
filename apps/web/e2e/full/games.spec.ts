@@ -15,10 +15,11 @@ async function startGroup(page: Page, name: string): Promise<string> {
 
 async function addGuestTo(page: Page, slot: Locator, name: string): Promise<void> {
   await slot.click();
-  const picker = page.getByRole("dialog", { name: "Pick a player" });
-  await picker.getByPlaceholder("Their name").fill(name);
-  await picker.getByRole("button", { name: "Add guest" }).click();
-  await expect(picker).toBeHidden();
+  await page.getByRole("dialog", { name: "Pick a player" }).getByRole("button", { name: "Add a guest" }).click();
+  const guest = page.getByRole("dialog", { name: "Add a guest" });
+  await guest.getByLabel("Guest's name").fill(name);
+  await guest.getByRole("button", { name: "Add guest" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
 }
 
 test("log a doubles game with guests, see it, and delete it", async ({ page }) => {
@@ -42,9 +43,11 @@ test("log a doubles game with guests, see it, and delete it", async ({ page }) =
   await page.getByRole("button", { name: "Team B, player 2: Robin. Change" }).click();
   const picker = page.getByRole("dialog", { name: "Pick a player" });
   await expect(picker.getByRole("button", { name: /Gary/ })).toBeDisabled();
-  await picker.getByPlaceholder("Their name").fill("gary");
-  await picker.getByRole("button", { name: "Add guest" }).click();
-  await expect(picker.getByRole("alert")).toContainText("already a player called gary");
+  await picker.getByRole("button", { name: "Add a guest" }).click();
+  const guest = page.getByRole("dialog", { name: "Add a guest" });
+  await guest.getByLabel("Guest's name").fill("gary");
+  await guest.getByRole("button", { name: "Add guest" }).click();
+  await expect(guest.getByRole("alert")).toContainText("already a player called gary");
   await page.keyboard.press("Escape");
 
   // A score that can't happen is explained as you type.
@@ -133,4 +136,58 @@ test("edit your name and see it across the app", async ({ page }) => {
   await page.reload();
   await expect(page.getByRole("region", { name: /Members/ })).toContainText("JJ (you)");
   expect(problems).toEqual([]);
+});
+
+test("the player picker works at keyboard height on a phone", async ({ page }) => {
+  // Roughly what's left of a phone screen with the on-screen keyboard up.
+  await page.setViewportSize({ width: 390, height: 420 });
+  await signIn(page, newUser("Kim"));
+  const problems = await watchProblems(page);
+  const groupUrl = await startGroup(page, "Small Screen");
+  await page.goto(`${groupUrl}/log`);
+
+  await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
+  const picker = page.getByRole("dialog", { name: "Pick a player" });
+  await expect(picker).toBeVisible();
+  // Opening the picker doesn't focus a text field, so no keyboard pops up over the list.
+  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe("INPUT");
+
+  // Searching for someone who isn't there offers to add them, name filled in.
+  await picker.getByLabel("Find a player").fill("Mo");
+  await picker.getByRole("button", { name: "Add “Mo” as a guest" }).click();
+  const guest = page.getByRole("dialog", { name: "Add a guest" });
+  const field = guest.getByLabel("Guest's name");
+  await expect(field).toBeFocused();
+  await expect(field).toHaveValue("Mo");
+  // The field and its button sit at the top, inside what's visible.
+  await expect(field).toBeInViewport();
+  await expect(guest.getByRole("button", { name: "Add guest" })).toBeInViewport();
+  await field.fill("Morgan");
+  await guest.getByRole("button", { name: "Add guest" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Team B, player 1: Morgan. Change" })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
+test("home counts the games you've played, and the logo goes home", async ({ page }) => {
+  await signIn(page, newUser("Lee"));
+  const groupUrl = await startGroup(page, "Count Crew");
+  await page.goto("/");
+  const stats = page.getByRole("definition").filter({ hasText: /^\d/ });
+  await expect(page.getByText("Games played")).toBeVisible();
+  await expect(stats.nth(1)).toHaveText("0");
+
+  await page.goto(`${groupUrl}/log`);
+  await page.getByText("Singles", { exact: true }).click();
+  await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Pat");
+  await page.getByRole("textbox", { name: /^Game 1,/ }).first().fill("11");
+  await page.getByRole("textbox", { name: "Game 1, Pat" }).fill("6");
+  await page.getByRole("button", { name: "Log game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+
+  // The logo is a link home from anywhere in the app.
+  await page.getByRole("link", { name: "Popshot home" }).first().click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(stats.nth(1)).toHaveText("1");
+  await expect(page.getByRole("link", { name: /Count Crew/ })).toContainText("1 game");
 });

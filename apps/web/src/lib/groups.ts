@@ -18,6 +18,9 @@ export interface GroupSummary {
   member_count: number | null;
   // Up to 4 active members, the lead first.
   member_preview: MemberPreview[];
+  // Games logged in the group, and how many you played. Null while you're waiting to join.
+  games_logged: number | null;
+  my_games: number | null;
 }
 
 export interface Member {

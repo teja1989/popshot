@@ -9,6 +9,14 @@ import { CloseIcon } from "./icons";
 // Radix handles focus trapping, Escape, returning focus and hiding the rest of the page
 // from screen readers.
 
+const DESKTOP =
+  "sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:h-auto sm:max-h-[92dvh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border sm:pb-6";
+
+const PANEL = {
+  bottom: `fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] animate-sheet-up overflow-y-auto rounded-t-3xl border border-line bg-surface px-5 pt-5 pb-8 text-ink ${DESKTOP}`,
+  full: `fixed inset-0 z-50 h-dvh animate-sheet-up overflow-y-auto border-line bg-surface px-5 pt-5 pb-8 text-ink ${DESKTOP}`,
+};
+
 export function Sheet({
   trigger,
   open,
@@ -16,6 +24,7 @@ export function Sheet({
   title,
   description,
   onOpenAutoFocus,
+  fullOnPhone = false,
   children,
 }: {
   // The button that opens the sheet. Radix returns focus to it when the sheet closes.
@@ -25,6 +34,9 @@ export function Sheet({
   title: string;
   description: string;
   onOpenAutoFocus?: (event: Event) => void;
+  // Fill the screen on phones, content from the top. For sheets with text fields: a bottom
+  // sheet would sit under the on-screen keyboard.
+  fullOnPhone?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -34,7 +46,7 @@ export function Sheet({
         <Dialog.Overlay className="fixed inset-0 z-40 animate-fade-in bg-ink/45" />
         <Dialog.Content
           onOpenAutoFocus={onOpenAutoFocus}
-          className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] animate-sheet-up overflow-y-auto rounded-t-3xl border border-line bg-surface px-5 pt-5 pb-8 text-ink sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:pb-6"
+          className={fullOnPhone ? PANEL.full : PANEL.bottom}
         >
           <div className="flex items-start justify-between gap-4">
             <Dialog.Title className="text-[24px] leading-tight font-extrabold tracking-[-0.01em] [font-stretch:110%]">
