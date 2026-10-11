@@ -177,7 +177,7 @@ function EditFocusSheet({ options, focus, onSaved }: { options: FocusOption[]; f
       <div className="flex flex-col gap-6">
         <FocusPicker
           legend="Strengths"
-          hint="Pick 2 to 4."
+          hint={`Up to ${String(MAX_STRENGTHS)}.`}
           options={options}
           selected={strengths}
           onChange={setStrengths}
@@ -187,7 +187,7 @@ function EditFocusSheet({ options, focus, onSaved }: { options: FocusOption[]; f
         />
         <FocusPicker
           legend="Areas to improve"
-          hint="Pick 1 to 3."
+          hint={`Up to ${String(MAX_IMPROVE)}.`}
           options={options}
           selected={improve}
           onChange={setImprove}

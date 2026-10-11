@@ -85,7 +85,7 @@ function ReflectionForm({ groupId, match, onSaved }: { groupId: string; match: M
     <div className="flex flex-col gap-5">
       <FocusPicker
         legend="What went well?"
-        hint="Up to 3."
+        hint={`Up to ${String(MAX_PER_REFLECTION)}.`}
         options={options.result.data}
         selected={wentWell}
         onChange={setWentWell}
@@ -97,7 +97,7 @@ function ReflectionForm({ groupId, match, onSaved }: { groupId: string; match: M
       />
       <FocusPicker
         legend="What to improve?"
-        hint="Up to 3."
+        hint={`Up to ${String(MAX_PER_REFLECTION)}.`}
         options={options.result.data}
         selected={toImprove}
         onChange={setToImprove}

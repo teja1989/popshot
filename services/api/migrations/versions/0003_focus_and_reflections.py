@@ -44,9 +44,9 @@ $$;
 CREATE TABLE user_focus (
     user_id uuid PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
     strengths text[] NOT NULL DEFAULT '{{}}'
-        CHECK (cardinality(strengths) <= 4 AND app_valid_focus_ids(strengths)),
+        CHECK (cardinality(strengths) <= 6 AND app_valid_focus_ids(strengths)),
     improve text[] NOT NULL DEFAULT '{{}}'
-        CHECK (cardinality(improve) <= 3 AND app_valid_focus_ids(improve)),
+        CHECK (cardinality(improve) <= 6 AND app_valid_focus_ids(improve)),
     updated_at timestamptz NOT NULL DEFAULT now(),
     CHECK (NOT (strengths && improve))
 );
@@ -56,9 +56,9 @@ CREATE TABLE match_reflections (
     group_id uuid NOT NULL,
     user_id uuid NOT NULL,
     went_well text[] NOT NULL DEFAULT '{{}}'
-        CHECK (cardinality(went_well) <= 3 AND app_valid_focus_ids(went_well)),
+        CHECK (cardinality(went_well) <= 6 AND app_valid_focus_ids(went_well)),
     to_improve text[] NOT NULL DEFAULT '{{}}'
-        CHECK (cardinality(to_improve) <= 3 AND app_valid_focus_ids(to_improve)),
+        CHECK (cardinality(to_improve) <= 6 AND app_valid_focus_ids(to_improve)),
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (match_id, user_id),

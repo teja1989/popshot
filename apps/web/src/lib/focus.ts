@@ -1,9 +1,9 @@
 // Private focus areas and post-game reflections. Shapes match the API's routes/focus.py;
 // the option list itself comes from GET /v1/focus-options.
 
-export const MAX_STRENGTHS = 4;
-export const MAX_IMPROVE = 3;
-export const MAX_PER_REFLECTION = 3;
+export const MAX_STRENGTHS = 6;
+export const MAX_IMPROVE = 6;
+export const MAX_PER_REFLECTION = 6;
 // A game you played shows "How did it go?" for this long.
 export const REFLECT_PROMPT_DAYS = 7;
 

@@ -7,9 +7,9 @@ Add new options anywhere; the order here is the order on screen.
 
 from dataclasses import dataclass
 
-MAX_STRENGTHS = 4
-MAX_IMPROVE = 3
-MAX_PER_REFLECTION = 3
+MAX_STRENGTHS = 6
+MAX_IMPROVE = 6
+MAX_PER_REFLECTION = 6
 # Suggest promoting an option picked in at least SUGGEST_MIN of your last SUGGEST_WINDOW
 # reflections that weren't skipped.
 SUGGEST_WINDOW = 10
@@ -33,14 +33,20 @@ FOCUS_OPTIONS: tuple[FocusOption, ...] = (
     FocusOption("dinking_patience", "Dinking patience", "Kitchen"),
     FocusOption("kitchen_positioning", "Kitchen positioning", "Kitchen"),
     FocusOption("speedups_counters", "Speed-ups and counters", "Kitchen"),
+    FocusOption("hand_battles", "Hand battles and volleys", "Kitchen"),
     FocusOption("transition_resets", "Transition zone resets", "Transition"),
     FocusOption("reset_under_pressure", "Reset ability under pressure", "Transition"),
     FocusOption("put_aways", "Aggressive put-aways", "Finishing"),
     FocusOption("lobs_overheads", "Lobs and overheads", "Finishing"),
+    FocusOption("poaching", "Poaching", "Finishing"),
+    FocusOption("backhand", "Backhand consistency", "Strokes"),
+    FocusOption("spin_variety", "Spin and shot variety", "Strokes"),
     FocusOption("footwork", "Footwork", "Movement"),
     FocusOption("court_coverage", "Court coverage", "Movement"),
+    FocusOption("fitness_stamina", "Fitness and stamina", "Movement"),
     FocusOption("partner_communication", "Communication with partner", "Mental & team"),
     FocusOption("shot_selection", "Shot selection and patience", "Mental & team"),
+    FocusOption("staying_calm", "Staying calm after errors", "Mental & team"),
 )
 
 KNOWN_IDS = frozenset(o.id for o in FOCUS_OPTIONS)

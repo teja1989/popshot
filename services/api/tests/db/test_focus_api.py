@@ -6,7 +6,13 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import Engine, text
 
-from popshot_api.focus import FOCUS_OPTIONS, MAX_IMPROVE, MAX_STRENGTHS, SUGGEST_MIN
+from popshot_api.focus import (
+    FOCUS_OPTIONS,
+    MAX_IMPROVE,
+    MAX_PER_REFLECTION,
+    MAX_STRENGTHS,
+    SUGGEST_MIN,
+)
 from tests.db.conftest import (
     INSUFFICIENT_PRIVILEGE,
     People,
@@ -80,7 +86,7 @@ def put_focus(people: People, headers: Headers, strengths: list[str], improve: l
 def test_options_are_offered_in_order(people: People) -> None:
     listed = people.client.get("/v1/focus-options", headers=people.new("Casey")).json()
     assert [o["id"] for o in listed] == [o.id for o in FOCUS_OPTIONS if not o.retired]
-    assert 12 <= len(listed) <= 18
+    assert len(listed) >= 20
     assert len({o["id"] for o in listed}) == len(listed)
     assert listed[0] == {
         "id": "serve_consistency",
@@ -169,7 +175,7 @@ def test_database_rejects_bad_ids_and_overlap(people: People, app_engine: Engine
             ("{Bad Id}", "{}"),
             ("{footwork,footwork}", "{}"),
             ("{footwork}", "{footwork}"),
-            ("{a,b,c,d,e}", "{}"),
+            ("{a,b,c,d,e,f,g}", "{}"),
         ):
             state = sqlstate_of(
                 conn,
@@ -255,7 +261,7 @@ def test_who_can_reflect(people: People, pair: dict[str, Any], app_engine: Engin
     ("went_well", "to_improve"),
     [
         (["footwork"], ["footwork"]),
-        (["footwork", "court_coverage", "put_aways", "lobs_overheads"], []),
+        ([o.id for o in FOCUS_OPTIONS[: MAX_PER_REFLECTION + 1]], []),
         (["nope"], []),
         (["footwork", "footwork"], []),
     ],

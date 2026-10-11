@@ -48,7 +48,10 @@ describe("promote", () => {
   });
 
   it("refuses when the list is full", () => {
-    const full = { strengths: ["a", "b", "c", "d"].slice(0, MAX_STRENGTHS), improve: ["e", "f", "g"].slice(0, MAX_IMPROVE) };
+    const full = {
+      strengths: Array.from({ length: MAX_STRENGTHS }, (_, i) => `s${String(i)}`),
+      improve: Array.from({ length: MAX_IMPROVE }, (_, i) => `i${String(i)}`),
+    };
     expect(promote(full, { option_id: "z", kind: "strength", count: 5, out_of: 5 })).toBeNull();
     expect(promote(full, { option_id: "z", kind: "improve", count: 5, out_of: 5 })).toBeNull();
   });

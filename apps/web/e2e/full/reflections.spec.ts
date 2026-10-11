@@ -49,11 +49,14 @@ test("reflect after a game, skip one, and keep it to yourself", async ({ page })
   await expect(wentWell.getByRole("button", { name: /Footwork/ })).toHaveAttribute("aria-pressed", "true");
   // The same option can't also go under what to improve.
   await expect(toImprove.getByRole("button", { name: /Footwork/ })).toBeDisabled();
-  // At most three.
-  for (const name of ["Return of serve", "Third-shot drops"]) {
+  // At most six.
+  for (const name of ["Return of serve", "Third-shot drops", "Poaching", "Backhand consistency", "Court coverage"]) {
     await wentWell.getByRole("button", { name }).click();
   }
-  await expect(wentWell.getByRole("button", { name: "Court coverage" })).toBeDisabled();
+  await expect(wentWell.getByRole("button", { name: "Lobs and overheads" })).toBeDisabled();
+  for (const name of ["Poaching", "Backhand consistency", "Court coverage"]) {
+    await wentWell.getByRole("button", { name }).click();
+  }
   await toImprove.getByRole("button", { name: "Serve consistency" }).click();
   await sheet.getByRole("button", { name: "Save" }).click();
   await expect(sheet).toBeHidden();
@@ -84,10 +87,13 @@ test("pick strengths and areas, and promote a repeated reflection", async ({ pag
   await section.getByRole("button", { name: "Edit your game" }).click();
   const edit = page.getByRole("dialog", { name: "Your game" });
   const strengths = edit.getByRole("group", { name: /Strengths/ });
-  for (const name of ["Footwork", "Court coverage", "Serve consistency", "Return of serve"]) {
+  for (const name of ["Footwork", "Court coverage", "Serve consistency", "Return of serve", "Poaching", "Backhand consistency"]) {
     await strengths.getByRole("button", { name }).click();
   }
   await expect(strengths.getByRole("button", { name: "Lobs and overheads" })).toBeDisabled();
+  for (const name of ["Poaching", "Backhand consistency"]) {
+    await strengths.getByRole("button", { name }).click();
+  }
   await expect(edit.getByRole("group", { name: /Areas to improve/ }).getByRole("button", { name: /Footwork/ })).toBeDisabled();
   await strengths.getByRole("button", { name: /Return of serve/ }).click();
   await edit.getByRole("group", { name: /Areas to improve/ }).getByRole("button", { name: "Dinking patience" }).click();
