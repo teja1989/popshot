@@ -462,7 +462,10 @@ def change_night(
         text(
             """
             UPDATE play_nights SET starts_at = :starts_at, venue = :venue, note = :note,
-                   spots = :spots, updated_at = now()
+                   spots = :spots, updated_at = now(),
+                   -- A new time means new reminders.
+                   reminded_day_at = CASE WHEN starts_at = :starts_at THEN reminded_day_at END,
+                   reminded_soon_at = CASE WHEN starts_at = :starts_at THEN reminded_soon_at END
             WHERE id = :n AND group_id = :g
             """
         ),

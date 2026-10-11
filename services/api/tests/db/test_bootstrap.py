@@ -67,3 +67,13 @@ def test_iam_token_hook_supplies_the_password(app_url: str, migrated: None) -> N
         assert conn.execute(text("SELECT current_user")).scalar_one() == url.username
     engine.dispose()
     assert calls == [1]
+
+
+def test_the_jobs_user_is_separate_too() -> None:
+    with pytest.raises(ValueError, match="different"):
+        bootstrap(
+            "postgresql://unused@127.0.0.1:1/x",
+            migrator="popshot_migrator",
+            api="popshot_api",
+            jobs="popshot_api",
+        )

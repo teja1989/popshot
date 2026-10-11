@@ -55,5 +55,6 @@ output "jobs" {
   value = {
     db_bootstrap = google_cloud_run_v2_job.db_bootstrap.name
     migrate      = google_cloud_run_v2_job.migrate.name
+    tick         = google_cloud_run_v2_job.tick.name
   }
 }

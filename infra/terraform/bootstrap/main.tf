@@ -11,6 +11,7 @@ locals {
   # use it (see the GitHub environment rules in README.md).
   deploy_roles = [
     "roles/artifactregistry.admin",
+    "roles/cloudscheduler.admin",
     "roles/cloudsql.admin",
     "roles/compute.networkAdmin",
     "roles/firebase.admin",

@@ -16,6 +16,7 @@ locals {
   # Cloud SQL's IAM user name for a service account drops ".gserviceaccount.com".
   api_db_user      = trimsuffix(google_service_account.api.email, ".gserviceaccount.com")
   migrator_db_user = trimsuffix(google_service_account.migrate.email, ".gserviceaccount.com")
+  jobs_db_user     = trimsuffix(google_service_account.tick.email, ".gserviceaccount.com")
   db_ip            = google_sql_database_instance.main.private_ip_address
   # verify-ca: the connection is encrypted and the server must present Cloud SQL's CA.
   ssl_params = "sslmode=verify-ca&sslrootcert=${urlencode(local.sql_ca_file)}"
@@ -25,6 +26,7 @@ resource "google_project_service" "apis" {
   for_each = toset([
     "apikeys.googleapis.com",
     "billingbudgets.googleapis.com",
+    "cloudscheduler.googleapis.com",
     "compute.googleapis.com",
     "firebase.googleapis.com",
     "identitytoolkit.googleapis.com",
@@ -92,6 +94,17 @@ resource "google_service_account" "migrate" {
   display_name = "Cloud Run job: migrations (database login: popshot_owner)"
 }
 
+resource "google_service_account" "tick" {
+  account_id   = "job-tick"
+  display_name = "Cloud Run job: scheduled tasks (database login: popshot_jobs)"
+}
+
+# Only starts the tick job. Nothing else.
+resource "google_service_account" "scheduler" {
+  account_id   = "scheduler-tick"
+  display_name = "Cloud Scheduler: starts the tick job"
+}
+
 resource "google_service_account" "db_admin" {
   account_id   = "job-db-admin"
   display_name = "Cloud Run job: database bootstrap (Cloud SQL admin)"
@@ -100,10 +113,12 @@ resource "google_service_account" "db_admin" {
 # gha-deploy may deploy as these accounts, and no others.
 resource "google_service_account_iam_member" "deploy_act_as" {
   for_each = {
-    web      = google_service_account.web.name
-    api      = google_service_account.api.name
-    migrate  = google_service_account.migrate.name
-    db_admin = google_service_account.db_admin.name
+    web       = google_service_account.web.name
+    api       = google_service_account.api.name
+    migrate   = google_service_account.migrate.name
+    db_admin  = google_service_account.db_admin.name
+    tick      = google_service_account.tick.name
+    scheduler = google_service_account.scheduler.name
   }
   service_account_id = each.value
   role               = "roles/iam.serviceAccountUser"
@@ -115,6 +130,7 @@ resource "google_project_iam_member" "sql_client" {
     api      = google_service_account.api.member
     migrate  = google_service_account.migrate.member
     db_admin = google_service_account.db_admin.member
+    tick     = google_service_account.tick.member
   }
   project = var.project_id
   role    = "roles/cloudsql.client"
@@ -126,6 +142,7 @@ resource "google_project_iam_member" "sql_instance_user" {
   for_each = {
     api     = google_service_account.api.member
     migrate = google_service_account.migrate.member
+    tick    = google_service_account.tick.member
   }
   project = var.project_id
   role    = "roles/cloudsql.instanceUser"
@@ -231,6 +248,12 @@ resource "google_sql_user" "migrate" {
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 }
 
+resource "google_sql_user" "tick" {
+  name     = local.jobs_db_user
+  instance = google_sql_database_instance.main.name
+  type     = "CLOUD_IAM_SERVICE_ACCOUNT"
+}
+
 # ---------------------------------------------------------------- secrets
 
 resource "google_secret_manager_secret" "db_admin_url" {
@@ -279,6 +302,7 @@ resource "google_secret_manager_secret_iam_member" "sql_ca" {
     api      = google_service_account.api.member
     migrate  = google_service_account.migrate.member
     db_admin = google_service_account.db_admin.member
+    tick     = google_service_account.tick.member
   }
   secret_id = google_secret_manager_secret.sql_ca.id
   role      = "roles/secretmanager.secretAccessor"
@@ -312,9 +336,13 @@ resource "google_secret_manager_secret_version" "push_vapid" {
 }
 
 resource "google_secret_manager_secret_iam_member" "push_vapid" {
+  for_each = {
+    api  = google_service_account.api.member
+    tick = google_service_account.tick.member
+  }
   secret_id = google_secret_manager_secret.push_vapid.id
   role      = "roles/secretmanager.secretAccessor"
-  member    = google_service_account.api.member
+  member    = each.value
 }
 
 # Only the bootstrap job can read the admin URL. The API never can.
@@ -357,7 +385,12 @@ resource "google_cloud_run_v2_job" "db_bootstrap" {
       containers {
         image   = var.api_image
         command = ["python", "-m", "popshot_api.ops.bootstrap_db"]
-        args    = ["--migrator", local.migrator_db_user, "--api", local.api_db_user, "--database", local.db_name]
+        args = [
+          "--migrator", local.migrator_db_user,
+          "--api", local.api_db_user,
+          "--jobs", local.jobs_db_user,
+          "--database", local.db_name,
+        ]
 
         env {
           name = "POPSHOT_BOOTSTRAP_ADMIN_URL"
@@ -395,6 +428,7 @@ resource "google_cloud_run_v2_job" "db_bootstrap" {
     google_secret_manager_secret_iam_member.sql_ca,
     google_sql_user.api,
     google_sql_user.migrate,
+    google_sql_user.tick,
   ]
 }
 
@@ -457,5 +491,121 @@ resource "google_cloud_run_v2_job" "migrate" {
     google_secret_manager_secret_iam_member.sql_ca,
     google_project_iam_member.sql_instance_user,
     google_sql_user.migrate,
+  ]
+}
+
+# ---------------------------------------------------------------- scheduled job
+
+# Every 15 minutes: play-night reminders and purging deleted groups (popshot_api.ops.tick).
+# Logs in as popshot_jobs, which can only call the functions migration 0008 grants it.
+resource "google_cloud_run_v2_job" "tick" {
+  name                = "tick"
+  location            = var.region
+  deletion_protection = false
+
+  template {
+    task_count = 1
+    template {
+      service_account = google_service_account.tick.email
+      # The next run is 15 minutes away; a retry could only send reminders late.
+      max_retries = 0
+      timeout     = "300s"
+
+      vpc_access {
+        network_interfaces {
+          network    = local.job_vpc.network
+          subnetwork = local.job_vpc.subnetwork
+        }
+        # The database over the VPC; push services over the internet.
+        egress = "PRIVATE_RANGES_ONLY"
+      }
+
+      containers {
+        image   = var.api_image
+        command = ["python", "-m", "popshot_api.ops.tick"]
+
+        env {
+          name = "POPSHOT_JOBS_DATABASE_URL"
+          value = format(
+            "postgresql+psycopg://%s@%s/%s?%s",
+            urlencode(local.jobs_db_user), local.db_ip, local.db_name, local.ssl_params,
+          )
+        }
+        env {
+          name  = "POPSHOT_DATABASE_IAM_AUTH"
+          value = "true"
+        }
+        env {
+          name = "POPSHOT_PUSH_VAPID_PRIVATE_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.push_vapid.secret_id
+              version = "latest"
+            }
+          }
+        }
+        env {
+          name  = "POPSHOT_PUSH_SUBJECT"
+          value = local.web_url
+        }
+
+        volume_mounts {
+          name       = "sql-ca"
+          mount_path = local.sql_ca_mount_path
+        }
+      }
+
+      volumes {
+        name = "sql-ca"
+        secret {
+          secret = google_secret_manager_secret.sql_ca.secret_id
+          items {
+            version = "latest"
+            path    = "server-ca.pem"
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    google_secret_manager_secret_iam_member.sql_ca,
+    google_secret_manager_secret_iam_member.push_vapid,
+    google_secret_manager_secret_version.push_vapid,
+    google_project_iam_member.sql_instance_user,
+    google_sql_user.tick,
+  ]
+}
+
+resource "google_cloud_run_v2_job_iam_member" "scheduler_runs_tick" {
+  name     = google_cloud_run_v2_job.tick.name
+  location = var.region
+  role     = "roles/run.invoker"
+  member   = google_service_account.scheduler.member
+}
+
+resource "google_cloud_scheduler_job" "tick" {
+  name      = "tick"
+  region    = var.region
+  schedule  = "*/15 * * * *"
+  time_zone = "Etc/UTC"
+  # A missed run is fine: the next one catches up.
+  attempt_deadline = "60s"
+  retry_config {
+    retry_count = 0
+  }
+
+  http_target {
+    http_method = "POST"
+    uri         = "https://run.googleapis.com/v2/projects/${var.project_id}/locations/${var.region}/jobs/${google_cloud_run_v2_job.tick.name}:run"
+    oauth_token {
+      service_account_email = google_service_account.scheduler.email
+      scope                 = "https://www.googleapis.com/auth/cloud-platform"
+    }
+  }
+
+  depends_on = [
+    google_project_service.apis,
+    google_cloud_run_v2_job_iam_member.scheduler_runs_tick,
   ]
 }
