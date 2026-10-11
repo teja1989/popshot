@@ -10,7 +10,7 @@ Log a game when you walk off the court, and Popshot keeps the running story of y
 
 - Sign in with Google
 - Create private groups and invite people with expiring links (for one person or up to 10) that the lead or a co-lead approves
-- Log doubles (default) or singles games after they finish; someone on the other team confirms the score
+- Log doubles (default) or singles games after they finish; the score counts as soon as it's logged, and whoever logged it can edit it
 - Group leaderboard, head-to-head records and a crew rating
 - A personal view across every group you belong to, showing where you're playing your best
 - Fun stats: nemesis, best partner, skunks, close-game record, upsets, streaks, iron player

@@ -64,9 +64,22 @@ test("log a doubles game with guests, see it, and delete it", async ({ page }) =
   await page.keyboard.press("Escape");
   await expect(page.getByRole("status")).toContainText("Game logged.");
   const card = page.getByRole("listitem").filter({ hasText: "Jo & Robin" });
-  await expect(card).toContainText("Waiting for confirmation");
-  await expect(card).toContainText("logged by you");
+  // It counts straight away: no confirmation step.
+  await expect(card).not.toContainText("Waiting");
+  await expect(card).toContainText("Logged by you");
   await expect(card.getByRole("table")).toContainText(`${casey.name} & Gary`);
+
+  // The scorer can fix it: the same form, filled in.
+  await card.getByRole("link", { name: "Edit game" }).click();
+  await expect(page.getByRole("heading", { name: "Edit game" })).toBeVisible();
+  await expect(page.getByLabel(`Game 1, ${casey.name} & Gary`)).toHaveValue("12");
+  await expect(page.getByLabel("Game 1, Jo & Robin")).toHaveValue("10");
+  await page.getByLabel(`Game 1, ${casey.name} & Gary`).fill("6");
+  await page.getByLabel("Game 1, Jo & Robin").fill("11");
+  await expect(page.getByText("✓ Jo & Robin win 11–6.")).toBeVisible();
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+  await expect(card.getByRole("cell")).toHaveText(["6", "11"]);
 
   await card.getByRole("button", { name: "Delete" }).click();
   await card.getByRole("button", { name: "Delete game" }).click();
@@ -195,4 +208,54 @@ test("home counts the games you've played, and the logo goes home", async ({ pag
   await expect(page).toHaveURL(/\/$/);
   await expect(stats.nth(1)).toHaveText("1");
   await expect(page.getByRole("link", { name: /Count Crew/ })).toContainText("1 game");
+});
+
+test("other players see a logged game straight away, but only the scorer can edit it", async ({ page, browser }) => {
+  const casey = newUser("Casey");
+  const sam = newUser("Sam");
+  await signIn(page, casey);
+  const groupUrl = await startGroup(page, "Open Book");
+
+  // Sam joins through an invite link, and Casey lets Sam in.
+  await page.getByRole("button", { name: "Make an invite link" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Make link" }).click();
+  const link = await page.getByRole("dialog", { name: "Your invite link" }).getByLabel("Link").inputValue();
+  await page.keyboard.press("Escape");
+  const other = await browser.newPage();
+  await signIn(other, sam);
+  await other.goto(link);
+  await other.getByRole("button", { name: "Ask to join" }).click();
+  await expect(other.getByRole("heading", { name: "Waiting for approval" })).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: `Let ${sam.name} in` }).click();
+  await expect(page.getByRole("region", { name: /Members · 2/ })).toBeVisible();
+
+  // Casey logs a singles game against Sam.
+  await page.goto(`${groupUrl}/log`);
+  await page.getByText("Singles", { exact: true }).click();
+  await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
+  await page.getByRole("dialog", { name: "Pick a player" }).getByRole("button", { name: new RegExp(sam.name) }).click();
+  await page.getByLabel(`Game 1, ${casey.name}`).fill("11");
+  await page.getByLabel(`Game 1, ${sam.name}`).fill("8");
+  await page.getByRole("button", { name: "Log game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+  const sheet = page.getByRole("dialog", { name: "How did it go?" });
+  await expect(sheet).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+  const gameUrl = await page.getByRole("link", { name: "Edit game" }).getAttribute("href");
+
+  // Sam sees it right away, with Casey as the scorer, and no Edit.
+  await other.goto("/games");
+  const card = other.getByRole("listitem").filter({ hasText: casey.name });
+  await expect(card).toContainText(`Logged by ${casey.name}`);
+  await expect(card.getByRole("cell")).toHaveText(["11", "8"]);
+  await expect(card.getByRole("link", { name: "Edit game" })).toHaveCount(0);
+  await expect(card.getByRole("button", { name: "Delete" })).toHaveCount(0);
+  // Sam played, so the optional "How did it go?" is offered here too.
+  await expect(card.getByRole("button", { name: /How did it go for you\?/ })).toBeVisible();
+  // Going to the edit page directly says no.
+  await other.goto(gameUrl ?? "/");
+  await expect(other.getByText("Only the person who logged this game can edit it.")).toBeVisible();
+  await other.close();
 });

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { apiDelete, ApiError } from "@/lib/api-client";
 import { labelFor, wantsReflection, type FocusOption, type Reflection } from "@/lib/focus";
-import { namesOn, playedWhen, STATUS_LABEL, type Match } from "@/lib/games";
+import { namesOn, playedWhen, type Match } from "@/lib/games";
 import type { GroupSummary } from "@/lib/groups";
 import type { Team } from "@/lib/scoring";
 
@@ -72,7 +72,7 @@ function GroupGames({
 
       {justLogged && (
         <p role="status" className="animate-rise rounded-xl bg-chip px-4 py-3 text-[15px] font-bold">
-          Game logged. It shows as waiting until someone on the other team confirms it.
+          Game logged. It&apos;s on your crew&apos;s record now, and you can edit it any time.
         </p>
       )}
 
@@ -92,8 +92,8 @@ function GroupGames({
           <CourtArt className="w-40" />
           <h2 className="text-[20px] font-extrabold">No games in {group.name} yet</h2>
           <p className="text-[16px] leading-relaxed text-muted">
-            Log your first one: pick who played, tap in the score, and someone on the other team
-            confirms it.
+            Log your first one: pick who played and tap in the score. It counts right away, and
+            you can fix it later if needed.
           </p>
         </section>
       )}
@@ -140,12 +140,6 @@ function GroupGames({
   );
 }
 
-const STATUS_TONE: Record<Match["status"], string> = {
-  pending: "bg-chip text-muted",
-  confirmed: "bg-win text-on-win",
-  disputed: "border border-warn text-warn",
-};
-
 function GameCard({
   groupId,
   match,
@@ -163,7 +157,7 @@ function GameCard({
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const canDelete = match.entered_by_me && match.status === "pending";
+  const canChange = match.can_edit;
 
   async function remove() {
     setBusy(true);
@@ -181,8 +175,8 @@ function GameCard({
     <li className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[14px] text-muted">{playedWhen(match.played_at)}</span>
-        <span className={`rounded-full px-2.5 py-1 text-[12px] font-bold ${STATUS_TONE[match.status]}`}>
-          {STATUS_LABEL[match.status]}
+        <span className="text-[13px] text-muted">
+          {match.format === "doubles" ? "Doubles" : "Singles"} · to {match.points_to}
         </span>
       </div>
       <table className="w-full border-separate border-spacing-y-1">
@@ -218,20 +212,26 @@ function GameCard({
         </tbody>
       </table>
       <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
-        <span>
-          {match.format === "doubles" ? "Doubles" : "Singles"} · to {match.points_to}
-          {match.entered_by_name ? ` · logged by ${match.entered_by_me ? "you" : match.entered_by_name}` : ""}
-        </span>
-        {canDelete && !confirming && (
-          <button
-            type="button"
-            className="min-h-11 cursor-pointer px-2 font-bold text-primary"
-            onClick={() => {
-              setConfirming(true);
-            }}
-          >
-            Delete
-          </button>
+        <span>{match.entered_by_name ? `Logged by ${match.entered_by_me ? "you" : match.entered_by_name}` : ""}</span>
+        {canChange && !confirming && (
+          <span className="flex">
+            <Link
+              href={`/groups/${groupId}/matches/${match.id}/edit`}
+              aria-label="Edit game"
+              className="flex min-h-11 items-center px-2 font-bold text-primary no-underline"
+            >
+              Edit
+            </Link>
+            <button
+              type="button"
+              className="min-h-11 cursor-pointer px-2 font-bold text-primary"
+              onClick={() => {
+                setConfirming(true);
+              }}
+            >
+              Delete
+            </button>
+          </span>
         )}
       </div>
       {wantsReflection(match) && (
@@ -247,7 +247,7 @@ function GameCard({
       {match.my_reflection && <MyNotes reflection={match.my_reflection} labels={labels} onEdit={onReflect} />}
       {confirming && (
         <div className="flex flex-col gap-3 rounded-xl border border-warn p-3">
-          <p className="text-[15px] font-bold">Delete this game? Use this for a typo, then log it again.</p>
+          <p className="text-[15px] font-bold">Delete this game? It comes off everyone&apos;s record.</p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"

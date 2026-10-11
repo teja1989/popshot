@@ -142,7 +142,8 @@ def test_log_a_doubles_game_with_guests(people: People, crew: dict[str, Any]) ->
     )
     assert response.status_code == 201, response.text
     match = response.json()
-    assert (match["status"], match["winner"], match["entered_by_me"]) == ("pending", "B", True)
+    assert (match["winner"], match["entered_by_me"], match["can_edit"]) == ("B", True, True)
+    assert "status" not in match
     assert match["entered_by_name"] == "Sam"
     assert {(p["display_name"], p["team"], p["is_guest"]) for p in match["players"]} == {
         ("Sam", "A", False),
@@ -276,41 +277,111 @@ def test_rejects_non_integer_scores(people: People, crew: dict[str, Any]) -> Non
         assert response.status_code == 422
 
 
-def test_only_the_logger_deletes_and_only_while_pending(
-    people: People, crew: dict[str, Any], app_engine: Engine
-) -> None:
+def edit(people: People, headers: Headers, group_id: str, match_id: str, **body: Any) -> Any:
+    full: dict[str, Any] = {
+        "format": "singles",
+        "points_to": 11,
+        "win_by_two": True,
+        "best_of": 1,
+        "games": [{"team_a": 11, "team_b": 7}],
+    }
+    full.update(body)
+    return people.client.put(
+        f"/v1/groups/{group_id}/matches/{match_id}", json=full, headers=headers
+    )
+
+
+def test_the_scorer_edits_their_game(people: People, crew: dict[str, Any]) -> None:
     group_id, ids = crew["group_id"], crew["ids"]
-    teams = {"format": "singles", "team_a": [ids["Sam"]], "team_b": [ids["Casey"]]}
-    first = log(people, crew["sam"], group_id, **teams).json()["id"]
-    second = log(people, crew["sam"], group_id, **teams).json()["id"]
-    path = f"/v1/groups/{group_id}/matches"
+    logged = log(
+        people,
+        crew["sam"],
+        group_id,
+        team_a=[ids["Sam"], ids["Gary"]],
+        team_b=[ids["Casey"], ids["Jo"]],
+        played_at=(datetime.now(UTC) - timedelta(days=3)).isoformat(),
+    ).json()
 
-    assert people.client.delete(f"{path}/{first}", headers=crew["casey"]).status_code == 403
-    assert people.client.delete(f"{path}/{uuid4()}", headers=crew["sam"]).status_code == 404
-    assert people.client.delete(f"{path}/{first}", headers=crew["sam"]).status_code == 204
-    assert [m["id"] for m in people.client.get(path, headers=crew["sam"]).json()] == [second]
+    # Fix the score and the lineup. Leaving played_at out keeps the original time.
+    edited = edit(
+        people,
+        crew["sam"],
+        group_id,
+        logged["id"],
+        team_a=[ids["Sam"]],
+        team_b=[ids["Jo"]],
+        games=[{"team_a": 9, "team_b": 11}],
+    )
+    assert edited.status_code == 200, edited.text
+    body = edited.json()
+    assert (body["id"], body["format"], body["winner"]) == (logged["id"], "singles", "B")
+    assert body["games"] == [{"team_a": 9, "team_b": 11}]
+    assert {p["display_name"] for p in body["players"]} == {"Sam", "Jo"}
+    assert body["played_at"] == logged["played_at"]
+    # Everyone sees the fixed version straight away.
+    as_casey = people.client.get(
+        f"/v1/groups/{group_id}/matches/{logged['id']}", headers=crew["casey"]
+    )
+    assert as_casey.json()["games"] == [{"team_a": 9, "team_b": 11}]
+    assert as_casey.json()["can_edit"] is False
 
-    # Once someone has confirmed, it stays.
-    casey_id = people.user_id(crew["casey"])
-    with committed_as(app_engine, casey_id) as conn:
-        conn.execute(
-            text(
-                "INSERT INTO match_confirmations (match_id, group_id, user_id, decision) "
-                "VALUES (:m, :g, :u, 'confirm')"
-            ),
-            {"m": second, "g": group_id, "u": casey_id},
-        )
-    assert people.client.delete(f"{path}/{second}", headers=crew["sam"]).status_code == 409
-
-    # Another group's game is a 404, not a 403.
-    other = people.new("Jordan")
-    other_group = create(people, other)["id"]
+    # Same checks as logging.
+    bad = edit(
+        people,
+        crew["sam"],
+        group_id,
+        logged["id"],
+        team_a=[ids["Sam"]],
+        team_b=[ids["Jo"]],
+        games=[{"team_a": 11, "team_b": 10}],
+    )
+    assert bad.status_code == 422
+    future = (datetime.now(UTC) + timedelta(hours=2)).isoformat()
     assert (
-        people.client.delete(
-            f"/v1/groups/{other_group}/matches/{second}", headers=other
+        edit(
+            people,
+            crew["sam"],
+            group_id,
+            logged["id"],
+            team_a=[ids["Sam"]],
+            team_b=[ids["Jo"]],
+            played_at=future,
+        ).status_code
+        == 422
+    )
+
+
+def test_only_the_scorer_edits_or_deletes(people: People, crew: dict[str, Any]) -> None:
+    group_id, ids = crew["group_id"], crew["ids"]
+    teams = {"team_a": [ids["Sam"]], "team_b": [ids["Gary"]]}
+    match_id = log(people, crew["sam"], group_id, format="singles", **teams).json()["id"]
+    path = f"/v1/groups/{group_id}/matches/{match_id}"
+
+    # Not even the lead can change someone else's game.
+    assert edit(people, crew["casey"], group_id, match_id, **teams).status_code == 403
+    assert people.client.delete(path, headers=crew["casey"]).status_code == 403
+    outsider = people.new("Jordan")
+    assert edit(people, outsider, group_id, match_id, **teams).status_code == 404
+    assert people.client.get(path, headers=outsider).status_code == 404
+    assert (
+        people.client.get(
+            f"/v1/groups/{group_id}/matches/{uuid4()}", headers=crew["sam"]
         ).status_code
         == 404
     )
+    assert edit(people, crew["sam"], group_id, str(uuid4()), **teams).status_code == 404
+
+    # Another group's game is a 404, not a 403.
+    other_group = create(people, outsider)["id"]
+    assert (
+        people.client.delete(
+            f"/v1/groups/{other_group}/matches/{match_id}", headers=outsider
+        ).status_code
+        == 404
+    )
+
+    assert people.client.delete(path, headers=crew["sam"]).status_code == 204
+    assert people.client.get(path, headers=crew["sam"]).status_code == 404
 
 
 def test_logging_writes_the_audit_log(
@@ -335,6 +406,12 @@ def test_logging_writes_the_audit_log(
     assert [(r.action, r.actor_user_id) for r in rows] == [
         ("match.logged", people.user_id(crew["sam"]))
     ]
+    edit(people, crew["sam"], crew["group_id"], match_id, team_a=[ids["Sam"]], team_b=[ids["Gary"]])
+    with as_user(app_engine, people.user_id(crew["casey"])) as conn:
+        actions = conn.execute(
+            text("SELECT action FROM audit_log WHERE target_id = :m ORDER BY id"), {"m": match_id}
+        ).scalars()
+        assert list(actions) == ["match.logged", "match.edited"]
 
 
 def test_edit_your_name(people: People, crew: dict[str, Any]) -> None:

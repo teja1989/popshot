@@ -122,9 +122,9 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
         <Feature
           flip
           eyebrow="Fair records"
-          title="Bragging rights, confirmed."
-          body="One player logs the score and someone on the other team confirms it. No more “pretty sure we won that one.” If nobody objects, it confirms itself after 48 hours."
-          visual={<ConfirmVisual />}
+          title="Every game, on the record."
+          body="Log it once and it counts. Your whole crew sees every game, so there's no more “pretty sure we won that one.” Whoever logged a score can fix a typo."
+          visual={<RecordVisual />}
         />
         <Feature
           eyebrow="Rivals & partners"
@@ -136,7 +136,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
           flip
           eyebrow="Crew rating"
           title="Climb your crew's board."
-          body="A rating that counts who you played with and against, from confirmed games only. It compares you with your crew, not with strangers across the country."
+          body="A rating that counts who you played with and against, from every game your crew logs. It compares you with your crew, not with strangers across the country."
           visual={<BoardVisual />}
         />
 
@@ -148,7 +148,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
             {[
               ["Start a group", "Name your crew and pick how you usually play."],
               ["Invite your crew", "Share an invite link. You approve who joins."],
-              ["Play, log, confirm", "Log after each game; the other team confirms."],
+              ["Play and log", "Log after each game. It counts straight away."],
             ].map(([title, body], i) => (
               <li key={title} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-6">
                 <span className="flex size-11 items-center justify-center rounded-full bg-ball text-[20px] font-extrabold text-on-ball [font-stretch:80%]">
@@ -236,10 +236,10 @@ function LogVisual() {
   );
 }
 
-function ConfirmVisual() {
+function RecordVisual() {
   return (
     <div className={`${card} flex flex-col gap-4`}>
-      <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Confirmed by Sam</p>
+      <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Logged by Sam · just now</p>
       <div className="flex items-center justify-between">
         <span className="text-[16px] font-bold">Casey &amp; Sam</span>
         <span className="text-[44px] leading-none font-extrabold [font-stretch:72%]">11 – 8</span>
@@ -247,7 +247,7 @@ function ConfirmVisual() {
       </div>
       <div className="flex items-center gap-3 rounded-2xl bg-chip p-3">
         <span className="flex size-10 items-center justify-center rounded-full bg-win text-[18px] font-extrabold text-on-win">✓</span>
-        <span className="text-[15px] font-bold">On the record. Ratings updated.</span>
+        <span className="text-[15px] font-bold">On the record for the whole crew.</span>
       </div>
     </div>
   );
