@@ -81,6 +81,11 @@ class MatchPlayer(BaseModel):
     team: Literal["A", "B"]
 
 
+class MyReflection(BaseModel):
+    went_well: list[str]
+    to_improve: list[str]
+
+
 class Match(BaseModel):
     id: UUID
     format: Format
@@ -94,6 +99,9 @@ class Match(BaseModel):
     winner: Literal["A", "B"]
     players: list[MatchPlayer]
     games: list[GameScore]
+    # Whether you played in it, and your own reflection on it (nobody else's is ever sent).
+    i_played: bool = False
+    my_reflection: MyReflection | None = None
 
 
 def _require_member(session: Session, me: UUID, group_id: UUID) -> None:
@@ -365,9 +373,15 @@ def _matches(
                    (SELECT json_agg(json_build_object(
                                'team_a', g.team_a_score, 'team_b', g.team_b_score)
                            ORDER BY g.game_number)
-                    FROM match_games g WHERE g.match_id = m.id) AS games
+                    FROM match_games g WHERE g.match_id = m.id) AS games,
+                   EXISTS (SELECT 1 FROM match_players mp JOIN players p ON p.id = mp.player_id
+                           WHERE mp.match_id = m.id AND p.user_id = :me) AS i_played,
+                   CASE WHEN r.match_id IS NOT NULL THEN json_build_object(
+                       'went_well', r.went_well, 'to_improve', r.to_improve) END
+                       AS my_reflection
             FROM matches m
             LEFT JOIN users u ON u.id = m.entered_by
+            LEFT JOIN match_reflections r ON r.match_id = m.id AND r.user_id = :me
             WHERE m.group_id = :group_id AND (CAST(:match_id AS uuid) IS NULL OR m.id = :match_id)
             ORDER BY m.played_at DESC, m.id
             LIMIT :limit

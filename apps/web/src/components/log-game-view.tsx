@@ -193,9 +193,10 @@ function LogGameForm({
     setSaving(true);
     setProblem(null);
     try {
-      await apiPost<Match>(user, `/v1/groups/${group.id}/matches`, body);
+      const logged = await apiPost<Match>(user, `/v1/groups/${group.id}/matches`, body);
       rememberGroup(group.id);
-      router.push("/games?logged=1");
+      // If you played, the Games tab offers the optional "How did it go?" right away.
+      router.push(logged.i_played ? `/games?logged=1&reflect=${logged.id}` : "/games?logged=1");
     } catch (error) {
       setProblem(
         error instanceof ApiError && error.detail

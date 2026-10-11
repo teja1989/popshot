@@ -6,6 +6,7 @@ import { applyTheme, readTheme, type ThemeChoice } from "@/lib/theme";
 
 import { useSignedIn } from "./auth";
 import { EditNameSheet } from "./edit-name-sheet";
+import { FocusSection } from "./focus-section";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./ui/avatar";
 
@@ -36,9 +37,15 @@ export function YouView() {
             {me?.display_name ?? "You"}
           </h1>
           <p className="text-[15px] text-muted">Signed in with Google</p>
+          {me && (
+            <div className="mt-2">
+              <EditNameSheet />
+            </div>
+          )}
         </div>
-        {me && <EditNameSheet />}
       </section>
+
+      <FocusSection />
 
       <section aria-labelledby="analytics-heading" className="flex animate-rise flex-col gap-3 [animation-delay:60ms]">
         <h2 id="analytics-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">

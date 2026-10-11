@@ -191,6 +191,24 @@ TABLES: list[TableSpec] = [
         ],
     ),
     TableSpec(
+        name="match_reflections",
+        a_row="match_id = :m AND user_id = :u",
+        a_params=lambda s: {"m": s.match_a, "u": s.alice},
+        b_params=lambda s: {"m": s.match_b, "u": s.bob},
+        noop_update="went_well = went_well",
+        deletable=False,
+        insert_into_a=(
+            "INSERT INTO match_reflections (match_id, group_id, user_id) VALUES (:m, :g, :u)",
+            lambda s: {"m": s.match_a, "g": s.group_a, "u": s.bob},
+        ),
+        cross_refs=[
+            (
+                "INSERT INTO match_reflections (match_id, group_id, user_id) VALUES (:m, :g, :u)",
+                lambda s: {"m": s.match_a, "g": s.group_b, "u": s.bob},
+            ),
+        ],
+    ),
+    TableSpec(
         name="ratings",
         a_row="group_id = :g AND player_id = :p",
         a_params=lambda s: {"g": s.group_a, "p": s.player_alice_a},
@@ -257,7 +275,8 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
                 )
             ).scalars()
         )
-    assert tables - {"alembic_version", "users"} == set(TABLE_IDS)
+    # users and user_focus aren't group tables; test_focus_api.py covers user_focus.
+    assert tables - {"alembic_version", "users", "user_focus"} == set(TABLE_IDS)
 
 
 @pytest.mark.parametrize("table", TABLES, ids=TABLE_IDS)

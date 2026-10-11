@@ -19,7 +19,8 @@ export function Sheet({
   children,
 }: {
   // The button that opens the sheet. Radix returns focus to it when the sheet closes.
-  trigger: ReactNode;
+  // Leave it out for a sheet the page opens itself (say, right after logging a game).
+  trigger?: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -29,7 +30,7 @@ export function Sheet({
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+      {trigger !== undefined && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 animate-fade-in bg-ink/45" />
         <Dialog.Content
