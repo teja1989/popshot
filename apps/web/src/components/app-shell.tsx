@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import type { FirebaseWebConfig } from "@/lib/config";
 
+import { AppFrame } from "./app-frame";
 import { AuthProvider, useAuth } from "./auth";
 import { LoadingScreen } from "./loading-screen";
 import { SignInScreen } from "./sign-in-screen";
@@ -41,5 +42,5 @@ function Gate({ children }: { children: ReactNode }) {
   if (state.kind === "signed-out") {
     return <SignInScreen />;
   }
-  return <>{children}</>;
+  return <AppFrame>{children}</AppFrame>;
 }
