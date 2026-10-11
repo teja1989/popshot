@@ -11,14 +11,18 @@ resource "google_firebase_project" "this" {
 }
 
 # The browser key the web app ships. It can only call the two sign-in APIs, and only from
-# the web app's own address.
+# the web app's own address and the auth domain: the sign-in popup runs on
+# <project>.firebaseapp.com and calls Identity Toolkit with this key from there.
 resource "google_apikeys_key" "web" {
   name         = "popshot-web"
   display_name = "Popshot web (sign-in only)"
 
   restrictions {
     browser_key_restrictions {
-      allowed_referrers = ["${local.web_url}/*"]
+      allowed_referrers = [
+        "${local.web_url}/*",
+        "https://${var.project_id}.firebaseapp.com/*",
+      ]
     }
     api_targets {
       service = "identitytoolkit.googleapis.com"
