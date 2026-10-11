@@ -131,4 +131,5 @@ def identity_from_claims(
         email=email,
         display_name=name if isinstance(name, str) and name else None,
         picture_url=picture if isinstance(picture, str) and picture else None,
+        auth_time=auth_time,
     )

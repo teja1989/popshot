@@ -39,12 +39,9 @@ def test_the_app_can_only_add_today_for_itself(people: People, app_engine: Engin
     insert = "INSERT INTO user_activity (user_id, day) VALUES (:u, {day})"
     today = insert.format(day="current_date")
     with as_user(app_engine, casey) as conn:
-        for statement in (
-            "SELECT count(*) FROM user_activity",
-            "SELECT * FROM app_metrics_weekly(4)",
-            "SELECT * FROM app_metrics_retention(4)",
-        ):
-            assert sqlstate_of(conn, statement) == INSUFFICIENT_PRIVILEGE, statement
+        # The metric functions are the API's since 0010, behind the admin check
+        # (test_admin_api.py); the table itself stays unreadable.
+        assert sqlstate_of(conn, "SELECT count(*) FROM user_activity") == INSUFFICIENT_PRIVILEGE
         # Not for someone else, not for another day.
         assert (
             sqlstate_of(conn, insert.format(day="current_date"), {"u": sam})

@@ -1,4 +1,5 @@
 import os
+import time
 from collections.abc import Iterator
 from typing import Any
 
@@ -34,6 +35,7 @@ ALICE = VerifiedIdentity(
     email="alice@example.com",
     display_name="Alice",
     picture_url=None,
+    auth_time=int(time.time()),
 )
 
 

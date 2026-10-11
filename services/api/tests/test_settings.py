@@ -89,3 +89,29 @@ def test_auth_emulator_refused_on_cloud_run(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setenv("K_SERVICE", "api")
     with pytest.raises(ValidationError, match="Cloud Run"):
         _emulator_settings()
+
+
+def _settings(admin_emails: str | None = None) -> Settings:
+    extra = {} if admin_emails is None else {"admin_emails": admin_emails}
+    return Settings.model_validate(
+        {
+            "firebase_project_id": "ps-dev-1234",
+            "database_url": "postgresql+psycopg://u:p@h/db",
+            **extra,
+        }
+    )
+
+
+def test_no_admins_by_default() -> None:
+    assert _settings().admins == frozenset()
+
+
+def test_admin_emails_are_trimmed_and_lowercased(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("POPSHOT_ADMIN_EMAILS", " Boss@Example.com,, ops@example.org ")
+    assert _settings().admins == {"boss@example.com", "ops@example.org"}
+
+
+@pytest.mark.parametrize("bad", ["boss", "boss@localhost", "@example.com", "boss @example.com"])
+def test_admin_emails_must_be_emails(bad: str) -> None:
+    with pytest.raises(ValidationError):
+        _settings(admin_emails=bad)

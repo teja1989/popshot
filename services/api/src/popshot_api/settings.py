@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     push_vapid_private_key: SecretStr | None = None
     # Who to contact about our push traffic, sent to push services: the app's URL.
     push_subject: str = Field(default="https://localhost", pattern=r"^https://[^\s]+$")
+    # Who can open the admin page: Google account emails, comma-separated. Empty: nobody.
+    # Set from the POPSHOT_ADMIN_EMAILS GitHub variable at deploy, so it isn't in the repo.
+    admin_emails: str = ""
 
     @model_validator(mode="after")
     def _auth_emulator_is_local_only(self) -> Self:
@@ -52,6 +55,19 @@ class Settings(BaseSettings):
         if os.environ.get("K_SERVICE"):
             raise ValueError("auth_emulator can't be used on Cloud Run")
         return self
+
+    @model_validator(mode="after")
+    def _admin_emails_look_like_emails(self) -> Self:
+        for email in self.admins:
+            local, _, domain = email.partition("@")
+            if not local or "." not in domain or any(c.isspace() for c in email):
+                raise ValueError("admin_emails must be comma-separated email addresses")
+        return self
+
+    @property
+    def admins(self) -> frozenset[str]:
+        """Admin emails, lowercased."""
+        return frozenset(e.strip().lower() for e in self.admin_emails.split(",") if e.strip())
 
     @property
     def expose_docs(self) -> bool:

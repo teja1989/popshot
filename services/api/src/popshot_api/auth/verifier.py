@@ -12,6 +12,9 @@ class VerifiedIdentity:
     email: str
     display_name: str | None
     picture_url: str | None
+    # When they last actually signed in (seconds since the epoch). Tokens refresh hourly
+    # without changing it, so it says how recently they proved who they are.
+    auth_time: int
 
 
 class InvalidTokenError(Exception):

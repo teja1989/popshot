@@ -15,6 +15,7 @@ from popshot_api.log_config import configure_logging
 from popshot_api.middleware import RequestContextMiddleware
 from popshot_api.push import PushSender
 from popshot_api.routes import (
+    admin,
     board,
     focus,
     games,
@@ -88,6 +89,7 @@ def create_app(
     app.include_router(stats.router)
     app.include_router(notifications.router)
     app.include_router(nights.router)
+    app.include_router(admin.router)
     return app
 
 

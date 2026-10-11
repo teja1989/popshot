@@ -315,13 +315,14 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         )
     # These aren't group tables. test_focus_api.py covers user_focus;
     # test_notifications_api.py covers push_subscriptions and notification_settings.
-    # test_metrics.py covers user_activity.
+    # test_metrics.py covers user_activity; test_admin_api.py covers admin_views.
     personal = {
         "users",
         "user_focus",
         "push_subscriptions",
         "notification_settings",
         "user_activity",
+        "admin_views",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 

@@ -86,6 +86,10 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "POPSHOT_PUSH_SUBJECT"
         value = local.platform.web_url
       }
+      env {
+        name  = "POPSHOT_ADMIN_EMAILS"
+        value = var.admin_emails
+      }
 
       volume_mounts {
         name       = "sql-ca"

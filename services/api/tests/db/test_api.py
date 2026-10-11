@@ -1,5 +1,6 @@
 """The API end to end against the real database, with fake tokens."""
 
+import time
 from collections.abc import Iterator
 
 import pytest
@@ -20,6 +21,7 @@ NEWCOMER = VerifiedIdentity(
     email="newcomer@example.com",
     display_name="  " + "N" * 100,
     picture_url="http://insecure.example.com/a.png",
+    auth_time=int(time.time()),
 )
 
 
