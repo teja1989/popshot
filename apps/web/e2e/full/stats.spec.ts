@@ -3,7 +3,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { newUser, signIn } from "./auth";
 import { watchProblems } from "./problems";
 
-async function logSingles(page: Page, groupUrl: string, me: string, guest: string, score: [string, string], isNew: boolean) {
+async function logSingles(
+  page: Page,
+  groupUrl: string,
+  me: string,
+  guest: string,
+  score: [string, string],
+  isNew: boolean,
+) {
   await page.goto(`${groupUrl}/log`);
   await page.getByText("Singles", { exact: true }).click();
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
@@ -46,7 +53,12 @@ test("your stats and the crew's highlights fill in as games are logged", async (
 
   await page.goto("/you");
   await expect(stats).toContainText("3 games · 2–1 · Lost the last one");
-  await expect(stats.getByRole("definition").filter({ hasText: /^\d+–\d+$/ }).first()).toHaveText("1–0"); // close games
+  await expect(
+    stats
+      .getByRole("definition")
+      .filter({ hasText: /^\d+–\d+$/ })
+      .first(),
+  ).toHaveText("1–0"); // close games
   await expect(stats).toContainText("Nobody has your number yet.");
   await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("Lou");
   await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("2–1");
@@ -77,5 +89,51 @@ test("your stats and the crew's highlights fill in as games are logged", async (
   await expect(highlights).toContainText("3 games");
   // Lou came back from behind after two losses: an upset.
   await expect(highlights).toContainText(`Lou beat ${user.name}`);
+  expect(problems).toEqual([]);
+});
+
+test("you can compare how the last 30 days went in each crew", async ({ page }) => {
+  test.setTimeout(180_000);
+  const user = newUser("Noor");
+  await signIn(page, user);
+  const problems = await watchProblems(page);
+
+  async function startGroup(name: string): Promise<string> {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Start a group" }).first().click();
+    await page.getByLabel("Group name").fill(name);
+    await page.getByRole("button", { name: "Create group" }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
+    return page.url();
+  }
+
+  // Five easy wins in one crew, five heavy losses in the other.
+  const thursday = await startGroup("Thursday Smashers");
+  for (let i = 0; i < 5; i++) {
+    await logSingles(page, thursday, user.name, "Lou", ["11", "2"], i === 0);
+  }
+  const sunday = await startGroup("Sunday Crew");
+  for (let i = 0; i < 4; i++) {
+    await logSingles(page, sunday, user.name, "Max", ["2", "11"], i === 0);
+  }
+
+  await page.goto("/you");
+  const section = page.getByRole("region", { name: "Crew points" });
+  // Four games isn't enough to call it, so nothing to compare yet.
+  await expect(section).toContainText("4 games · a few more for a trend");
+  await expect(section).not.toContainText("is where to focus");
+
+  await logSingles(page, sunday, user.name, "Max", ["2", "11"], false);
+  await page.goto("/you");
+  await expect(section).toContainText("Going well in Thursday Smashers; Sunday Crew is where to focus.");
+  const rows = section.getByRole("listitem");
+  await expect(rows.filter({ hasText: "Thursday Smashers" })).toContainText("Climbing");
+  await expect(rows.filter({ hasText: "Thursday Smashers" })).toContainText(
+    /▲ \d\.\d\d in 30 days · 5 games · \d+% more of the points than expected/,
+  );
+  await expect(rows.filter({ hasText: "Sunday Crew" })).toContainText("Slipping");
+  await expect(rows.filter({ hasText: "Sunday Crew" })).toContainText(
+    /▼ \d\.\d\d in 30 days · 5 games · \d+% fewer of the points than expected/,
+  );
   expect(problems).toEqual([]);
 });

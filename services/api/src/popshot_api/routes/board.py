@@ -30,6 +30,7 @@ from popshot_api.rating import (
     PlayerRating,
     reliability,
     replay,
+    trend,
     week_change,
 )
 from popshot_api.routes.games import _require_member
@@ -77,6 +78,12 @@ class MyRating(BaseModel):
     # Last HOME_FORM results, newest first, and matches in the last 7 days.
     form: list[Literal["W", "L"]]
     week_games: int
+    # The last 30 days (rating.TREND_WINDOW): matches, change in crew points, average share
+    # of points won above expected, and climbing/steady/slipping once there are enough games.
+    month_games: int
+    month_change: float
+    month_edge: float | None
+    trend: Literal["climbing", "steady", "slipping"] | None
 
 
 class LevelBody(BaseModel):
@@ -233,6 +240,7 @@ def my_ratings(user: CurrentUserSession) -> list[MyRating]:
             continue
         rated_me = rated[row.player_id]
         week_ago = now - timedelta(days=7)
+        month = trend(rated_me, now)
         mine.append(
             MyRating(
                 group_id=group.id,
@@ -244,6 +252,10 @@ def my_ratings(user: CurrentUserSession) -> list[MyRating]:
                 to_go=row.to_go,
                 form=rated_me.results[-HOME_FORM:][::-1],
                 week_games=sum(1 for at, _ in rated_me.history if at > week_ago),
+                month_games=month.games,
+                month_change=round(month.change, 2),
+                month_edge=None if month.edge is None else round(month.edge, 3),
+                trend=month.label,
             )
         )
     return sorted(mine, key=lambda r: (-r.matches, r.group_name.lower()))

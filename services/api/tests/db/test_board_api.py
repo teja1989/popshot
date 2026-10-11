@@ -180,6 +180,11 @@ def test_my_ratings_across_groups(people: People, crew: dict[str, Any]) -> None:
         2,
     )
     assert mine[0]["rating"] > START
+    # All ten were today: the 30-day trend covers them, starting from START.
+    assert mine[0]["month_games"] == RANKED_AFTER
+    assert mine[0]["month_change"] == pytest.approx(mine[0]["rating"] - START, abs=0.01)
+    assert mine[0]["month_edge"] > 0
+    assert mine[0]["trend"] in ("climbing", "steady")
 
 
 def test_outsiders_cant_see_a_board(people: People, crew: dict[str, Any]) -> None:

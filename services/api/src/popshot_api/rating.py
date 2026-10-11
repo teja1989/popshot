@@ -39,6 +39,12 @@ RESTING_AFTER = timedelta(days=60)  # no games for this long: off the ranking un
 RELIABLE_AFTER = 20  # games for full reliability, if you've played recently
 FORM_LENGTH = 5
 
+# How each crew is going, on the You page. Change in crew points can't be compared across
+# crews (each crew is its own scale), but points won against what was expected can.
+TREND_WINDOW = timedelta(days=30)
+TREND_MIN_GAMES = 5  # logged matches in the window before we call it
+TREND_EDGE = 0.02  # average share of points above (or below) expected: climbing (slipping)
+
 Team = Literal["A", "B"]
 
 
@@ -65,6 +71,8 @@ class PlayedMatch:
 @dataclass(slots=True)
 class PlayerRating:
     rating: float
+    # Where they started: from their self-rated level, or START.
+    start: float = START
     matches: int = 0
     wins: int = 0
     last_played: datetime | None = None
@@ -72,6 +80,8 @@ class PlayerRating:
     results: list[Literal["W", "L"]] = field(default_factory=list)
     # (played_at, rating after that match), oldest first.
     history: list[tuple[datetime, float]] = field(default_factory=list)
+    # (played_at, share of points won minus expected, averaged over the match's games).
+    edges: list[tuple[datetime, float]] = field(default_factory=list)
 
 
 def expected_share(rating_a: float, rating_b: float) -> float:
@@ -103,7 +113,8 @@ def replay(
 
     def player(pid: UUID) -> PlayerRating:
         if pid not in players:
-            players[pid] = PlayerRating(rating=starts.get(pid, START))
+            first = starts.get(pid, START)
+            players[pid] = PlayerRating(rating=first, start=first)
         return players[pid]
 
     for match in sorted(matches, key=lambda m: (m.played_at, str(m.id))):
@@ -111,20 +122,24 @@ def replay(
         side_b = [player(p) for p in match.team_b]
         if pregame is not None:
             pregame[match.id] = (_average(side_a), _average(side_b))
+        surprises: list[float] = []
         for game in match.games:
             total = game.team_a + game.team_b
             if total == 0:
                 continue
             surprise = game.team_a / total - expected_share(_average(side_a), _average(side_b))
+            surprises.append(surprise)
             # Step sizes from before this match, so game order within it doesn't matter.
             for p in side_a:
                 p.rating = clamp(p.rating + step(p.matches) * surprise)
             for p in side_b:
                 p.rating = clamp(p.rating - step(p.matches) * surprise)
         winner = match.winner
+        edge_a = sum(surprises) / len(surprises) if surprises else 0.0
         for team, side in (("A", side_a), ("B", side_b)):
             for p in side:
                 won = team == winner
+                p.edges.append((match.played_at, edge_a if team == "A" else -edge_a))
                 p.matches += 1
                 p.wins += int(won)
                 p.last_played = match.played_at
@@ -154,3 +169,29 @@ def week_change(rated: PlayerRating, now: datetime) -> float | None:
     if not before:
         return None
     return rated.rating - before[-1]
+
+
+@dataclass(frozen=True, slots=True)
+class Trend:
+    games: int  # logged matches in the window
+    change: float  # crew points now minus at the start of the window
+    edge: float | None  # average points share above expected; None without games
+    label: Literal["climbing", "steady", "slipping"] | None  # None under TREND_MIN_GAMES
+
+
+def trend(rated: PlayerRating, now: datetime) -> Trend:
+    """How the last TREND_WINDOW has gone in this crew."""
+    since = now - TREND_WINDOW
+    edges = [edge for at, edge in rated.edges if at > since]
+    before = [rating for at, rating in rated.history if at <= since]
+    change = rated.rating - (before[-1] if before else rated.start)
+    edge = sum(edges) / len(edges) if edges else None
+    label: Literal["climbing", "steady", "slipping"] | None = None
+    if edge is not None and len(edges) >= TREND_MIN_GAMES:
+        if edge >= TREND_EDGE:
+            label = "climbing"
+        elif edge <= -TREND_EDGE:
+            label = "slipping"
+        else:
+            label = "steady"
+    return Trend(games=len(edges), change=change, edge=edge, label=label)

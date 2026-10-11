@@ -4,7 +4,18 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { apiPut, ApiError } from "@/lib/api-client";
-import { DEFAULT_START, LEVELS, levelLabel, points, type Level, type MyRating } from "@/lib/board";
+import {
+  change,
+  DEFAULT_START,
+  edgeText,
+  LEVELS,
+  levelLabel,
+  points,
+  TREND_LABEL,
+  trendSummary,
+  type Level,
+  type MyRating,
+} from "@/lib/board";
 
 import { useAuth, useSignedIn } from "./auth";
 import { useApiGet } from "./use-api";
@@ -46,23 +57,33 @@ export function CrewPointsSection() {
           <p className="text-muted">Your crew points show up after your first game.</p>
         )}
         {ratings.result.kind === "ready" && ratings.result.data.length > 0 && (
-          <ul className="flex flex-col gap-3">
-            {ratings.result.data.map((r) => (
-              <li key={r.group_id} className="flex items-center justify-between gap-3">
-                <span className="flex min-w-0 flex-col">
-                  <Link href={`/groups/${r.group_id}`} className="truncate font-bold text-ink no-underline">
-                    {r.group_name}
-                  </Link>
-                  <span className="text-[14px] text-muted">
-                    {r.rank !== null
-                      ? `#${String(r.rank)} of ${String(r.ranked_of)} · ${String(r.matches)} games`
-                      : `${String(r.matches)} of ${String(r.matches + r.to_go)} games to be ranked`}
+          <>
+            {trendSummary(ratings.result.data) && (
+              <p className="rounded-xl bg-chip px-3 py-2 text-[15px] font-bold">{trendSummary(ratings.result.data)}</p>
+            )}
+            <ul className="flex flex-col gap-4">
+              {ratings.result.data.map((r) => (
+                <li key={r.group_id} className="flex flex-col gap-1">
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 flex-col">
+                      <Link href={`/groups/${r.group_id}`} className="truncate font-bold text-ink no-underline">
+                        {r.group_name}
+                      </Link>
+                      <span className="text-[14px] text-muted">
+                        {r.rank !== null
+                          ? `#${String(r.rank)} of ${String(r.ranked_of)} · ${String(r.matches)} games`
+                          : `${String(r.matches)} of ${String(r.matches + r.to_go)} games to be ranked`}
+                      </span>
+                    </span>
+                    <span className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">
+                      {points(r.rating)}
+                    </span>
                   </span>
-                </span>
-                <span className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">{points(r.rating)}</span>
-              </li>
-            ))}
-          </ul>
+                  <MonthLine rating={r} />
+                </li>
+              ))}
+            </ul>
+          </>
         )}
         {level && ratings.result.kind === "ready" && ratings.result.data[0] && (
           <p className="rounded-xl bg-chip px-3 py-2 text-[15px]">
@@ -75,30 +96,63 @@ export function CrewPointsSection() {
           <p className="-mt-1 mb-1 text-[14px] text-muted">
             Optional. It&apos;s where your crew points start; your games take over within about 10.
           </p>
-          {[{ value: null, label: "Not set", start: DEFAULT_START, hint: "Start at the middle" }, ...LEVELS].map((option) => (
-            <label
-              key={option.label}
-              className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-bg px-4 has-[:checked]:border-primary has-[:checked]:bg-chip"
-            >
-              <input
-                type="radio"
-                name="self_level"
-                checked={level === option.value}
-                onChange={() => void choose(option.value)}
-                className="size-4 accent-primary"
-              />
-              <span className="flex grow flex-col">
-                <span className="font-bold">{option.label}</span>
-                <span className="text-[13px] text-muted">{option.hint}</span>
-              </span>
-              <span className="text-[14px] font-bold text-muted tabular-nums">{points(option.start)}</span>
-            </label>
-          ))}
+          {[{ value: null, label: "Not set", start: DEFAULT_START, hint: "Start at the middle" }, ...LEVELS].map(
+            (option) => (
+              <label
+                key={option.label}
+                className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-bg px-4 has-[:checked]:border-primary has-[:checked]:bg-chip"
+              >
+                <input
+                  type="radio"
+                  name="self_level"
+                  checked={level === option.value}
+                  onChange={() => void choose(option.value)}
+                  className="size-4 accent-primary"
+                />
+                <span className="flex grow flex-col">
+                  <span className="font-bold">{option.label}</span>
+                  <span className="text-[13px] text-muted">{option.hint}</span>
+                </span>
+                <span className="text-[14px] font-bold text-muted tabular-nums">{points(option.start)}</span>
+              </label>
+            ),
+          )}
         </fieldset>
         <p role="alert" className="text-[15px] text-warn empty:hidden">
           {problem}
         </p>
       </div>
     </section>
+  );
+}
+
+/** How the last 30 days have gone in one crew. */
+function MonthLine({ rating: r }: { rating: MyRating }) {
+  if (r.month_games === 0) {
+    return <p className="text-[14px] text-muted">No games in the last 30 days.</p>;
+  }
+  const moved = change(r.month_change);
+  const games = `${String(r.month_games)} game${r.month_games === 1 ? "" : "s"}`;
+  return (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-muted">
+      {r.trend && (
+        <span
+          className={`rounded-full px-2 py-0.5 text-[12px] font-bold ${
+            r.trend === "climbing"
+              ? "bg-win text-on-win"
+              : r.trend === "slipping"
+                ? "bg-chip text-ink"
+                : "border border-line text-ink"
+          }`}
+        >
+          {TREND_LABEL[r.trend]}
+        </span>
+      )}
+      <span>
+        {moved ? <span className={`font-bold ${moved.up ? "text-win" : "text-loss"}`}>{moved.text}</span> : "No change"}{" "}
+        in 30 days · {games}
+        {r.trend && r.month_edge !== null ? ` · ${edgeText(r.month_edge)}` : " · a few more for a trend"}
+      </span>
+    </p>
   );
 }
