@@ -5,6 +5,7 @@ import { useState } from "react";
 import { applyTheme, readTheme, type ThemeChoice } from "@/lib/theme";
 
 import { useSignedIn } from "./auth";
+import { EditNameSheet } from "./edit-name-sheet";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./ui/avatar";
 
@@ -30,12 +31,13 @@ export function YouView() {
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
       <section className="flex animate-rise items-center gap-4">
         <Avatar name={me?.display_name} photoUrl={me?.avatar_url} size="lg" />
-        <div className="min-w-0">
+        <div className="min-w-0 grow">
           <h1 className="truncate text-[28px] leading-tight font-extrabold [font-stretch:110%]">
             {me?.display_name ?? "You"}
           </h1>
           <p className="text-[15px] text-muted">Signed in with Google</p>
         </div>
+        {me && <EditNameSheet />}
       </section>
 
       <section aria-labelledby="analytics-heading" className="flex animate-rise flex-col gap-3 [animation-delay:60ms]">

@@ -18,12 +18,8 @@ import { useSignedIn } from "./auth";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
 import { PlusIcon } from "./ui/icons";
+import { segmentOption } from "./ui/segmented";
 import { Sheet } from "./ui/sheet";
-
-const option =
-  "flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-3 text-[15px] font-bold text-muted " +
-  "has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-sm " +
-  "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
 
 /** For leads and co-leads: make invite links and see or cancel the open ones. */
 export function InvitePanel({ groupId, groupName }: { groupId: string; groupName: string }) {
@@ -214,7 +210,7 @@ function InviteSheet({
             <legend className="mb-2 text-[15px] font-bold">How many people can use it?</legend>
             <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
               {INVITE_USE_CHOICES.map((value) => (
-                <label key={value} className={option}>
+                <label key={value} className={segmentOption}>
                   <input
                     type="radio"
                     name="max_uses"

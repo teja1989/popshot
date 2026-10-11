@@ -7,12 +7,8 @@ import { GROUP_NAME_MAX, type Format, type GroupDetail, type PointsTo } from "@/
 
 import { useSignedIn } from "./auth";
 import { buttonClass } from "./ui/button";
+import { segmentOption } from "./ui/segmented";
 import { Sheet } from "./ui/sheet";
-
-const option =
-  "flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-3 text-[15px] font-bold text-muted " +
-  "has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-sm " +
-  "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
 
 export function CreateGroupDialog({
   trigger,
@@ -111,7 +107,7 @@ export function CreateGroupDialog({
           <legend className="mb-2 text-[15px] font-bold">Usual format</legend>
           <div className="grid grid-cols-2 gap-1 rounded-xl bg-chip p-1">
             {(["doubles", "singles"] as const).map((value) => (
-              <label key={value} className={option}>
+              <label key={value} className={segmentOption}>
                 <input
                   type="radio"
                   name="format"
@@ -133,7 +129,7 @@ export function CreateGroupDialog({
             <legend className="mb-2 text-[15px] font-bold">Games to</legend>
             <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
               {([11, 15, 21] as const).map((value) => (
-                <label key={value} className={`${option} w-12`}>
+                <label key={value} className={`${segmentOption} w-12`}>
                   <input
                     type="radio"
                     name="points_to"
