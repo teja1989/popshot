@@ -53,7 +53,7 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
   }
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Tally every rally.",
+    "More rallies, more friends.",
   );
   await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeEnabled();
   await page.waitForLoadState("networkidle");
@@ -126,12 +126,14 @@ test("/favicon.ico serves the app icon instead of a 404", async ({ request }) =>
 test("the landing page explains the app and offers sign-in top and bottom", async ({ page }) => {
   await page.goto("/");
   for (const title of [
+    "Pickleball is better together.",
     "Logged before the next game starts.",
     "Bragging rights, confirmed.",
     "Know your nemesis.",
     "Climb your crew's board.",
     "Up and running in three steps.",
     "Private by default.",
+    "Tally every rally.",
   ]) {
     await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
   }

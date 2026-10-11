@@ -367,3 +367,26 @@ def test_editing_your_name_only_touches_your_rows(people: People, crew: dict[str
     people.client.patch("/v1/me", json={"display_name": "Sammy"}, headers=crew["sam"])
     names = set(players(people, crew["casey"], crew["group_id"]))
     assert names == {"Casey", "Sammy", "Gary", "Jo"}
+
+
+def test_group_list_counts_games(people: People, crew: dict[str, Any]) -> None:
+    group_id, ids = crew["group_id"], crew["ids"]
+    singles = {"format": "singles"}
+    log(people, crew["casey"], group_id, team_a=[ids["Casey"]], team_b=[ids["Gary"]], **singles)
+    log(people, crew["casey"], group_id, team_a=[ids["Sam"]], team_b=[ids["Casey"]], **singles)
+    log(people, crew["sam"], group_id, team_a=[ids["Gary"]], team_b=[ids["Jo"]], **singles)
+
+    def counts(headers: Headers) -> tuple[int, int]:
+        card = people.client.get("/v1/groups", headers=headers).json()[0]
+        return card["games_logged"], card["my_games"]
+
+    assert counts(crew["casey"]) == (3, 2)
+    assert counts(crew["sam"]) == (3, 1)
+    # Someone waiting for approval sees no numbers.
+    riley = people.new("Riley")
+    token = people.client.post(
+        f"/v1/groups/{group_id}/invites", json={}, headers=crew["casey"]
+    ).json()["token"]
+    people.client.post("/v1/invites/join", json={"token": token}, headers=riley)
+    card = people.client.get("/v1/groups", headers=riley).json()[0]
+    assert (card["games_logged"], card["my_games"]) == (None, None)

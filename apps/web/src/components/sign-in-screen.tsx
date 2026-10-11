@@ -28,7 +28,25 @@ function SignInButton({ className = "" }: { className?: string }) {
   );
 }
 
-const HIGHLIGHTS = ["15-second logging", "Opponent-confirmed scores", "Doubles & singles"];
+const HIGHLIGHTS = ["Meet new players", "Stay active", "Friendly rivalries"];
+
+const TOGETHER = [
+  {
+    title: "Meet your people",
+    body: "Open play turns strangers into a regular crew. Popshot gives that crew a home.",
+    accent: "bg-ball",
+  },
+  {
+    title: "Move more, smile more",
+    body: "Quick games, plenty of laughs, and a reason to be back on court next week.",
+    accent: "bg-primary",
+  },
+  {
+    title: "Rivalries that stay friendly",
+    body: "Keep score, trade bragging rights, and still tap paddles at the net.",
+    accent: "bg-win",
+  },
+];
 
 export function SignInScreen({ invited = false }: { invited?: boolean }) {
   const { notice } = useAuth();
@@ -43,15 +61,15 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
 
           <div className="flex flex-col">
             <p className="animate-rise text-[13px] font-bold tracking-[0.14em] text-ball uppercase">
-              {invited ? "You've been invited" : "Pickleball stats for your crew"}
+              {invited ? "You've been invited" : "Pickleball with your crew"}
             </p>
             <h1 className="mt-4 animate-rise text-[56px] leading-[0.95] font-[820] tracking-[-0.035em] [animation-delay:80ms] [font-stretch:118%] sm:text-[68px] lg:text-[82px]">
-              Tally every <span className="text-ball">rally.</span>
+              More rallies, more <span className="text-ball">friends.</span>
             </h1>
             <p className="mt-6 max-w-xl animate-rise text-[18px] leading-relaxed text-on-hero-muted [animation-delay:160ms] lg:text-[20px]">
               {invited
                 ? "Someone wants you in their Popshot group. Sign in to see which one and ask to join."
-                : "Log a game in seconds. The other team confirms it. Your crew gets the streaks, rivalries and bragging rights, kept between you."}
+                : "Play, laugh and stay active. Popshot keeps the score so you can enjoy the game, and your crew gets the streaks and bragging rights."}
             </p>
             <div className="mt-8 flex animate-rise flex-col gap-4 [animation-delay:240ms] sm:flex-row sm:items-center">
               <SignInButton />
@@ -80,6 +98,21 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
       </section>
 
       <div className="mx-auto flex max-w-6xl flex-col gap-20 px-6 py-20 lg:gap-28 lg:px-10 lg:py-28">
+        <section aria-labelledby="together-heading" className="flex flex-col gap-8">
+          <h2 id="together-heading" className="text-[34px] leading-tight font-extrabold tracking-[-0.02em] [font-stretch:110%] lg:text-[44px]">
+            Pickleball is better together.
+          </h2>
+          <ul className="grid gap-4 md:grid-cols-3">
+            {TOGETHER.map((item) => (
+              <li key={item.title} className="flex flex-col gap-3 overflow-hidden rounded-3xl border border-line bg-surface p-6">
+                <span aria-hidden="true" className={`h-1.5 w-12 rounded-full ${item.accent}`} />
+                <p className="text-[20px] font-extrabold">{item.title}</p>
+                <p className="text-[16px] leading-relaxed text-muted">{item.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <Feature
           eyebrow="Fast at the fence"
           title="Logged before the next game starts."
@@ -144,7 +177,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
         <section className="relative isolate flex flex-col items-start gap-6 overflow-hidden rounded-[32px] bg-hero p-8 text-on-hero lg:flex-row lg:items-center lg:justify-between lg:p-14">
           <CourtPattern />
           <h2 className="text-[34px] leading-[1.05] font-extrabold tracking-[-0.02em] [font-stretch:112%] lg:text-[46px]">
-            Ready when your <span className="text-ball">crew</span> is.
+            Tally every <span className="text-ball">rally.</span>
           </h2>
           <SignInButton />
         </section>

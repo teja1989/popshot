@@ -72,6 +72,7 @@ export function HomeView() {
                 "."
               )}
             </h1>
+            <p className="mt-1 text-[16px] text-on-hero-muted">Play, laugh, stay active. Popshot keeps the score.</p>
             {problem && <p className="text-[15px] font-bold text-ball">{problem}</p>}
           </div>
         </div>
@@ -80,8 +81,11 @@ export function HomeView() {
             label="Groups"
             value={result.kind === "ready" ? String(result.data.filter((g) => g.my_status === "active").length) : "–"}
           />
-          <HeroStat label="Games logged" value="0" />
-          <HeroStat label="Crew rating" value="–" hint="After your first confirmed game" />
+          <HeroStat
+            label="Games played"
+            value={result.kind === "ready" ? String(result.data.reduce((sum, g) => sum + (g.my_games ?? 0), 0)) : "–"}
+          />
+          <HeroStat label="Crew rating" value="–" note="After confirmed games" />
         </dl>
       </section>
 
@@ -176,7 +180,7 @@ function GroupCard({ group }: { group: GroupSummary }) {
             <span className="text-[14px] text-muted">
               {group.my_status === "pending"
                 ? "Waiting for approval"
-                : `${ROLE_LABEL[group.my_role]} · ${String(count)} ${count === 1 ? "member" : "members"}`}
+                : `${ROLE_LABEL[group.my_role]} · ${String(count)} ${count === 1 ? "member" : "members"} · ${String(group.games_logged ?? 0)} ${group.games_logged === 1 ? "game" : "games"}`}
             </span>
           </span>
           <ChevronIcon />
@@ -198,12 +202,13 @@ function ballSpot(id: string): number {
   return hash % BALL_SPOTS.length;
 }
 
-function HeroStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function HeroStat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="flex flex-col gap-1">
       <dt className="text-[13px] font-bold text-on-hero-muted">{label}</dt>
-      <dd className="text-[34px] leading-none font-extrabold [font-stretch:75%] lg:text-[40px]" title={hint}>
-        {value}
+      <dd className="flex flex-col gap-1">
+        <span className="text-[34px] leading-none font-extrabold [font-stretch:75%] lg:text-[40px]">{value}</span>
+        {note && <span className="text-[12px] text-on-hero-muted">{note}</span>}
       </dd>
     </div>
   );
@@ -240,8 +245,8 @@ function StatsPanel() {
         />
       </svg>
       <p className="text-[15px] leading-relaxed text-muted">
-        Your stats start with your first confirmed game: form, partners, rivals and how
-        you&apos;re trending.
+        These count confirmed games only, so a typo can&apos;t skew them. Confirming games comes
+        next; until then, your logged games wait on the Games tab.
       </p>
     </aside>
   );

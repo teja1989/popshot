@@ -22,6 +22,9 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // When the on-screen keyboard opens, shrink the page (and dvh) instead of covering it, so
+  // full-height sheets keep their fields and buttons above the keyboard (Android Chrome).
+  interactiveWidget: "resizes-content",
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
