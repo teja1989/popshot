@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { reachedWeeks, share, shortDate } from "./admin";
+import { membership, reachedWeeks, share, shortDate } from "./admin";
 
 describe("admin formatting", () => {
   it("shares", () => {
@@ -19,5 +19,17 @@ describe("admin formatting", () => {
     expect(reachedWeeks(monday, new Date("2026-10-01T12:00:00Z"))).toBe(0);
     expect(reachedWeeks(monday, new Date("2026-10-05T00:00:00Z"))).toBe(1);
     expect(reachedWeeks(monday, new Date("2026-11-30T00:00:00Z"))).toBe(4);
+  });
+});
+
+describe("membership labels", () => {
+  it.each([
+    [{ role: "lead", status: "active", left_on_own: false }, "Lead"],
+    [{ role: "co_lead", status: "active", left_on_own: false }, "Co-lead"],
+    [{ role: "member", status: "pending", left_on_own: false }, "Asked to join"],
+    [{ role: "member", status: "removed", left_on_own: true }, "Left"],
+    [{ role: "member", status: "removed", left_on_own: false }, "Removed"],
+  ] as const)("%o is %s", (m, label) => {
+    expect(membership(m)).toBe(label);
   });
 });
