@@ -425,3 +425,36 @@ def create(
     assert response.status_code == 201, response.text
     body: dict[str, Any] = response.json()
     return body
+
+
+# The admin pages (test_admin_api.py, test_admin_lookup_api.py).
+ADMIN = "Boss@Example.com"
+
+
+@pytest.fixture
+def admins(app_engine: Engine) -> Iterator[People]:
+    """Like `people`, with boss@example.com as the admin (set with different case)."""
+    verifier = FakeTokenVerifier()
+    app = create_app(make_settings(admin_emails=f" {ADMIN} , "), verifier, app_engine)
+    with TestClient(app) as client:
+        yield People(client, verifier)
+
+
+def sign_in_as(
+    people: People, email: str, *, signed_in_ago: int = 60
+) -> tuple[dict[str, str], str]:
+    """Headers for a new person with this email, and their token subject."""
+    token = f"token-{secrets.token_hex(8)}"
+    subject = f"admin-test-{secrets.token_hex(8)}"
+    people.verifier.identities[token] = VerifiedIdentity(
+        subject=subject,
+        email=email,
+        display_name="Admin Test",
+        picture_url=None,
+        auth_time=int(time.time()) - signed_in_ago,
+    )
+    return {"Authorization": f"Bearer {token}"}, subject
+
+
+def sign_in(people: People, email: str, *, signed_in_ago: int = 60) -> dict[str, str]:
+    return sign_in_as(people, email, signed_in_ago=signed_in_ago)[0]

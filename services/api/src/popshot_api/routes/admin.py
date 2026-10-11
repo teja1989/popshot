@@ -42,12 +42,21 @@ def require_admin(identity: CurrentIdentity, request: Request) -> None:
 router = APIRouter(prefix="/v1/admin", dependencies=[Depends(require_admin)])
 
 
-def _record(user: UserSession, page: Literal["overview", "groups"]) -> None:
+Page = Literal["overview", "groups", "people", "person", "group"]
+
+
+def record_view(user: UserSession, page: Page, target: UUID | None = None) -> None:
+    """Who opened which admin page, and which person or crew. Search terms aren't kept."""
     user.session.execute(
-        text("INSERT INTO admin_views (user_id, page) VALUES (:me, :page)"),
-        {"me": user.user_id, "page": page},
+        text("INSERT INTO admin_views (user_id, page, target_id) VALUES (:me, :page, :target)"),
+        {"me": user.user_id, "page": page, "target": target},
     )
-    log.info("admin.viewed", page=page, user_id=str(user.user_id))
+    log.info(
+        "admin.viewed",
+        page=page,
+        user_id=str(user.user_id),
+        target_id=str(target) if target else None,
+    )
 
 
 class Totals(BaseModel):
@@ -102,7 +111,7 @@ class AdminGroup(BaseModel):
 
 @router.get("/overview")
 def overview(user: CurrentUserSession) -> Overview:
-    _record(user, "overview")
+    record_view(user, "overview")
     session = user.session
     totals = session.execute(text("SELECT * FROM app_admin_totals()")).one()
     weeks = session.execute(text("SELECT * FROM app_metrics_weekly(:n)"), {"n": WEEKS}).all()
@@ -116,6 +125,6 @@ def overview(user: CurrentUserSession) -> Overview:
 
 @router.get("/groups")
 def groups(user: CurrentUserSession) -> list[AdminGroup]:
-    _record(user, "groups")
+    record_view(user, "groups")
     rows = user.session.execute(text("SELECT * FROM app_admin_groups()")).all()
     return [AdminGroup.model_validate(r._mapping) for r in rows]

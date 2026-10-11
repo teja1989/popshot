@@ -149,6 +149,14 @@ resource "google_project_iam_member" "sql_instance_user" {
   member  = each.value
 }
 
+# The admin pages look up a person's email from Identity Platform when an admin opens them
+# (popshot_api.accounts); emails aren't stored in the database. Read-only.
+resource "google_project_iam_member" "api_account_lookup" {
+  project = var.project_id
+  role    = "roles/firebaseauth.viewer"
+  member  = google_service_account.api.member
+}
+
 # ---------------------------------------------------------------- database
 
 resource "google_sql_database_instance" "main" {

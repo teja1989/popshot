@@ -90,6 +90,11 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "POPSHOT_ADMIN_EMAILS"
         value = var.admin_emails
       }
+      env {
+        # Emails for the admin pages, from Identity Platform (platform: api_account_lookup).
+        name  = "POPSHOT_ACCOUNT_LOOKUP"
+        value = "true"
+      }
 
       volume_mounts {
         name       = "sql-ca"
