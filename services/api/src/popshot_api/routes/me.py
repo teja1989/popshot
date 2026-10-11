@@ -15,6 +15,8 @@ class Me(BaseModel):
     id: UUID
     display_name: str
     avatar_url: str | None
+    # Where your crew points start: beginner, intermediate, advanced, expert, or unset.
+    self_level: str | None = None
 
 
 class EditMe(BaseModel):
@@ -27,7 +29,7 @@ def _me(session: Session, user_id: UUID) -> Me:
     # Always filter explicitly. RLS is the backstop, not the filter.
     row = (
         session.execute(
-            text("SELECT id, display_name, avatar_url FROM users WHERE id = :id"),
+            text("SELECT id, display_name, avatar_url, self_level FROM users WHERE id = :id"),
             {"id": user_id},
         )
         .mappings()

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 
+import { points, type MyRating } from "@/lib/board";
 import { ROLE_LABEL, type GroupDetail, type GroupSummary } from "@/lib/groups";
 import { firstName, greetingFor } from "@/lib/people";
 
@@ -48,6 +49,10 @@ export function HomeView() {
     };
   }, []);
   const name = firstName(me?.display_name);
+  // Your crew points in the group you've played most in.
+  const ratings = useApiGet<MyRating[]>("/v1/me/ratings");
+  const top = ratings.result.kind === "ready" ? ratings.result.data[0] : undefined;
+  const ratingsCount = ratings.result.kind === "ready" ? ratings.result.data.length : 0;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-5xl lg:px-8 lg:pt-10">
@@ -86,7 +91,11 @@ export function HomeView() {
             label="Games played"
             value={result.kind === "ready" ? String(result.data.reduce((sum, g) => sum + (g.my_games ?? 0), 0)) : "–"}
           />
-          <HeroStat label="Crew rating" value="–" note="Coming next" />
+          <HeroStat
+            label="Crew points"
+            value={top ? points(top.rating) : "–"}
+            note={top ? (ratingsCount > 1 ? top.group_name : undefined) : "After your first game"}
+          />
         </dl>
       </section>
 
@@ -244,7 +253,7 @@ function StatsPanel() {
         Your stats
       </h2>
       <dl className="grid grid-cols-3 gap-3">
-        {["Win rate", "Crew rating", "Streak"].map((label) => (
+        {["Win rate", "Crew points", "Streak"].map((label) => (
           <div key={label} className="flex flex-col gap-1">
             <dt className="text-[13px] text-muted">{label}</dt>
             <dd className="text-[28px] leading-none font-extrabold text-loss [font-stretch:75%]">
@@ -265,8 +274,8 @@ function StatsPanel() {
         />
       </svg>
       <p className="text-[15px] leading-relaxed text-muted">
-        Win rate, crew rating and streaks are coming next. Every game you log already counts
-        toward them.
+        Your win rate, streaks and form arrive with the stats update next. Crew points are live on
+        the Board now.
       </p>
     </aside>
   );

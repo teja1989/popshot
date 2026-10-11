@@ -11,6 +11,8 @@ export interface Me {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  // Self-rated level: where crew points start. Null when not set.
+  self_level?: string | null;
 }
 
 export type AuthState =

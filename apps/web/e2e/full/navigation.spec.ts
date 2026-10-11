@@ -8,12 +8,13 @@ function nav(page: Page) {
   return page.getByRole("navigation", { name: "Main" });
 }
 
-async function startGroup(page: Page, name: string): Promise<void> {
+async function startGroup(page: Page, name: string): Promise<string> {
   await page.goto("/");
   await page.getByRole("button", { name: "Start a group" }).first().click();
   await page.getByLabel("Group name").fill(name);
   await page.getByRole("button", { name: "Create group" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
+  return page.url();
 }
 
 test("the tabs move between pages and show where you are", async ({ page }) => {
@@ -24,7 +25,7 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
 
   for (const [label, path, heading] of [
     ["Games", "/games", "Games"],
-    ["Board", "/board", "Leaderboard"],
+    ["Board", "/board", "Board"],
     ["You", "/you", user.name],
     ["Home", "/", /^Good (morning|afternoon|evening), Nia\.$/],
   ] as const) {
@@ -56,18 +57,51 @@ test("Games and Board follow the chosen group and remember it", async ({ page })
   await expect(page.getByLabel("Group").locator("option:checked")).toHaveText("Beta Crew");
 });
 
-test("the board lists the crew, unranked, until games are confirmed", async ({ page }) => {
+test("the board shows crew points from the first game", async ({ page }) => {
   const user = newUser("Pia");
   await signIn(page, user);
+  const problems = await watchProblems(page);
   await page.goto("/board");
   await expect(page.getByText("You're not in a group yet.", { exact: false })).toBeVisible();
 
-  await startGroup(page, "Pia's Crew");
+  const groupUrl = await startGroup(page, "Pia's Crew");
   await page.goto("/board");
-  const roster = page.getByRole("list", { name: "Players, not yet ranked" });
-  await expect(roster.getByRole("listitem")).toHaveCount(1);
-  await expect(roster).toContainText(`${user.name} (you)`);
-  await expect(roster).toContainText("Unrated");
+  await expect(page.getByRole("heading", { name: "Nobody's ranked yet" })).toBeVisible();
+  const starting = page.getByRole("list", { name: /Getting started/ });
+  await expect(starting).toContainText(`${user.name} (you)`);
+  await expect(starting).toContainText("0 of 10 games");
+
+  // One win against a guest: crew points move above the 3.00 start, still getting started.
+  await page.goto(`${groupUrl}/log`);
+  await page.getByText("Singles", { exact: true }).click();
+  await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
+  await page.getByRole("dialog", { name: "Pick a player" }).getByRole("button", { name: "Add a guest" }).click();
+  await page.getByRole("dialog", { name: "Add a guest" }).getByLabel("Guest's name").fill("Lou");
+  await page.getByRole("dialog", { name: "Add a guest" }).getByRole("button", { name: "Add guest" }).click();
+  await page.getByLabel(`Game 1, ${user.name}`).fill("11");
+  await page.getByLabel("Game 1, Lou").fill("3");
+  await page.getByRole("button", { name: "Log game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+
+  await page.goto("/board");
+  const mine = starting.getByRole("listitem").filter({ hasText: user.name });
+  await expect(mine).toContainText("1 of 10 games");
+  const points = Number(await mine.getByText(/^\d\.\d\d$/).textContent());
+  expect(points).toBeGreaterThan(3);
+  expect(points).toBeLessThanOrEqual(6);
+  await expect(starting.getByRole("listitem").filter({ hasText: "Lou" })).toContainText("guest");
+  expect(problems).toEqual([]);
+});
+
+test("your level sets where crew points start", async ({ page }) => {
+  await signIn(page, newUser("Kai"));
+  await page.goto("/you");
+  const section = page.getByRole("region", { name: "Crew points" });
+  await expect(section).toContainText("Your crew points show up after your first game.");
+  await expect(section.getByRole("radio", { name: /Not set/ })).toBeChecked();
+  await section.getByRole("radio", { name: /Advanced/ }).check();
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Crew points" }).getByRole("radio", { name: /Advanced/ })).toBeChecked();
 });
 
 test("appearance is remembered and applied before the page paints", async ({ page }) => {
