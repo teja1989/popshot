@@ -85,7 +85,7 @@ jobs:
           access_token_lifetime: 600s
       - id: push
         if: steps.check.outputs.configured == 'true'
-        name: Push by commit SHA and record digests
+        name: Push by commit SHA and run, record digests
         env:
           ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           REPOSITORY: ${{ vars.IMAGE_REPOSITORY }}
@@ -93,8 +93,11 @@ jobs:
         run: |
           set -euo pipefail
           printf '%s' "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://${REGION}-docker.pkg.dev"
+          # Tags are immutable and rebuilds aren't byte-identical, so a re-run on the same
+          # commit needs its own tag. Deploys pin the digest, not the tag.
+          tag="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           for name in api web; do
-            target="${REPOSITORY}/${name}:${GITHUB_SHA}"
+            target="${REPOSITORY}/${name}:${tag}"
             docker tag "popshot-${name}:candidate" "$target"
             docker push "$target"
             digest="$(docker image inspect --format '{{index .RepoDigests 0}}' "$target")"
