@@ -4,6 +4,8 @@ Creates the two group roles from ADR 0004 and gives the login users membership:
 
   popshot_owner  NOLOGIN, owns every table and function (migrations SET ROLE to it)
   popshot_app    NOLOGIN, what RLS policies and grants target
+  popshot_jobs   NOLOGIN, the scheduled job: no table privileges, only EXECUTE on the
+                 functions migrations grant it (see migration 0008)
 
 The login users are passed in. Locally and in CI they're password users; on Cloud SQL they're
 the service accounts' IAM database users, so no database password exists anywhere.
@@ -24,6 +26,7 @@ from psycopg import sql
 
 OWNER_ROLE = "popshot_owner"
 APP_ROLE = "popshot_app"
+JOBS_ROLE = "popshot_jobs"
 DEFAULT_DATABASE = "popshot"
 # Plain names locally; IAM service account users look like "name@project.iam".
 _ROLE_NAME = re.compile(r"^[a-z][a-z0-9_.@-]{0,62}$")
@@ -67,12 +70,20 @@ def _grant_membership(conn: psycopg.Connection, group: str, user: str, *, can_se
     )
 
 
-def bootstrap(admin_url: str, *, migrator: str, api: str, database: str = DEFAULT_DATABASE) -> None:
+def bootstrap(
+    admin_url: str,
+    *,
+    migrator: str,
+    api: str,
+    jobs: str | None = None,
+    database: str = DEFAULT_DATABASE,
+) -> None:
     migrator = _check(migrator, _ROLE_NAME, "migrator user")
     api = _check(api, _ROLE_NAME, "api user")
+    jobs = _check(jobs, _ROLE_NAME, "jobs user") if jobs is not None else None
     database = _check(database, _DB_NAME, "database name")
-    if migrator == api:
-        raise ValueError("the migrator and the API must be different users")
+    if len({migrator, api, jobs} - {None}) != (3 if jobs else 2):
+        raise ValueError("the migrator, the API and the jobs must be different users")
 
     with psycopg.connect(admin_url, autocommit=True) as conn:
         is_super = conn.execute("SELECT rolsuper FROM pg_roles WHERE rolname = current_user")
@@ -80,8 +91,11 @@ def bootstrap(admin_url: str, *, migrator: str, api: str, database: str = DEFAUL
 
         _ensure_group(conn, OWNER_ROLE)
         _ensure_group(conn, APP_ROLE)
+        _ensure_group(conn, JOBS_ROLE)
         _grant_membership(conn, OWNER_ROLE, migrator, can_set=True)
         _grant_membership(conn, APP_ROLE, api, can_set=False)
+        if jobs is not None:
+            _grant_membership(conn, JOBS_ROLE, jobs, can_set=False)
 
         exists = conn.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database,))
         if exists.fetchone() is None:
@@ -115,30 +129,35 @@ def bootstrap(admin_url: str, *, migrator: str, api: str, database: str = DEFAUL
                 sql.Identifier(database), sql.Identifier(OWNER_ROLE)
             )
         )
-        conn.execute(
-            sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(
-                sql.Identifier(database), sql.Identifier(APP_ROLE)
+        for role in (APP_ROLE, JOBS_ROLE):
+            conn.execute(
+                sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(
+                    sql.Identifier(database), sql.Identifier(role)
+                )
             )
-        )
 
     db_url = psycopg.conninfo.make_conninfo(admin_url, dbname=database)
     with psycopg.connect(db_url, autocommit=True) as conn:
         # The database owner owns the public schema (PG 15+). Only it may create objects.
         conn.execute("REVOKE ALL ON SCHEMA public FROM PUBLIC")
-        conn.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(sql.Identifier(APP_ROLE)))
+        for role in (APP_ROLE, JOBS_ROLE):
+            conn.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(sql.Identifier(role)))
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--migrator", required=True)
     parser.add_argument("--api", required=True)
+    parser.add_argument("--jobs", default=None, help="the scheduled job's login user")
     parser.add_argument("--database", default=DEFAULT_DATABASE)
     args = parser.parse_args(argv)
     admin_url = os.environ.get("POPSHOT_BOOTSTRAP_ADMIN_URL")
     if not admin_url:
         print("Set POPSHOT_BOOTSTRAP_ADMIN_URL to the admin's libpq URL.", file=sys.stderr)
         return 2
-    bootstrap(admin_url, migrator=args.migrator, api=args.api, database=args.database)
+    bootstrap(
+        admin_url, migrator=args.migrator, api=args.api, jobs=args.jobs, database=args.database
+    )
     print(f"Database {args.database!r} is ready for {args.migrator!r} and {args.api!r}.")
     return 0
 
