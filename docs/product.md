@@ -37,6 +37,7 @@ There are plenty of score-keeping apps already. Popshot's angle is what happens 
 - Group leaderboard with crew rating
 - Head-to-head records
 - Personal multi-group dashboard
+- Private focus areas: Strengths and Areas to improve, an optional "How did it go?" after each game you play, and suggestions from your own repeated picks. Only you see them
 - Fun stats (see below)
 - Installable web app on phones
 
