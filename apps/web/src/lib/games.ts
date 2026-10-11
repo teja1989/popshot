@@ -1,5 +1,6 @@
 // Shapes returned by the API's routes/games.py, and how games read on screen.
 
+import type { Reflection } from "./focus";
 import type { Format } from "./groups";
 import type { BestOf, PointsTo, Team } from "./scoring";
 
@@ -37,6 +38,9 @@ export interface Match {
   winner: Team;
   players: MatchPlayer[];
   games: GameScore[];
+  i_played: boolean;
+  // Yours only. Both lists empty means you skipped it.
+  my_reflection: Reflection | null;
 }
 
 export interface LogGameBody {

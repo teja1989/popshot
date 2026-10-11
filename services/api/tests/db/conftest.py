@@ -330,6 +330,20 @@ def seed(app_engine: Engine) -> Seed:
             {"m": match_b, "g": group_b, "u": users["dave"]},
         )
 
+    # Private reflections: Alice on group A's game, Bob on group B's.
+    for user, match, group in (
+        (users["alice"], match_a, group_a),
+        (users["bob"], match_b, group_b),
+    ):
+        with committed_as(app_engine, user) as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO match_reflections (match_id, group_id, user_id, went_well) "
+                    "VALUES (:m, :g, :u, ARRAY['footwork'])"
+                ),
+                {"m": match, "g": group, "u": user},
+            )
+
     return Seed(
         **users,
         group_a=group_a,

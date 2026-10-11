@@ -66,3 +66,5 @@ the stacks. Infrastructure lives in `infra/terraform` (bootstrap, then `prod/pla
 - `match_confirmations`: match, confirming user, decision
 - `ratings` and `rating_history`: per group, per player
 - `audit_log`: who did what, when
+- `user_focus`: your Strengths and Areas to improve (option IDs). Private to you, enforced by RLS; not on `users`, which group-mates can read
+- `match_reflections`: what went well and what to improve, per game and player. A group table, but only the author can read or change a row

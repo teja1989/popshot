@@ -53,6 +53,14 @@ export function apiPost<T>(user: User, path: ApiPath, body: unknown): Promise<T>
   });
 }
 
+export function apiPut<T>(user: User, path: ApiPath, body: unknown): Promise<T> {
+  return request<T>(user, path, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export function apiPatch<T>(user: User, path: ApiPath, body: unknown): Promise<T> {
   return request<T>(user, path, {
     method: "PATCH",

@@ -56,6 +56,9 @@ test("log a doubles game with guests, see it, and delete it", async ({ page }) =
 
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/games$/);
+  // You played, so the optional reflection opens; close it without answering.
+  await expect(page.getByRole("dialog", { name: "How did it go?" })).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(page.getByRole("status")).toContainText("Game logged.");
   const card = page.getByRole("listitem").filter({ hasText: "Jo & Robin" });
   await expect(card).toContainText("Waiting for confirmation");
@@ -95,6 +98,7 @@ test("best of three shows a third game only when it's one each", async ({ page }
   await expect(page.getByLabel("Played at")).toBeVisible();
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/games$/);
+  await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
   const card = page.getByRole("listitem").filter({ hasText: "Alex" });
   await expect(card).toContainText("Singles · to 11");
   await expect(card.getByRole("cell")).toHaveCount(6);
