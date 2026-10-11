@@ -18,11 +18,6 @@ const THEMES: { value: ThemeChoice; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
-const ANALYTICS = [
-  { title: "Rating & form", body: "Your crew rating over time, last-10 form, streaks and where you rank." },
-  { title: "Activity", body: "Games per week, your most active days, doubles and singles." },
-];
-
 export function YouView() {
   const { me } = useSignedIn();
   // Rendered in the browser only (inside the app shell), so storage can be read up front.
@@ -50,20 +45,6 @@ export function YouView() {
       <MyStatsSection />
 
       <FocusSection />
-
-      <section aria-labelledby="analytics-heading" className="flex animate-rise flex-col gap-3 [animation-delay:60ms]">
-        <h2 id="analytics-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-          Coming next
-        </h2>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {ANALYTICS.map((item) => (
-            <li key={item.title} className="rounded-2xl border border-dashed border-line p-4">
-              <p className="text-[16px] font-bold">{item.title}</p>
-              <p className="text-[14px] text-muted">{item.body}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <fieldset className="flex animate-rise flex-col gap-3 [animation-delay:120ms]">
         <legend className="mb-3 text-xs font-bold tracking-[0.1em] text-muted uppercase">Appearance</legend>

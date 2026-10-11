@@ -33,6 +33,10 @@ export interface MyRating {
   rank: number | null;
   ranked_of: number;
   to_go: number;
+  // Last 10, newest first.
+  form: ("W" | "L")[];
+  // Matches in the last 7 days.
+  week_games: number;
 }
 
 export type Level = "beginner" | "intermediate" | "advanced" | "expert";

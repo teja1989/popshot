@@ -4,21 +4,25 @@ See popshot_api.stats for what counts as a close game, a skunk, an upset, a best
 and a nemesis. Like crew points, everything is worked out from the games on each read.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from popshot_api import stats
 from popshot_api.db import CurrentUserSession
+from popshot_api.rating import START
 from popshot_api.routes.board import group_matches, group_ratings
 from popshot_api.routes.games import _require_member
 
 router = APIRouter(prefix="/v1/groups/{group_id}")
+
+# Windows the You page offers, in days (no value means all time).
+WINDOWS = frozenset({30, 90})
 
 
 class PlayerRef(BaseModel):
@@ -46,7 +50,17 @@ class Streak(BaseModel):
     length: int
 
 
+class TimelinePointOut(BaseModel):
+    played_at: datetime
+    doubles: bool
+    won: bool
+    rating: float
+
+
 class MyStats(BaseModel):
+    # The window everything below covers, in days; None for all time. Best partner and
+    # nemesis always cover all time, since they need MIN_PAIRING matches.
+    days: int | None
     matches: int
     wins: int
     current_streak: Streak | None
@@ -61,6 +75,11 @@ class MyStats(BaseModel):
     nemesis: RecordOut | None
     # Everyone you've played against, most matches first.
     head_to_head: list[RecordOut]
+    # Your matches in the window, oldest first, with your crew points after each.
+    timeline: list[TimelinePointOut]
+    # Crew points going into the window, and now (both all-time ratings).
+    rating_start: float | None
+    rating_now: float | None
     min_pairing: int = stats.MIN_PAIRING
 
 
@@ -116,17 +135,26 @@ def _record_out(
 
 
 @router.get("/stats/me")
-def my_stats(group_id: UUID, user: CurrentUserSession) -> MyStats:
+def my_stats(group_id: UUID, user: CurrentUserSession, days: int | None = None) -> MyStats:
+    """Your stats in the group, over the last `days` (30 or 90) or all time if not given."""
+    if days is not None and days not in WINDOWS:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail="days must be 30 or 90.")
     session = user.session
     _require_member(session, user.user_id, group_id)
     me = session.execute(
         text("SELECT id FROM players WHERE group_id = :group_id AND user_id = :me"),
         {"group_id": group_id, "me": user.user_id},
     ).scalar_one()
+    # Crew points need every game, whatever the window.
     matches = group_matches(session, group_id)
     pregame: dict[UUID, tuple[float, float]] = {}
-    group_ratings(session, group_id, matches, pregame)
-    mine = stats.personal(matches, me, pregame)
+    starts: dict[UUID, float] = {}
+    rated = group_ratings(session, group_id, matches, pregame, starts)
+    since = datetime.now(UTC) - timedelta(days=days) if days else None
+    window = [m for m in matches if since is None or m.played_at > since]
+
+    all_time = stats.personal(matches, me, pregame)
+    mine = stats.personal(window, me, pregame) if since else all_time
     names = _players(session, group_id)
     head_to_head = [
         RecordOut(player=names[pid], played=r.played, won=r.won)
@@ -136,8 +164,19 @@ def my_stats(group_id: UUID, user: CurrentUserSession) -> MyStats:
         )
         if pid in names
     ]
-    streak = mine.current_streak
+    mine_rated = rated.get(me)
+    points = (
+        [p for p in stats.timeline(matches, me, mine_rated) if since is None or p.played_at > since]
+        if mine_rated
+        else []
+    )
+    start = starts.get(me, START)
+    rating_start: float | None = None
+    if mine_rated:
+        rating_start = round(stats.rating_before(mine_rated, start, since) if since else start, 2)
+    streak = all_time.current_streak
     return MyStats(
+        days=days,
         matches=mine.matches,
         wins=mine.wins,
         current_streak=Streak(result=streak[0], length=streak[1]) if streak else None,
@@ -148,9 +187,17 @@ def my_stats(group_id: UUID, user: CurrentUserSession) -> MyStats:
         skunks_taken=mine.skunks_taken,
         upset_wins=mine.upset_wins,
         biggest_upset=_upset_out(mine.biggest_upset, names),
-        best_partner=_record_out(stats.best_partner(mine.partners), names),
-        nemesis=_record_out(stats.nemesis(mine.opponents), names),
+        best_partner=_record_out(stats.best_partner(all_time.partners), names),
+        nemesis=_record_out(stats.nemesis(all_time.opponents), names),
         head_to_head=head_to_head,
+        timeline=[
+            TimelinePointOut(
+                played_at=p.played_at, doubles=p.doubles, won=p.won, rating=round(p.rating, 2)
+            )
+            for p in points
+        ],
+        rating_start=rating_start,
+        rating_now=round(mine_rated.rating, 2) if mine_rated else None,
     )
 
 

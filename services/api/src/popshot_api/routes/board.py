@@ -10,7 +10,7 @@ The Board has three sections:
 People who have left the group still count in everyone's history but aren't listed.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
@@ -35,6 +35,8 @@ from popshot_api.rating import (
 from popshot_api.routes.games import _require_member
 
 router = APIRouter(prefix="/v1")
+
+HOME_FORM = 10
 
 Level = Literal["beginner", "intermediate", "advanced", "expert"]
 
@@ -72,6 +74,9 @@ class MyRating(BaseModel):
     rank: int | None
     ranked_of: int
     to_go: int
+    # Last HOME_FORM results, newest first, and matches in the last 7 days.
+    form: list[Literal["W", "L"]]
+    week_games: int
 
 
 class LevelBody(BaseModel):
@@ -115,8 +120,12 @@ def group_ratings(
     group_id: UUID,
     matches: list[PlayedMatch] | None = None,
     pregame: dict[UUID, tuple[float, float]] | None = None,
+    starts_out: dict[UUID, float] | None = None,
 ) -> dict[UUID, PlayerRating]:
-    """Everyone's crew points in the group. Pass `matches` if you've already loaded them."""
+    """Everyone's crew points in the group. Pass `matches` if you've already loaded them.
+
+    `starts_out`, if given, is filled with the starting ratings from self-rated levels.
+    """
     starts = {
         row.player_id: LEVEL_START[row.self_level]
         for row in session.execute(
@@ -124,13 +133,22 @@ def group_ratings(
         )
         if row.self_level in LEVEL_START
     }
+    if starts_out is not None:
+        starts_out.update(starts)
     if matches is None:
         matches = group_matches(session, group_id)
     return replay(matches, starts, pregame)
 
 
-def build_board(session: Session, me: UUID, group_id: UUID, now: datetime) -> Board:
-    rated = group_ratings(session, group_id)
+def build_board(
+    session: Session,
+    me: UUID,
+    group_id: UUID,
+    now: datetime,
+    rated: dict[UUID, PlayerRating] | None = None,
+) -> Board:
+    if rated is None:
+        rated = group_ratings(session, group_id)
     # Listed players: guests, and members who are still active.
     listed = session.execute(
         text(
@@ -207,11 +225,14 @@ def my_ratings(user: CurrentUserSession) -> list[MyRating]:
     now = datetime.now(UTC)
     mine: list[MyRating] = []
     for group in groups:
-        board_ = build_board(session, me, group.id, now)
+        rated = group_ratings(session, group.id)
+        board_ = build_board(session, me, group.id, now, rated)
         rows = [*board_.ranked, *board_.getting_started, *board_.resting]
         row = next((r for r in rows if r.is_me and r.matches > 0), None)
         if row is None:
             continue
+        rated_me = rated[row.player_id]
+        week_ago = now - timedelta(days=7)
         mine.append(
             MyRating(
                 group_id=group.id,
@@ -221,6 +242,8 @@ def my_ratings(user: CurrentUserSession) -> list[MyRating]:
                 rank=row.rank,
                 ranked_of=len(board_.ranked),
                 to_go=row.to_go,
+                form=rated_me.results[-HOME_FORM:][::-1],
+                week_games=sum(1 for at, _ in rated_me.history if at > week_ago),
             )
         )
     return sorted(mine, key=lambda r: (-r.matches, r.group_name.lower()))
