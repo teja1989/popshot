@@ -203,6 +203,23 @@ TF_STATE_BUCKET="$(out state_bucket)"
 IMAGE_REPOSITORY="$(out image_repository)"
 ok "Bootstrap outputs read"
 
+# The deploy's plan job runs as a read-only identity. On a missing state, Terraform's
+# GCS backend takes a lock and writes an empty state even with -lock=false, which that
+# identity can't do. So create the empty platform state here, with your credentials.
+# (The services stack is only touched by the deploy identity, which can write state.)
+PLATFORM="infra/terraform/prod/platform"
+if gcloud storage objects describe "gs://${TF_STATE_BUCKET}/prod/platform/default.tfstate" >/dev/null 2>&1; then
+  ok "Platform state exists"
+else
+  "$TF" -chdir="$PLATFORM" init -input=false -lockfile=readonly -reconfigure \
+    -backend-config="bucket=${TF_STATE_BUCKET}" >/dev/null
+  # Loading the state is what creates it; the listing itself is empty.
+  "$TF" -chdir="$PLATFORM" state list >/dev/null 2>&1 || true
+  gcloud storage objects describe "gs://${TF_STATE_BUCKET}/prod/platform/default.tfstate" >/dev/null 2>&1 \
+    || die "Couldn't create the empty platform state in gs://${TF_STATE_BUCKET}."
+  ok "Empty platform state created"
+fi
+
 # ---------------------------------------------------------------- 5. GitHub
 
 step "5/7 GitHub environments and variables"
