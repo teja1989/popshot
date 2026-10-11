@@ -21,32 +21,35 @@ export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-8 border-r border-line bg-surface px-4 py-8 lg:flex">
-        <div className="px-2">
-          <Brand />
-        </div>
-        <nav aria-label="Main">
-          <ul className="flex flex-col gap-1">
-            {NAV.map((item) => {
-              const active = item.matches(pathname);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-[16px] font-bold no-underline transition-colors duration-150 ${active ? "bg-chip text-primary" : "text-muted hover:bg-bg hover:text-ink"}`}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-        <div className="grow" />
-        <SignOutButton className="w-full" />
-      </aside>
+      {/* The column carries the background, so it runs the full height of long pages. */}
+      <div className="hidden border-r border-line bg-surface lg:block">
+        <aside className="sticky top-0 flex h-dvh flex-col gap-8 px-4 py-8">
+          <div className="px-2">
+            <Brand />
+          </div>
+          <nav aria-label="Main">
+            <ul className="flex flex-col gap-1">
+              {NAV.map((item) => {
+                const active = item.matches(pathname);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-[16px] font-bold no-underline transition-colors duration-150 ${active ? "bg-chip text-primary" : "text-muted hover:bg-bg hover:text-ink"}`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+          <div className="grow" />
+          <SignOutButton className="w-full" />
+        </aside>
+      </div>
 
       <div className="flex min-w-0 flex-col pb-24 lg:pb-0">
         <header className="px-5 pt-8 lg:hidden">

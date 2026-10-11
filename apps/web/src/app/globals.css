@@ -22,6 +22,11 @@
   --c-ball: #d7ea4c;
   --c-on-ball: #14210a;
   --c-warn: #8a4b0f;
+  /* The big court-blue blocks (landing hero, home header). White text on it in both themes. */
+  --c-hero: #1d4e89;
+  --c-on-hero: #ffffff;
+  --c-on-hero-muted: #c8d8ec;
+  --c-hero-line: rgb(255 255 255 / 0.14);
   color-scheme: light;
 }
 
@@ -41,6 +46,10 @@
     --c-ball: #dcec5c;
     --c-on-ball: #14210a;
     --c-warn: #f0b36a;
+    --c-hero: #123a68;
+    --c-on-hero: #ffffff;
+    --c-on-hero-muted: #b7c9df;
+    --c-hero-line: rgb(255 255 255 / 0.12);
     color-scheme: dark;
   }
 }
@@ -60,6 +69,10 @@
   --c-ball: #dcec5c;
   --c-on-ball: #14210a;
   --c-warn: #f0b36a;
+  --c-hero: #123a68;
+  --c-on-hero: #ffffff;
+  --c-on-hero-muted: #b7c9df;
+  --c-hero-line: rgb(255 255 255 / 0.12);
   color-scheme: dark;
 }
 
@@ -83,6 +96,10 @@
   --color-ball: var(--c-ball);
   --color-on-ball: var(--c-on-ball);
   --color-warn: var(--c-warn);
+  --color-hero: var(--c-hero);
+  --color-on-hero: var(--c-on-hero);
+  --color-on-hero-muted: var(--c-on-hero-muted);
+  --color-hero-line: var(--c-hero-line);
 
   --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
 
@@ -94,6 +111,16 @@
   --animate-rally-y: rally-y 1.1s 1.1s 4 both;
   --animate-rally-shadow: rally-shadow 1.1s 1.1s 4 both;
   --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-grow-x: grow-x 0.9s 0.6s var(--ease-court) both;
+
+  @keyframes grow-x {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
 
   /* A rally: the ball crosses the court at a steady pace (x) while rising and falling (y),
      and its shadow shrinks at the top of the arc. Four crossings, then it rests. */
