@@ -151,6 +151,36 @@ def _count_games(stats: PersonalStats, match: PlayedMatch, my_team: str) -> None
             stats.skunks_taken += 1
 
 
+@dataclass(frozen=True, slots=True)
+class TimelinePoint:
+    played_at: datetime
+    doubles: bool
+    won: bool
+    # Your crew points after this match.
+    rating: float
+
+
+def timeline(matches: Iterable[PlayedMatch], me: UUID, rated: PlayerRating) -> list[TimelinePoint]:
+    """Each of your matches in played order, with your crew points after it."""
+    mine = [m for m in in_order(matches) if me in m.team_a or me in m.team_b]
+    # replay() records history and results in the same order, one entry per match.
+    return [
+        TimelinePoint(
+            played_at=m.played_at,
+            doubles=len(m.team_a) > 1,
+            won=result == "W",
+            rating=rating,
+        )
+        for m, result, (_, rating) in zip(mine, rated.results, rated.history, strict=True)
+    ]
+
+
+def rating_before(rated: PlayerRating, start: float, since: datetime) -> float:
+    """Your crew points going into `since`: after your last match before it, else your start."""
+    earlier = [rating for at, rating in rated.history if at <= since]
+    return earlier[-1] if earlier else start
+
+
 def best_partner(partners: Mapping[UUID, Record]) -> tuple[UUID, Record] | None:
     """Highest win share together, over MIN_PAIRING matches; more matches breaks a tie."""
     eligible = [(pid, r) for pid, r in partners.items() if r.played >= MIN_PAIRING]

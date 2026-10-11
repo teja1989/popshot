@@ -51,6 +51,24 @@ test("your stats and the crew's highlights fill in as games are logged", async (
   await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("Lou");
   await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("2–1");
 
+  // The dashboard: crew points over time, activity, and the window (30 days by default).
+  await expect(stats.getByRole("radio", { name: "30 days" })).toBeChecked();
+  await expect(stats.getByRole("img", { name: /^Crew points over 3 games/ })).toBeVisible();
+  await expect(stats.getByLabel("Last 3, newest first: L W W")).toBeVisible();
+  await expect(stats.getByRole("img", { name: /This week: 3\.$/ })).toBeVisible();
+  await expect(stats).toContainText("Doubles · singles0 · 3");
+  await stats.getByText("All time", { exact: true }).click();
+  await expect(stats.getByRole("radio", { name: "All time" })).toBeChecked();
+  await expect(stats).toContainText("all time");
+  await expect(stats).toContainText("3 games · 2–1");
+
+  // Home's short version.
+  await page.goto("/");
+  const home = page.getByRole("complementary", { name: "Your stats" });
+  await expect(home).toContainText("Last 3");
+  await expect(home).toContainText("2–1");
+  await expect(home).toContainText("Last 7 days3 games");
+
   await page.goto("/board");
   const highlights = page.getByRole("region", { name: "Highlights" });
   await expect(highlights).toContainText("Longest win streak");

@@ -130,3 +130,48 @@ def test_outsiders_get_nothing(people: People, crew: dict[str, Any]) -> None:  #
     for path in ("stats/me", "highlights"):
         response = people.client.get(f"/v1/groups/{crew['group_id']}/{path}", headers=outsider)
         assert response.status_code == 404
+
+
+def test_window_filters_stats_but_not_partner_nemesis_or_points(
+    people: People,
+    crew: dict[str, Any],  # noqa: F811
+    app_engine: Engine,
+) -> None:
+    old = [singles(people, crew, "Casey", "Gary", (5, 11)) for _ in range(MIN_PAIRING)]
+    with committed_as(app_engine, people.user_id(crew["casey"])) as conn:
+        conn.execute(
+            text("UPDATE matches SET played_at = now() - interval '45 days' WHERE id = ANY(:ids)"),
+            {"ids": old},
+        )
+    singles(people, crew, "Casey", "Gary", (11, 9))
+
+    everything = my_stats(people, crew["casey"], crew["group_id"])
+    assert everything["days"] is None
+    assert (everything["matches"], len(everything["timeline"])) == (6, 6)
+    assert everything["rating_start"] == 3.0
+
+    path = f"/v1/groups/{crew['group_id']}/stats/me"
+    month = people.client.get(f"{path}?days=30", headers=crew["casey"]).json()
+    assert (month["days"], month["matches"], month["wins"]) == (30, 1, 1)
+    assert [r["played"] for r in month["head_to_head"]] == [1]
+    assert len(month["timeline"]) == 1
+    assert month["timeline"][0]["won"] is True
+    assert month["timeline"][0]["doubles"] is False
+    # Points going into the window are after the five old losses; now is after the win.
+    assert month["rating_start"] < 3.0
+    assert month["rating_start"] < month["rating_now"] == everything["rating_now"]
+    # Nemesis stays all time.
+    assert month["nemesis"]["player"]["display_name"] == "Gary"
+    assert month["nemesis"]["played"] == 6
+
+    quarter = people.client.get(f"{path}?days=90", headers=crew["casey"]).json()
+    assert quarter["matches"] == 6
+    assert people.client.get(f"{path}?days=7", headers=crew["casey"]).status_code == 422
+
+
+def test_my_ratings_carry_form_and_this_week(people: People, crew: dict[str, Any]) -> None:  # noqa: F811
+    for score in [(11, 4), (4, 11), (11, 6)]:
+        singles(people, crew, "Sam", "Gary", score)
+    mine = people.client.get("/v1/me/ratings", headers=crew["sam"]).json()
+    assert mine[0]["form"] == ["W", "L", "W"]
+    assert mine[0]["week_games"] == 3

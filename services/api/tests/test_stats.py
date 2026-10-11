@@ -12,7 +12,9 @@ from popshot_api.stats import (
     highlights,
     nemesis,
     personal,
+    rating_before,
     streaks,
+    timeline,
     upset,
 )
 
@@ -153,3 +155,25 @@ def test_crew_highlights() -> None:
 def test_highlights_with_no_games() -> None:
     h = highlights([], {}, {}, {A}, T0)
     assert (h.streak, h.most_games, h.biggest_upset) == (None, None, None)
+
+
+def test_timeline_follows_your_matches_with_ratings() -> None:
+    games = series(
+        match([A, B], [C, D], (11, 5)),
+        match([C], [D], (11, 4)),  # not A's
+        match([A], [C], (3, 11)),
+    )
+    rated = replay(games, {})
+    points = timeline(games, A, rated[A])
+    assert [(p.doubles, p.won) for p in points] == [(True, True), (False, False)]
+    assert points[0].rating > 3.0 > points[1].rating
+    assert points[-1].rating == rated[A].rating
+    assert [p.played_at for p in points] == [games[0].played_at, games[2].played_at]
+
+
+def test_rating_before_a_window() -> None:
+    games = series(match([A], [B], (11, 5)), match([A], [B], (11, 7)))
+    rated = replay(games, {A: 4.0})
+    # Before any match: the start. Between the two: after the first.
+    assert rating_before(rated[A], 4.0, T0 - timedelta(days=1)) == 4.0
+    assert rating_before(rated[A], 4.0, T0 + timedelta(hours=1)) == rated[A].history[0][1]

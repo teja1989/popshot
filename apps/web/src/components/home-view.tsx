@@ -182,7 +182,7 @@ export function HomeView() {
           )}
         </section>
 
-        <StatsPanel />
+        <StatsPanel top={top} loading={ratings.result.kind === "loading"} groups={ratingsCount} />
       </div>
     </main>
   );
@@ -243,40 +243,63 @@ function HeroStat({ label, value, note }: { label: string; value: string; note?:
   );
 }
 
-function StatsPanel() {
+function StatsPanel({ top, loading, groups }: { top: MyRating | undefined; loading: boolean; groups: number }) {
+  const wins = top ? top.form.filter((r) => r === "W").length : 0;
   return (
     <aside
-      aria-labelledby="stats-heading"
+      aria-labelledby="home-stats-heading"
       className="flex animate-rise flex-col gap-4 rounded-3xl border border-line bg-surface p-5 [animation-delay:120ms]"
     >
-      <h2 id="stats-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-        Your stats
+      <h2 id="home-stats-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        Your stats{top && groups > 1 ? ` · ${top.group_name}` : ""}
       </h2>
-      <dl className="grid grid-cols-3 gap-3">
-        {["Win rate", "Crew points", "Streak"].map((label) => (
-          <div key={label} className="flex flex-col gap-1">
-            <dt className="text-[13px] text-muted">{label}</dt>
-            <dd className="text-[28px] leading-none font-extrabold text-loss [font-stretch:75%]">
-              <span aria-hidden="true">–</span>
-              <span className="sr-only">Not yet</span>
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <svg viewBox="0 0 300 64" className="w-full" aria-hidden="true">
-        <path
-          d="M2 52 C 40 50, 60 30, 95 36 S 150 18, 190 26 S 250 8, 298 14"
-          fill="none"
-          strokeWidth="2.5"
-          strokeDasharray="5 7"
-          strokeLinecap="round"
-          className="stroke-line"
-        />
-      </svg>
-      <p className="text-[15px] leading-relaxed text-muted">
-        Your win rate, streaks and form arrive with the stats update next. Crew points are live on
-        the Board now.
-      </p>
+      {!top && !loading && (
+        <p className="text-[15px] leading-relaxed text-muted">
+          Log your first game and your crew points, form and weekly games show up here.
+        </p>
+      )}
+      {top && (
+        <>
+          <dl className="grid grid-cols-3 gap-3">
+            <PanelStat label="Crew points" value={points(top.rating)} />
+            <PanelStat label={`Last ${String(top.form.length)}`} value={`${String(wins)}–${String(top.form.length - wins)}`} />
+            <PanelStat label="Last 7 days" value={String(top.week_games)} note={top.week_games === 1 ? "game" : "games"} />
+          </dl>
+          <span
+            className="flex flex-wrap gap-1"
+            aria-label={`Last ${String(top.form.length)}, newest first: ${top.form.join(" ")}`}
+          >
+            {top.form.map((r, i) => (
+              <span
+                key={i}
+                aria-hidden="true"
+                className={
+                  r === "W"
+                    ? "flex size-6 items-center justify-center rounded bg-win text-[11px] font-extrabold text-on-win"
+                    : "flex size-6 items-center justify-center rounded border border-dashed border-loss text-[11px] font-extrabold text-muted"
+                }
+              >
+                {r}
+              </span>
+            ))}
+          </span>
+          <Link href="/you" className="self-start text-[15px] font-bold text-primary">
+            See all your stats
+          </Link>
+        </>
+      )}
     </aside>
+  );
+}
+
+function PanelStat({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <dt className="text-[13px] text-muted">{label}</dt>
+      <dd className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">
+        {value}
+        {note && <span className="text-[13px] font-bold text-muted [font-stretch:100%]"> {note}</span>}
+      </dd>
+    </div>
   );
 }
