@@ -25,6 +25,7 @@ Format = Literal["doubles", "singles"]
 
 # A generous cap that stops a script from creating groups without end.
 MAX_LED_GROUPS = 20
+MEMBER_PREVIEW = 4
 
 NOT_FOUND = HTTPException(status.HTTP_404_NOT_FOUND, detail="We couldn't find that group.")
 
@@ -51,6 +52,11 @@ class CreateGroup(BaseModel):
     default_win_by_two: bool = True
 
 
+class MemberPreview(BaseModel):
+    display_name: str
+    avatar_url: str | None
+
+
 class GroupSummary(BaseModel):
     id: UUID
     name: str
@@ -58,6 +64,8 @@ class GroupSummary(BaseModel):
     my_status: MemberStatus
     # Only for active members; someone waiting for approval doesn't see the roster yet.
     member_count: int | None
+    # Up to MEMBER_PREVIEW active members, the lead first, for the faces on a group card.
+    member_preview: list[MemberPreview] = []
 
 
 class Member(BaseModel):
@@ -85,16 +93,33 @@ def list_groups(user: CurrentUserSession) -> list[GroupSummary]:
                    CASE WHEN m.status = 'active' THEN (
                        SELECT count(*) FROM group_members a
                        WHERE a.group_id = g.id AND a.status = 'active'
-                   ) END AS member_count
+                   ) END AS member_count,
+                   CASE WHEN m.status = 'active' THEN (
+                       SELECT coalesce(json_agg(json_build_object(
+                                  'display_name', p.display_name, 'avatar_url', p.avatar_url
+                              ) ORDER BY p.ord), '[]'::json)
+                       FROM (
+                           SELECT u.display_name, u.avatar_url,
+                                  row_number() OVER (
+                                      ORDER BY array_position(
+                                          ARRAY['lead', 'co_lead', 'member']::group_role[], a.role
+                                      ), a.created_at, u.id
+                                  ) AS ord
+                           FROM group_members a
+                           JOIN users u ON u.id = a.user_id
+                           WHERE a.group_id = g.id AND a.status = 'active'
+                       ) p
+                       WHERE p.ord <= :preview
+                   ) END AS member_preview
             FROM group_members m
             JOIN groups g ON g.id = m.group_id
             WHERE m.user_id = :me AND m.status IN ('active', 'pending')
             ORDER BY lower(g.name), g.id
             """
         ),
-        {"me": user.user_id},
+        {"me": user.user_id, "preview": MEMBER_PREVIEW},
     ).mappings()
-    return [GroupSummary(**row) for row in rows]
+    return [GroupSummary(**{**row, "member_preview": row["member_preview"] or []}) for row in rows]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

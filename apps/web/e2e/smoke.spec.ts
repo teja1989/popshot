@@ -122,3 +122,33 @@ test("/favicon.ico serves the app icon instead of a 404", async ({ request }) =>
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toBe("image/png");
 });
+
+test("the example cards rotate, pause and can be picked", async ({ page }) => {
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Examples of what Popshot shows you" });
+  await expect(carousel.getByText("Your form")).toBeVisible();
+  // Advances by itself.
+  await expect(carousel.getByText("Your nemesis")).toBeVisible({ timeout: 8000 });
+
+  await carousel.getByRole("button", { name: "Pause" }).click();
+  await expect(carousel.getByRole("button", { name: "Play" })).toBeVisible();
+  await page.waitForTimeout(5000);
+  await expect(carousel.getByText("Your nemesis")).toBeVisible();
+
+  await carousel.getByRole("button", { name: /Show example 3 of 3/ }).click();
+  await expect(carousel.getByText("Best partner")).toBeVisible();
+  await expect(carousel.getByRole("button", { name: /Show example 3 of 3/ })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+});
+
+test("with reduce motion, the example cards stay put", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Examples of what Popshot shows you" });
+  await expect(carousel.getByText("Your form")).toBeVisible();
+  await expect(carousel.getByRole("button", { name: "Pause" })).toHaveCount(0);
+  await page.waitForTimeout(5500);
+  await expect(carousel.getByText("Your form")).toBeVisible();
+});

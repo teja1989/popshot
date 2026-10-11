@@ -5,12 +5,19 @@ export type MemberStatus = "active" | "pending";
 export type Format = "doubles" | "singles";
 export type PointsTo = 11 | 15 | 21;
 
+export interface MemberPreview {
+  display_name: string;
+  avatar_url: string | null;
+}
+
 export interface GroupSummary {
   id: string;
   name: string;
   my_role: Role;
   my_status: MemberStatus;
   member_count: number | null;
+  // Up to 4 active members, the lead first.
+  member_preview: MemberPreview[];
 }
 
 export interface Member {

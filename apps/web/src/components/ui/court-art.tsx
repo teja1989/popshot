@@ -10,7 +10,14 @@ const lines = [
   { d: "M221 100h107", w: 2, tone: "stroke-primary", delay: "[animation-delay:350ms]" },
 ];
 
-export function CourtArt({ className = "" }: { className?: string }) {
+export function CourtArt({
+  className = "",
+  rally = false,
+}: {
+  className?: string;
+  // Rally the ball over the net a few times instead of just dropping it in.
+  rally?: boolean;
+}) {
   return (
     <svg className={className} viewBox="0 0 334 200" aria-hidden="true">
       {lines.map((line) => (
@@ -23,12 +30,27 @@ export function CourtArt({ className = "" }: { className?: string }) {
           className={`court-line animate-court-draw ${line.tone} ${line.delay}`}
         />
       ))}
-      <circle
-        cx="262"
-        cy="58"
-        r="11"
-        className="animate-court-ball fill-ball [transform-box:fill-box]"
-      />
+      {rally ? (
+        <g className="animate-rally-x">
+          <ellipse
+            cx="70"
+            cy="128"
+            rx="11"
+            ry="4"
+            className="animate-rally-shadow fill-ink/20 [transform-box:fill-box] [transform-origin:center]"
+          />
+          <g className="animate-rally-y">
+            <circle cx="70" cy="112" r="11" className="fill-ball" />
+          </g>
+        </g>
+      ) : (
+        <circle
+          cx="262"
+          cy="58"
+          r="11"
+          className="animate-court-ball fill-ball [transform-box:fill-box]"
+        />
+      )}
     </svg>
   );
 }

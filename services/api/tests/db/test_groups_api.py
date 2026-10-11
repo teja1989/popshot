@@ -11,7 +11,7 @@ from sqlalchemy import Engine
 
 from popshot_api.auth.verifier import VerifiedIdentity
 from popshot_api.main import create_app
-from popshot_api.routes.groups import MAX_LED_GROUPS
+from popshot_api.routes.groups import MAX_LED_GROUPS, MEMBER_PREVIEW
 from tests.conftest import make_settings
 from tests.db.conftest import _create_invite, _redeem, committed_as
 from tests.fakes import FakeTokenVerifier
@@ -169,7 +169,9 @@ def test_pending_and_member_views(people: People, app_engine: Engine) -> None:
         [],
     )
     listed = people.client.get("/v1/groups", headers=priya).json()
-    assert [(g["my_status"], g["member_count"]) for g in listed] == [("pending", None)]
+    assert [(g["my_status"], g["member_count"], g["member_preview"]) for g in listed] == [
+        ("pending", None, [])
+    ]
 
     # Sam, a member: sees active members only.
     as_sam = people.client.get(f"/v1/groups/{group_id}", headers=sam).json()
@@ -188,3 +190,25 @@ def test_pending_and_member_views(people: People, app_engine: Engine) -> None:
         ("Priya", "member", "pending"),
     ]
     assert as_maya["member_count"] == 2
+
+    # The group card's faces: active members only, the lead first.
+    card = people.client.get("/v1/groups", headers=sam).json()[0]
+    assert card["member_preview"] == [
+        {"display_name": "Maya", "avatar_url": None},
+        {"display_name": "Sam", "avatar_url": None},
+    ]
+
+
+def test_member_preview_is_capped(people: People, app_engine: Engine) -> None:
+    maya = people.new("Maya")
+    group_id = UUID(create(people, maya)["id"])
+    maya_id = people.user_id(maya)
+    with committed_as(app_engine, maya_id) as conn:
+        _, invite = _create_invite(conn, group_id, maya_id, approval=False)
+    for n in range(MEMBER_PREVIEW + 2):
+        _redeem(app_engine, people.user_id(people.new(f"Player{n}")), invite)
+
+    card = people.client.get("/v1/groups", headers=maya).json()[0]
+    assert card["member_count"] == MEMBER_PREVIEW + 3
+    assert len(card["member_preview"]) == MEMBER_PREVIEW
+    assert card["member_preview"][0]["display_name"] == "Maya"

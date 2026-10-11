@@ -90,7 +90,45 @@
   --animate-rise: rise 0.5s var(--ease-court) both;
   --animate-court-draw: court-draw 0.9s var(--ease-court) forwards;
   --animate-court-ball: court-ball 0.7s 0.7s var(--ease-court) both;
+  --animate-rally-x: rally-x 1.1s linear 1.1s 4 alternate both;
+  --animate-rally-y: rally-y 1.1s 1.1s 4 both;
+  --animate-rally-shadow: rally-shadow 1.1s 1.1s 4 both;
   --animate-fade-in: fade-in 0.2s ease-out both;
+
+  /* A rally: the ball crosses the court at a steady pace (x) while rising and falling (y),
+     and its shadow shrinks at the top of the arc. Four crossings, then it rests. */
+  @keyframes rally-x {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(194px);
+    }
+  }
+  @keyframes rally-y {
+    0% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0.3, 0.6, 0.5, 1);
+    }
+    50% {
+      transform: translateY(-44px);
+      animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes rally-shadow {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    50% {
+      transform: scale(0.55);
+      opacity: 0.4;
+    }
+  }
   --animate-sheet-up: sheet-up 0.35s var(--ease-court) both;
 
   @keyframes fade-in {
