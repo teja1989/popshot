@@ -1,139 +1,163 @@
+@import "tailwindcss";
+/* Archivo, self-hosted (no request to Google Fonts), with its width axis for scoreboard numbers. */
+@import "@fontsource-variable/archivo/wdth.css";
+
+/*
+ * Court theme. Colors live here as CSS variables so light and dark switch in one place:
+ * dark follows the device unless data-theme="light" is set on <html>, and
+ * data-theme="dark" forces it (for a settings switch later).
+ */
 :root {
-  --bg: #f6f1e7;
-  --surface: #fffdf8;
-  --ink: #1f2a24;
-  --muted: #5b6b62;
-  --accent: #2f5d46;
-  --accent-ink: #ffffff;
-  --line: #e4dccb;
-  --warm: #b85c38;
-  --radius: 14px;
+  --c-bg: #f3f6f5;
+  --c-surface: #ffffff;
+  --c-chip: #e4ecf5;
+  --c-ink: #0f1b26;
+  --c-muted: #4b5b69;
+  --c-line: #d5dee2;
+  --c-primary: #1d4e89;
+  --c-on-primary: #ffffff;
+  --c-win: #2c6a4d;
+  --c-on-win: #ffffff;
+  --c-loss: #9aa7b1;
+  --c-ball: #d7ea4c;
+  --c-on-ball: #14210a;
+  --c-warn: #8a4b0f;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #16201b;
-    --surface: #1e2a24;
-    --ink: #eef2ee;
-    --muted: #a7b5ad;
-    --accent: #7fbf9a;
-    --accent-ink: #10201a;
-    --line: #2e3d35;
-    --warm: #e39a77;
+  :root:not([data-theme="light"]) {
+    --c-bg: #0a1520;
+    --c-surface: #122130;
+    --c-chip: #1c3248;
+    --c-ink: #eaf1f6;
+    --c-muted: #9eb1c1;
+    --c-line: #25384a;
+    --c-primary: #7db3f0;
+    --c-on-primary: #06121f;
+    --c-win: #63c08f;
+    --c-on-win: #06121f;
+    --c-loss: #4d6274;
+    --c-ball: #dcec5c;
+    --c-on-ball: #14210a;
+    --c-warn: #f0b36a;
     color-scheme: dark;
   }
 }
 
-* {
-  box-sizing: border-box;
+:root[data-theme="dark"] {
+  --c-bg: #0a1520;
+  --c-surface: #122130;
+  --c-chip: #1c3248;
+  --c-ink: #eaf1f6;
+  --c-muted: #9eb1c1;
+  --c-line: #25384a;
+  --c-primary: #7db3f0;
+  --c-on-primary: #06121f;
+  --c-win: #63c08f;
+  --c-on-win: #06121f;
+  --c-loss: #4d6274;
+  --c-ball: #dcec5c;
+  --c-on-ball: #14210a;
+  --c-warn: #f0b36a;
+  color-scheme: dark;
 }
 
-html,
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+/* Only the Court colors exist as utilities: Tailwind's stock palette is switched off. */
+@theme {
+  --color-*: initial;
 }
 
-.page {
-  min-height: 100dvh;
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-chip: var(--c-chip);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-primary: var(--c-primary);
+  --color-on-primary: var(--c-on-primary);
+  --color-win: var(--c-win);
+  --color-on-win: var(--c-on-win);
+  --color-loss: var(--c-loss);
+  --color-ball: var(--c-ball);
+  --color-on-ball: var(--c-on-ball);
+  --color-warn: var(--c-warn);
+
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --ease-court: cubic-bezier(0.3, 0.7, 0.2, 1);
+  --animate-rise: rise 0.5s var(--ease-court) both;
+  --animate-court-draw: court-draw 0.9s var(--ease-court) forwards;
+  --animate-court-ball: court-ball 0.7s 0.7s var(--ease-court) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes court-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes court-ball {
+    0% {
+      transform: translateY(-36px);
+      opacity: 0;
+    }
+    55% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    75% {
+      transform: translateY(-8px);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-weight: 650;
-  font-size: 1.15rem;
-  letter-spacing: 0.01em;
+@layer base {
+  html,
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 }
 
-.brand-mark {
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 50%;
-  background: #f2c94c;
-  box-shadow: inset 0 0 0 3px #d9ad2e;
+@layer components {
+  /* A path drawn on with pathLength="1": hidden until the draw animation runs. */
+  .court-line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1.75rem 1.5rem;
-}
-
-h1 {
-  font-size: clamp(1.6rem, 5vw, 2.1rem);
-  line-height: 1.2;
-  margin: 0 0 0.75rem;
-  font-weight: 700;
-}
-
-.lede {
-  color: var(--muted);
-  margin: 0 0 1.5rem;
-  font-size: 1.05rem;
-}
-
-.muted {
-  color: var(--muted);
-  margin: 0;
-}
-
-.notice {
-  color: var(--warm);
-  margin: 1rem 0 0;
-}
-
-.button {
-  display: inline-block;
-  text-decoration: none;
-  appearance: none;
-  border: 0;
-  border-radius: 999px;
-  padding: 0.8rem 1.4rem;
-  min-height: 44px;
-  font: inherit;
-  font-weight: 600;
-  background: var(--accent);
-  color: var(--accent-ink);
-  cursor: pointer;
-}
-
-.button:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-
-.button:focus-visible {
-  outline: 3px solid var(--warm);
-  outline-offset: 2px;
-}
-
-.button:disabled {
-  opacity: 0.6;
-  cursor: progress;
-}
-
-.button-quiet {
-  background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--line);
+/* Respect "reduce motion": animations jump to their end state, transitions are instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -37,7 +37,7 @@ export async function GET(
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#2f5d46",
+          background: "#1d4e89",
         }}
       >
         <div
@@ -45,7 +45,7 @@ export async function GET(
             width: ball,
             height: ball,
             borderRadius: "50%",
-            background: "#f2c94c",
+            background: "#d7ea4c",
             position: "relative",
             display: "flex",
           }}
@@ -60,7 +60,7 @@ export async function GET(
                 width: hole,
                 height: hole,
                 borderRadius: "50%",
-                background: "#d9ad2e",
+                background: "#b6c93a",
               }}
             />
           ))}

@@ -6,7 +6,7 @@ WORKDIR /src
 COPY package.json package-lock.json .npmrc ./
 # Install scripts stay blocked; package.json lists the ones we deny.
 RUN npm ci --no-audit --no-fund
-COPY next.config.ts tsconfig.json ./
+COPY next.config.ts postcss.config.mjs tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
