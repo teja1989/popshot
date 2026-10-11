@@ -9,6 +9,7 @@ dependencies = [
     "psycopg[binary]==3.3.6",
     "pydantic-settings==2.15.0",
     "pyjwt[crypto]==2.15.1",
+    "pywebpush==2.5.0",
     "sqlalchemy==2.1.4",
     "structlog==26.1.0",
     "uvicorn==0.54.0",
@@ -56,6 +57,11 @@ strict = true
 python_version = "3.13"
 files = ["src", "tests", "migrations"]
 plugins = ["pydantic.mypy"]
+
+# The Web Push libraries ship no type information.
+[[tool.mypy.overrides]]
+module = ["py_vapid", "pywebpush"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

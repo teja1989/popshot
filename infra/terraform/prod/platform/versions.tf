@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/random"
       version = "3.9.1"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "4.4.1"
+    }
   }
 
   # terraform init -backend-config="bucket=<project>-tfstate"

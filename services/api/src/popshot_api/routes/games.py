@@ -17,7 +17,9 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from popshot_api.db import CurrentUserSession
+from popshot_api.push import Message
 from popshot_api.routes.groups import NOT_FOUND, Format, PersonName
+from popshot_api.routes.notifications import CurrentNotifier, Notifier
 from popshot_api.scoring import GameRules, ScoreError, validate_match
 
 router = APIRouter(prefix="/v1/groups/{group_id}")
@@ -279,7 +281,9 @@ def _audit(session: Session, group_id: UUID, me: UUID, action: str, match_id: UU
 
 
 @router.post("/matches", status_code=status.HTTP_201_CREATED)
-def log_game(group_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
+def log_game(
+    group_id: UUID, body: LogGame, user: CurrentUserSession, notifier: CurrentNotifier
+) -> Match:
     session, me = user.session, user.user_id
     _require_member(session, me, group_id)
     played_at = _check_game(session, group_id, body)
@@ -319,7 +323,38 @@ def log_game(group_id: UUID, body: LogGame, user: CurrentUserSession) -> Match:
     ).scalar_one()
     _write_lineup(session, group_id, match_id, body)
     _audit(session, group_id, me, "match.logged", match_id)
-    return _matches(session, me, group_id, match_id=match_id)[0]
+    game = _matches(session, me, group_id, match_id=match_id)[0]
+    _tell_players(session, notifier, game, me)
+    return game
+
+
+def _tell_players(session: Session, notifier: Notifier, game: Match, me: UUID) -> None:
+    """Let the members who played know (not guests, not whoever logged it). No score in the
+    message: it shows on lock screens."""
+    rows = session.execute(
+        text(
+            """
+            SELECT p.user_id, p.display_name FROM match_players mp
+            JOIN players p ON p.id = mp.player_id AND p.group_id = mp.group_id
+            WHERE mp.match_id = :match_id AND p.user_id IS NOT NULL
+            """
+        ),
+        {"match_id": game.id},
+    ).all()
+    logger = session.execute(
+        text("SELECT display_name FROM users WHERE id = :me"), {"me": me}
+    ).scalar_one()
+    notifier.notify(
+        session,
+        [r.user_id for r in rows if r.user_id != me],
+        "games",
+        Message(
+            title=f"{logger} logged a game you played",
+            body="Tap to see how it went.",
+            url="/games",
+            tag=f"game-{game.id}",
+        ),
+    )
 
 
 @router.get("/matches")

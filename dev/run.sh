@@ -77,6 +77,11 @@ load_secrets() {
       } > "$STATE/secrets.env"
     )
   fi
+  # A local Web Push signing key, so notifications can be turned on in development.
+  if [ ! -f "$STATE/push-vapid.pem" ]; then
+    (umask 077 && openssl ecparam -name prime256v1 -genkey -noout -out "$STATE/push-vapid.pem")
+  fi
+  PUSH_KEY="$(cat "$STATE/push-vapid.pem")"
   # shellcheck disable=SC1091
   . "$STATE/secrets.env"
   export POPSHOT_DEV_SUPERUSER_PASSWORD
@@ -133,6 +138,7 @@ run_app() {
     POPSHOT_FIREBASE_PROJECT_ID="$PROJECT_ID" \
     POPSHOT_AUTH_EMULATOR=true \
     POPSHOT_DATABASE_URL="$API_DB_URL" \
+    POPSHOT_PUSH_VAPID_PRIVATE_KEY="$PUSH_KEY" \
       exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
       --host 127.0.0.1 --port "$API_PORT" --reload
   ) &
@@ -220,6 +226,7 @@ run_e2e() {
     POPSHOT_FIREBASE_PROJECT_ID="$PROJECT_ID" \
     POPSHOT_AUTH_EMULATOR=true \
     POPSHOT_DATABASE_URL="$API_DB_URL" \
+    POPSHOT_PUSH_VAPID_PRIVATE_KEY="$PUSH_KEY" \
       exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
       --host 127.0.0.1 --port "$E2E_API_PORT"
   ) > "$STATE/e2e-api.log" 2>&1 &

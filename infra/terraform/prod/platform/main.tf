@@ -285,6 +285,38 @@ resource "google_secret_manager_secret_iam_member" "sql_ca" {
   member    = each.value
 }
 
+# The Web Push (VAPID) signing key. Generated here so a deploy needs no manual step; it's
+# in this stack's state, which lives in the private, versioned state bucket like the other
+# generated secrets. Only the API can read it. To rotate: terraform taint the key (people
+# then need to turn notifications on again, since devices are tied to the public key).
+resource "tls_private_key" "push_vapid" {
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P256"
+}
+
+resource "google_secret_manager_secret" "push_vapid" {
+  secret_id = "push-vapid-key"
+  replication {
+    user_managed {
+      replicas {
+        location = var.region
+      }
+    }
+  }
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret_version" "push_vapid" {
+  secret      = google_secret_manager_secret.push_vapid.id
+  secret_data = tls_private_key.push_vapid.private_key_pem
+}
+
+resource "google_secret_manager_secret_iam_member" "push_vapid" {
+  secret_id = google_secret_manager_secret.push_vapid.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = google_service_account.api.member
+}
+
 # Only the bootstrap job can read the admin URL. The API never can.
 resource "google_secret_manager_secret_iam_member" "db_admin_url" {
   secret_id = google_secret_manager_secret.db_admin_url.id

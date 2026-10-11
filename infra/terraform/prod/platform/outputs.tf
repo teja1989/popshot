@@ -32,6 +32,12 @@ output "sql_ca_secret" {
   value = google_secret_manager_secret.sql_ca.secret_id
 }
 
+output "push_vapid_secret" {
+  value = google_secret_manager_secret.push_vapid.secret_id
+  # Reading the version makes sure it exists before the API that uses it is deployed.
+  depends_on = [google_secret_manager_secret_version.push_vapid]
+}
+
 output "sql_ca_mount_path" {
   value = local.sql_ca_mount_path
 }

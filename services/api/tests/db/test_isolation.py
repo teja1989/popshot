@@ -275,8 +275,10 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
                 )
             ).scalars()
         )
-    # users and user_focus aren't group tables; test_focus_api.py covers user_focus.
-    assert tables - {"alembic_version", "users", "user_focus"} == set(TABLE_IDS)
+    # These aren't group tables. test_focus_api.py covers user_focus;
+    # test_notifications_api.py covers push_subscriptions and notification_settings.
+    personal = {"users", "user_focus", "push_subscriptions", "notification_settings"}
+    assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 
 
 @pytest.mark.parametrize("table", TABLES, ids=TABLE_IDS)

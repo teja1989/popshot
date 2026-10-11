@@ -4,6 +4,8 @@ import { setNonce } from "get-nonce";
 import type { ReactNode } from "react";
 
 import type { FirebaseWebConfig } from "@/lib/config";
+// Catches the browser's one-time install event as early as possible.
+import "@/lib/install";
 
 import { AppFrame } from "./app-frame";
 import { AuthProvider, useAuth } from "./auth";

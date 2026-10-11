@@ -72,6 +72,20 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "POPSHOT_DATABASE_IAM_AUTH"
         value = "true"
       }
+      env {
+        name = "POPSHOT_PUSH_VAPID_PRIVATE_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = local.platform.push_vapid_secret
+            version = "latest"
+          }
+        }
+      }
+      env {
+        # Sent to push services as who to contact about our traffic.
+        name  = "POPSHOT_PUSH_SUBJECT"
+        value = local.platform.web_url
+      }
 
       volume_mounts {
         name       = "sql-ca"
