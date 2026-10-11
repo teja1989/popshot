@@ -141,6 +141,12 @@ jobs:
           STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
         run: |
           set -euo pipefail
+          # This identity can't create a missing state (Terraform locks to write the
+          # empty one even with -lock=false). provision.sh creates it on first setup.
+          if ! gcloud storage objects describe "gs://${STATE_BUCKET}/prod/platform/default.tfstate" >/dev/null; then
+            echo "::error::No platform state in gs://${STATE_BUCKET}. Run ./infra/provision.sh once, then re-run this workflow."
+            exit 1
+          fi
           terraform init -lockfile=readonly -backend-config="bucket=${STATE_BUCKET}"
           # Read-only identity: no state lock. A stale plan is refused at apply time.
           terraform plan -lock=false -out=platform.tfplan
