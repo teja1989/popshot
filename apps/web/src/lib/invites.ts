@@ -37,7 +37,7 @@ export interface Joined {
   status: JoinStatus;
 }
 
-export type MemberAction = "approve" | "decline" | "make_co_lead" | "make_member" | "remove";
+export type MemberAction = "approve" | "decline" | "make_co_lead" | "make_member" | "remove" | "make_lead" | "restore";
 
 export function inviteUrl(origin: string, token: string): string {
   return `${origin}${INVITE_PATH}#${token}`;

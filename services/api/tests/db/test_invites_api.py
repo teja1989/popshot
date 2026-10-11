@@ -309,7 +309,7 @@ def test_actions_must_fit_the_members_state(people: People) -> None:
     assert change(people, casey, group_id, riley_id, "remove").status_code == 409
     assert change(people, casey, group_id, uuid4(), "approve").status_code == 404
     bad = people.client.patch(
-        f"/v1/groups/{group_id}/members/{riley_id}", json={"action": "make_lead"}, headers=casey
+        f"/v1/groups/{group_id}/members/{riley_id}", json={"action": "make_owner"}, headers=casey
     )
     assert bad.status_code == 422
 

@@ -89,7 +89,9 @@ class Joined(BaseModel):
     status: JoinStatus
 
 
-Action = Literal["approve", "decline", "make_co_lead", "make_member", "remove"]
+Action = Literal[
+    "approve", "decline", "make_co_lead", "make_member", "remove", "make_lead", "restore"
+]
 
 
 class MemberChange(BaseModel):
@@ -113,6 +115,7 @@ def _my_role(session: Session, me: UUID, group_id: UUID) -> Role:
     role: Role | None = session.execute(
         text(
             "SELECT role FROM group_members "
+            "JOIN groups ON groups.id = group_members.group_id "
             "WHERE group_id = :group_id AND user_id = :me AND status = 'active'"
         ),
         {"group_id": group_id, "me": me},
@@ -251,6 +254,23 @@ def join(body: InviteToken, user: CurrentUserSession) -> Joined:
     return Joined(group_id=group_id, status=row["status"])
 
 
+def _hand_over(session: Session, me: UUID, group_id: UUID, user_id: UUID) -> GroupDetail:
+    """The lead makes an active member the lead, and becomes a co-lead."""
+    if _my_role(session, me, group_id) != "lead":
+        raise LEAD_ONLY
+    # False when they aren't an active member (say, still waiting for approval).
+    handed = session.execute(
+        text("SELECT app_hand_over_lead(:group_id, :user_id)"),
+        {"group_id": group_id, "user_id": user_id},
+    ).scalar_one()
+    if not handed:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="That person hasn't been let in yet.")
+    detail = group_detail(session, me, group_id)
+    if detail is None:  # pragma: no cover - you're still a co-lead
+        raise NOT_FOUND
+    return detail
+
+
 @router.patch("/v1/groups/{group_id}/members/{user_id}")
 def change_member(
     group_id: UUID, user_id: UUID, body: MemberChange, user: CurrentUserSession
@@ -264,23 +284,33 @@ def change_member(
     target = (
         session.execute(
             text(
-                "SELECT role, status FROM group_members "
-                "WHERE group_id = :group_id AND user_id = :user_id "
-                "AND status IN ('active', 'pending')"
+                "SELECT role, status, left_at FROM group_members "
+                "WHERE group_id = :group_id AND user_id = :user_id"
             ),
             {"group_id": group_id, "user_id": user_id},
         )
         .mappings()
         .one_or_none()
     )
-    if target is None:
+    # Someone who left on their own isn't the admins' to bring back: they ask again with an
+    # invite. Removed or declined people only show up for "restore".
+    if (
+        target is None
+        or target["left_at"] is not None
+        or (target["status"] == "removed") != (body.action == "restore")
+    ):
         raise MEMBER_NOT_FOUND
     if target["role"] == "lead":
         # The caller isn't the lead (that's their own row, refused above).
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Nobody can change the group's lead.")
 
     action = body.action
-    expected = "pending" if action in ("approve", "decline") else "active"
+    if action == "make_lead":
+        return _hand_over(session, me, group_id, user_id)
+
+    expected = {"approve": "pending", "decline": "pending", "restore": "removed"}.get(
+        action, "active"
+    )
     if target["status"] != expected:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
@@ -299,6 +329,7 @@ def change_member(
         "make_co_lead": ("co_lead", "active", "member.made_co_lead"),
         "make_member": ("member", "active", "member.made_member"),
         "remove": ("member", "removed", "member.removed"),
+        "restore": ("member", "active", "member.restored"),
     }[action]
     # The WHERE repeats what was checked, so a concurrent change makes this a no-op.
     changed = session.execute(
@@ -326,8 +357,8 @@ def change_member(
         raise HTTPException(
             status.HTTP_409_CONFLICT, detail="Someone else just changed this. Try again."
         )
-    if action == "approve":
-        # Their player record, so they can be put in games.
+    if action in ("approve", "restore"):
+        # Their player record, so they can be put in games (a declined person never had one).
         session.execute(
             text(
                 """

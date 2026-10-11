@@ -10,6 +10,7 @@ import { firstName, greetingFor } from "@/lib/people";
 
 import { useSignedIn } from "./auth";
 import { CreateGroupDialog } from "./create-group-dialog";
+import { DeletedGroups } from "./deleted-groups";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
 import { Avatar, AvatarStack } from "./ui/avatar";
@@ -180,6 +181,7 @@ export function HomeView() {
               </li>
             </ul>
           )}
+          <DeletedGroups />
         </section>
 
         <StatsPanel />

@@ -31,12 +31,40 @@ export interface Member {
   status: MemberStatus;
 }
 
+export interface FormerMember {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  // When they were removed or declined.
+  since: string;
+}
+
 export interface GroupDetail extends GroupSummary {
   default_format: Format;
   default_points_to: PointsTo;
   default_win_by_two: boolean;
   created_at: string;
   members: Member[];
+  // Leads and co-leads only: people removed or declined, who can be restored.
+  former_members: FormerMember[];
+}
+
+export interface DeletedGroup {
+  id: string;
+  name: string;
+  deleted_at: string;
+  restorable_until: string;
+}
+
+/** "29 days", "1 day" or "less than a day" left to restore a deleted group. */
+export function timeLeft(until: string, now: Date = new Date()): string {
+  const left = new Date(until).getTime() - now.getTime();
+  if (left < 86_400_000) {
+    return "less than a day";
+  }
+  // Rounded up, so a group deleted a minute ago shows the full 30 days.
+  const days = Math.ceil(left / 86_400_000);
+  return days === 1 ? "1 day" : `${String(days)} days`;
 }
 
 export const ROLE_LABEL: Record<Role, string> = {

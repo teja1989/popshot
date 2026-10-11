@@ -109,6 +109,7 @@ def _require_member(session: Session, me: UUID, group_id: UUID) -> None:
     found = session.execute(
         text(
             "SELECT 1 FROM group_members "
+            "JOIN groups ON groups.id = group_members.group_id "
             "WHERE group_id = :group_id AND user_id = :me AND status = 'active'"
         ),
         {"group_id": group_id, "me": me},
