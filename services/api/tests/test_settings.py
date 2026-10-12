@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from popshot_api.settings import Environment, Settings
+from tests.conftest import make_settings
 
 
 def test_reads_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -115,3 +116,13 @@ def test_admin_emails_are_trimmed_and_lowercased(monkeypatch: pytest.MonkeyPatch
 def test_admin_emails_must_be_emails(bad: str) -> None:
     with pytest.raises(ValidationError):
         _settings(admin_emails=bad)
+
+
+def test_the_ai_commentator_is_off_unless_set_and_needs_a_project() -> None:
+    settings = make_settings()
+    assert settings.recap_ai is False
+    assert settings.gemini_location == "us"
+    with pytest.raises(ValidationError, match="recap_ai needs gcp_project"):
+        make_settings(recap_ai=True)
+    on = make_settings(recap_ai=True, gcp_project="popshot-511218")
+    assert on.gemini_model == "gemini-3.5-flash-lite"

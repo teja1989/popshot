@@ -76,6 +76,12 @@ export default async function PrivacyPage() {
           Firebase handles sign-in, and your browser&apos;s push service (from Google, Apple or Mozilla) delivers
           notifications. They handle data only to provide those services.
         </li>
+        <li>
+          <strong>Recaps written by AI:</strong> after an outing, Google&apos;s Gemini AI (through Google Cloud, in the
+          United States) may write the recap&apos;s headline and lines. It gets first names and that outing&apos;s game
+          facts (games played and awards), nothing else. Google doesn&apos;t use it to train its models, and may keep it
+          in memory for up to 24 hours. AI-written recaps are labelled.
+        </li>
         <li>We&apos;ll share data if the law requires it, and only what&apos;s required.</li>
       </List>
 

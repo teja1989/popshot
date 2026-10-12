@@ -6,17 +6,19 @@ only, the same as every other group route.
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from popshot_api import ai_recap
 from popshot_api import recap as recaps
 from popshot_api.db import CurrentUserSession
-from popshot_api.recap_lines import commentary
+from popshot_api.recap_lines import commentary, first_name
 from popshot_api.routes.board import group_matches
 from popshot_api.routes.games import _require_member
 from popshot_api.routes.stats import PlayerRef, _players
@@ -53,6 +55,8 @@ class RecapSummary(BaseModel):
 
 class RecapOut(RecapSummary):
     lines: list[str]
+    # Who wrote the headline and lines: Popshot's own commentator, or the AI (shown as such).
+    written_by: Literal["popshot", "ai"] = "popshot"
     newcomers: list[PlayerRef]
     awards: list[AwardOut]
     # Everyone who played, most games first.
@@ -104,13 +108,39 @@ def _alphabetical(people: Iterable[PlayerRef]) -> list[PlayerRef]:
     return sorted(people, key=lambda p: (p.display_name.casefold(), str(p.player_id)))
 
 
-def _build(crew: _Crew, outing: recaps.Outing, earlier: list[recaps.Outing]) -> RecapOut:
+def _build(
+    crew: _Crew,
+    outing: recaps.Outing,
+    earlier: list[recaps.Outing],
+    writer: ai_recap.RecapWriter | None = None,
+    *,
+    ask: bool = False,
+) -> RecapOut:
     names = crew.players
     found = recaps.recap(outing, earlier)
     venue = _venue(crew.session, crew.group_id, outing)
-    said = commentary(
-        found, {pid: ref.display_name for pid, ref in names.items()}, crew.name, venue
-    )
+    display = {pid: ref.display_name for pid, ref in names.items()}
+    said = commentary(found, display, crew.name, venue)
+    written_by: Literal["popshot", "ai"] = "popshot"
+    if writer is not None:
+        facts = ai_recap.facts_for(found, display, crew.name, venue)
+        by_ai = (
+            ai_recap.ai_commentary(
+                crew.session,
+                writer=writer,
+                group_id=crew.group_id,
+                recap=found,
+                facts=facts,
+                crew_first_names={first_name(name) for name in display.values()},
+                now=datetime.now(UTC),
+            )
+            if ask
+            else ai_recap.already_written(
+                crew.session, model=writer.model, group_id=crew.group_id, recap=found, facts=facts
+            )
+        )
+        if by_ai is not None:
+            said, written_by = by_ai, "ai"
     return RecapOut(
         key=outing.key,
         start=outing.start,
@@ -120,6 +150,7 @@ def _build(crew: _Crew, outing: recaps.Outing, earlier: list[recaps.Outing]) -> 
         venue=venue,
         headline=said.headline,
         lines=list(said.lines),
+        written_by=written_by,
         newcomers=_alphabetical(names[pid] for pid in found.newcomers),
         awards=[
             AwardOut(
@@ -133,21 +164,26 @@ def _build(crew: _Crew, outing: recaps.Outing, earlier: list[recaps.Outing]) -> 
 
 
 @router.get("")
-def list_recaps(group_id: UUID, user: CurrentUserSession) -> list[RecapSummary]:
+def list_recaps(group_id: UUID, user: CurrentUserSession, request: Request) -> list[RecapSummary]:
     session = user.session
     _require_member(session, user.user_id, group_id)
     all_outings = recaps.outings(group_matches(session, group_id))
     crew = _Crew.load(session, group_id)
     newest = list(enumerate(all_outings))[::-1][:LISTED]
-    return [RecapSummary(**_build(crew, o, all_outings[:i]).model_dump()) for i, o in newest]
+    writer: ai_recap.RecapWriter | None = request.app.state.recap_writer
+    return [
+        RecapSummary(**_build(crew, o, all_outings[:i], writer).model_dump()) for i, o in newest
+    ]
 
 
 @router.get("/{key}")
-def get_recap(group_id: UUID, key: UUID, user: CurrentUserSession) -> RecapOut:
+def get_recap(group_id: UUID, key: UUID, user: CurrentUserSession, request: Request) -> RecapOut:
     session = user.session
     _require_member(session, user.user_id, group_id)
     found = recaps.find(recaps.outings(group_matches(session, group_id)), key)
     if found is None:
         raise NOT_FOUND
     outing, earlier = found
-    return _build(_Crew.load(session, group_id), outing, earlier)
+    # Only opening a recap asks the AI; the list shows words already written.
+    writer: ai_recap.RecapWriter | None = request.app.state.recap_writer
+    return _build(_Crew.load(session, group_id), outing, earlier, writer, ask=True)

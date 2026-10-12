@@ -187,6 +187,7 @@ jobs:
       TF_VAR_state_bucket: ${{ vars.TF_STATE_BUCKET }}
       # Who can open /admin. Not a secret, but kept out of the repo; empty means nobody.
       TF_VAR_admin_emails: ${{ vars.POPSHOT_ADMIN_EMAILS }}
+      TF_VAR_recap_ai: ${{ vars.POPSHOT_RECAP_AI }}
       STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
       REGION: ${{ vars.GCP_REGION }}
       PROJECT: ${{ vars.GCP_PROJECT_ID }}

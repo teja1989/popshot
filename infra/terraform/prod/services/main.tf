@@ -86,6 +86,15 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "POPSHOT_PUSH_SUBJECT"
         value = local.platform.web_url
       }
+      env {
+        # Gemini writes recap words when on (platform: api_vertex_ai). Processed in the US.
+        name  = "POPSHOT_RECAP_AI"
+        value = var.recap_ai == "true" ? "true" : "false"
+      }
+      env {
+        name  = "POPSHOT_GCP_PROJECT"
+        value = var.project_id
+      }
 
       volume_mounts {
         name       = "sql-ca"

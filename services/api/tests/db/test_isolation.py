@@ -300,6 +300,23 @@ TABLES += [
     ),
 ]
 
+TABLES += [
+    TableSpec(
+        name="recap_texts",
+        a_row="group_id = :g AND outing_key = :k",
+        a_params=lambda s: {"g": s.group_a, "k": s.match_a},
+        b_params=lambda s: {"g": s.group_b, "k": s.match_b},
+        noop_update="headline = headline",
+        deletable=False,
+        insert_into_a=(
+            "INSERT INTO recap_texts (group_id, outing_key, facts_hash, status, model) "
+            "VALUES (:g, gen_random_uuid(), repeat('b', 64), 'failed', 'gemini-test')",
+            lambda s: {"g": s.group_a},
+        ),
+        cross_refs=[],
+    ),
+]
+
 TABLE_IDS = [t.name for t in TABLES]
 
 
