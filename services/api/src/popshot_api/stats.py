@@ -274,25 +274,34 @@ def _week(when: datetime) -> int:
     return date.fromisocalendar(year, week, 1).toordinal() // 7
 
 
-def weeks_running(
-    matches: Iterable[PlayedMatch], listed: set[UUID], now: datetime
-) -> list[tuple[UUID, int]]:
-    """Who has played every week, unbroken, up to this week or last (this week isn't over)."""
+def weeks_in_a_row(matches: Iterable[PlayedMatch], now: datetime) -> dict[UUID, int]:
+    """Everyone's unbroken run of weeks with a game, up to this week or last (it isn't over)."""
     weeks: dict[UUID, set[int]] = {}
     for match in matches:
-        for pid in (*match.team_a, *match.team_b):
-            if pid in listed:
+        if match.played_at <= now:
+            for pid in (*match.team_a, *match.team_b):
                 weeks.setdefault(pid, set()).add(_week(match.played_at))
     this_week = _week(now)
-    found: list[tuple[UUID, int]] = []
+    runs: dict[UUID, int] = {}
     for pid, played in weeks.items():
         week = this_week if this_week in played else this_week - 1
         run = 0
         while week in played:
             run += 1
             week -= 1
-        if run >= MIN_WEEKS_RUNNING:
-            found.append((pid, run))
+        runs[pid] = run
+    return runs
+
+
+def weeks_running(
+    matches: Iterable[PlayedMatch], listed: set[UUID], now: datetime
+) -> list[tuple[UUID, int]]:
+    """Who has played every week, unbroken, for MIN_WEEKS_RUNNING weeks or more."""
+    found = [
+        (pid, run)
+        for pid, run in weeks_in_a_row(matches, now).items()
+        if pid in listed and run >= MIN_WEEKS_RUNNING
+    ]
     found.sort(key=lambda item: (-item[1], str(item[0])))
     return found[:SHOWN]
 

@@ -103,10 +103,11 @@ export function hasHighlights(h: Highlights): boolean {
   );
 }
 
-/** "Jo", "Jo and Sam", "Jo, Sam and Pat"; past `most` names, "Jo, Sam, Pat and 2 more". */
+/** "Jo", "Jo and Sam", "Jo, Sam and Pat"; past `most` + 1 names, "Jo, Sam, Pat and 2 more". */
 export function names(people: PlayerRef[], most = 3): string {
   const all = people.map((p) => p.display_name);
-  if (all.length > most) {
+  // Never "and 1 more": one extra name is shorter than saying so.
+  if (all.length > most + 1) {
     return `${all.slice(0, most).join(", ")} and ${String(all.length - most)} more`;
   }
   return all.length <= 1 ? (all[0] ?? "") : `${all.slice(0, -1).join(", ")} and ${all.at(-1) ?? ""}`;

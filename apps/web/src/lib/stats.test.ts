@@ -73,6 +73,7 @@ describe("stats formatting", () => {
     expect(names([ref("Jo")])).toBe("Jo");
     expect(names([ref("Jo"), ref("Sam")])).toBe("Jo and Sam");
     expect(names([ref("Jo"), ref("Sam"), ref("Pat")])).toBe("Jo, Sam and Pat");
+    expect(names([ref("Jo"), ref("Sam"), ref("Pat"), ref("Ana")])).toBe("Jo, Sam, Pat and Ana");
     expect(names([ref("Jo"), ref("Sam"), ref("Pat"), ref("Ana"), ref("Bo")])).toBe("Jo, Sam, Pat and 2 more");
   });
 });
