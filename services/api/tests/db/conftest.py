@@ -385,6 +385,14 @@ def seed(app_engine: Engine) -> Seed:
                 ),
                 {"g": group, "k": match},
             )
+            # A shared link to it.
+            conn.execute(
+                text(
+                    "INSERT INTO recap_shares (token_hash, group_id, outing_key, created_by) "
+                    "VALUES (:h, :g, :k, :u)"
+                ),
+                {"h": new_token_hash(), "g": group, "k": match, "u": user},
+            )
 
     return Seed(
         **users,

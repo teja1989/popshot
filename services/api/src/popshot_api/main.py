@@ -28,6 +28,7 @@ from popshot_api.routes import (
     nights,
     notifications,
     recaps,
+    shares,
     stats,
 )
 from popshot_api.settings import Settings
@@ -126,6 +127,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(nights.router)
     app.include_router(calendar.router)
     app.include_router(recaps.router)
+    app.include_router(shares.router)
     return app
 
 
