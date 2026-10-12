@@ -12,6 +12,7 @@ async function logSingles(
   isNew: boolean,
 ) {
   await page.goto(`${groupUrl}/log`);
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
   const picker = page.getByRole("dialog", { name: "Pick a player" });

@@ -95,8 +95,16 @@ test("best of three shows a third game only when it's one each", async ({ page }
   const groupUrl = await startGroup(page, "Singles Club");
   await page.goto(`${groupUrl}/log`);
 
+  // The rules start as one line, from the crew's usual ones.
+  const rules = page.getByRole("region", { name: "Rules" });
+  await expect(rules).toContainText("Doubles · 1 game · to 11, win by 2");
+  await expect(page.getByText("Best of 3", { exact: true })).toBeHidden();
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await page.getByText("Best of 3", { exact: true }).click();
+  await page.getByRole("button", { name: "Done with rules" }).click();
+  await expect(rules).toContainText("Singles · best of 3 · to 11, win by 2");
+  await expect(page.getByText("Best of 3", { exact: true })).toBeHidden();
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Alex");
 
   await expect(page.getByLabel(/^Game 3,/)).toHaveCount(0);
@@ -126,6 +134,7 @@ test("a best of 5 adds game rows only while the match is still open", async ({ p
   const groupUrl = await startGroup(page, "Long Matches");
   await page.goto(`${groupUrl}/log`);
 
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await page.getByText("Best of 5", { exact: true }).click();
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Lee");
@@ -231,6 +240,7 @@ test("home counts the games you've played, and the logo goes home", async ({ pag
   await expect(stats.nth(1)).toHaveText("0");
 
   await page.goto(`${groupUrl}/log`);
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Pat");
   await page
@@ -271,6 +281,7 @@ test("other players see a logged game straight away, but only the scorer can edi
 
   // Casey logs a singles game against Sam.
   await page.goto(`${groupUrl}/log`);
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
   await page

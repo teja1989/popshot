@@ -70,7 +70,9 @@ export function namesOn(match: Pick<Match, "players">, team: Team): string {
 /** Scores from the winner's side: "11–7" or "11–7, 9–11, 11–8". */
 export function scoreLine(match: Pick<Match, "games" | "winner">): string {
   return match.games
-    .map((g) => (match.winner === "A" ? `${String(g.team_a)}–${String(g.team_b)}` : `${String(g.team_b)}–${String(g.team_a)}`))
+    .map((g) =>
+      match.winner === "A" ? `${String(g.team_a)}–${String(g.team_b)}` : `${String(g.team_b)}–${String(g.team_a)}`,
+    )
     .join(", ");
 }
 
@@ -94,4 +96,17 @@ export function playedWhen(playedAt: string, now: Date = new Date(), locale?: st
 export function toLocalInput(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** "Doubles · best of 3 · to 11, win by 2": the rules a game is logged with, in one line. */
+export function describeMatch(rules: {
+  format: Format;
+  bestOf: BestOf;
+  pointsTo: PointsTo;
+  winByTwo: boolean;
+}): string {
+  const format = rules.format === "doubles" ? "Doubles" : "Singles";
+  const match = rules.bestOf === 1 ? "1 game" : `best of ${String(rules.bestOf)}`;
+  const winBy = rules.winByTwo ? ", win by 2" : ", no win by 2";
+  return `${format} · ${match} · to ${String(rules.pointsTo)}${winBy}`;
 }
