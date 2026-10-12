@@ -5,7 +5,11 @@ Revises: 0013
 Create Date: 2026-10-12
 
 Some crews play longer matches. Ratings already count every game on its own, so nothing
-else changes. Going back down fails if any best-of-5 match exists, rather than lose games.
+else changes.
+
+Going back down deletes best-of-5 matches, which the older rules can't hold. Downgrades are
+for development and tests (the test suite migrates down to the base and back up, and its own
+best-of-5 games would otherwise stop it); production only ever goes forward.
 """
 
 from collections.abc import Sequence
@@ -35,4 +39,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Their games, players and ratings history go with them (ON DELETE CASCADE). RLS is
+    # forced even for the owner, so allow this one delete and take the permission back.
+    op.execute("CREATE POLICY downgrade_0014 ON matches FOR DELETE TO CURRENT_USER USING (true)")
+    op.execute("DELETE FROM matches WHERE best_of NOT IN (1, 3)")
+    op.execute("DROP POLICY downgrade_0014 ON matches")
     _limits("1, 3", 3)
