@@ -32,14 +32,22 @@ test("settings, handing over, leaving, restoring, deleting and restoring a group
   const problems = await watchProblems(page);
   const groupUrl = await startGroup(page, "Thursday Smashers");
 
-  // Rename and change the usual rules.
-  await page.getByRole("button", { name: "Group settings" }).click();
-  const settings = page.getByRole("dialog", { name: "Group settings" });
-  await settings.getByLabel("Group name").fill("Night Owls");
-  await settings.getByText("Singles", { exact: true }).click();
-  await settings.getByText("15", { exact: true }).click();
-  await settings.getByRole("button", { name: "Save" }).click();
-  await expect(settings).toBeHidden();
+  // Rename and change the usual rules, on the settings page; each part saves on its own.
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(`${groupUrl}/settings`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings");
+  const crewPart = page.getByRole("region", { name: "Group" });
+  await expect(crewPart.getByRole("button", { name: "Save name" })).toBeDisabled();
+  await crewPart.getByLabel("Group name").fill("Night Owls");
+  await crewPart.getByRole("button", { name: "Save name" }).click();
+  await expect(crewPart.getByRole("status")).toHaveText("Saved.");
+  const rulesPart = page.getByRole("region", { name: "Game rules" });
+  await rulesPart.getByText("Singles", { exact: true }).click();
+  await rulesPart.getByText("15", { exact: true }).click();
+  await rulesPart.getByRole("button", { name: "Save rules" }).click();
+  await expect(rulesPart.getByRole("status")).toHaveText("Saved.");
+  await expect(rulesPart).toContainText("Now: Singles · games to 15, win by 2.");
+  await page.getByRole("link", { name: "Night Owls" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Night Owls");
   await expect(page.getByText("Singles · games to 15, win by 2")).toBeVisible();
 
@@ -54,9 +62,17 @@ test("settings, handing over, leaving, restoring, deleting and restoring a group
   const members = page.getByRole("region", { name: /Members/ });
   await expect(members).toContainText(riley.name);
 
+  // A member's settings are just leaving.
+  await other.goto(`${groupUrl}/settings`);
+  await expect(other.getByRole("region", { name: "Leave" })).toBeVisible();
+  await expect(other.getByRole("region", { name: "Group" })).toHaveCount(0);
+  await expect(other.getByRole("region", { name: "Game rules" })).toHaveCount(0);
+
   // The lead can't just leave; they hand over first.
+  await page.goto(`${groupUrl}/settings`);
   await expect(page.getByText("To leave, make someone else the lead first")).toBeVisible();
   await expect(page.getByRole("button", { name: "Leave group" })).toHaveCount(0);
+  await page.goto(groupUrl);
   await page.getByRole("button", { name: `Manage ${riley.name}` }).click();
   const manage = page.getByRole("dialog", { name: riley.name });
   await manage.getByRole("button", { name: /^Make lead/ }).click();
@@ -66,8 +82,12 @@ test("settings, handing over, leaving, restoring, deleting and restoring a group
   await expect(members.getByRole("listitem").filter({ hasText: casey.name })).toContainText("Co-lead");
 
   // Casey leaves; Riley (now lead) sees Casey gone and not offered for restoring.
+  await page.goto(`${groupUrl}/settings`);
   await page.getByRole("button", { name: "Leave group" }).click();
-  await page.getByRole("dialog", { name: "Leave Night Owls?" }).getByRole("button", { name: "Leave", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Leave Night Owls?" })
+    .getByRole("button", { name: "Leave", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByText("Night Owls")).toHaveCount(0);
   await other.goto(groupUrl);
@@ -92,6 +112,7 @@ test("settings, handing over, leaving, restoring, deleting and restoring a group
   await expect(other.getByRole("region", { name: /Members · 2/ })).toBeVisible();
 
   // Riley deletes the group (typing its name), then restores it from Home.
+  await other.goto(`${groupUrl}/settings`);
   await other.getByRole("button", { name: "Delete group" }).click();
   const confirm = other.getByRole("dialog", { name: "Delete Night Owls?" });
   const go = confirm.getByRole("button", { name: "Delete group" });
