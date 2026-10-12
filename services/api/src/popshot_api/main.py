@@ -19,6 +19,7 @@ from popshot_api.push import PushSender
 from popshot_api.routes import (
     board,
     calendar,
+    direct_invites,
     focus,
     games,
     groups,
@@ -119,6 +120,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(me.router)
     app.include_router(groups.router)
     app.include_router(invites.router)
+    app.include_router(direct_invites.router)
     app.include_router(games.router)
     app.include_router(focus.router)
     app.include_router(board.router)
