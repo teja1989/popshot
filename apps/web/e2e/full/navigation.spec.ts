@@ -145,3 +145,33 @@ test("appearance is remembered and applied before the page paints", async ({ pag
   expect(await theme()).toBe("system");
   expect(problems).toEqual([]);
 });
+
+test("on Home, the logo and the Home tab scroll to the top, or refresh at the top", async ({ page, context }) => {
+  await signIn(page, newUser("Ola"));
+  const problems = await watchProblems(page);
+  await startGroup(page, "First Crew");
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: /First Crew/ })).toBeVisible();
+
+  // A crew made elsewhere (another tab) shows up when you tap the logo at the top of Home.
+  const other = await context.newPage();
+  await startGroup(other, "Second Crew");
+  await other.close();
+  await expect(page.getByRole("link", { name: /Second Crew/ })).toHaveCount(0);
+  await page.getByRole("link", { name: "Popshot home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: /Second Crew/ })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Updated." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Updated." })).toHaveCount(0, { timeout: 8000 });
+
+  // Scrolled down, the Home tab brings you back up (when the page is long enough to scroll).
+  await page.evaluate(() => {
+    window.scrollTo(0, document.body.scrollHeight);
+  });
+  if ((await page.evaluate(() => window.scrollY)) > 0) {
+    await nav(page).getByRole("link", { name: "Home" }).click();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page).toHaveURL(/\/$/);
+  }
+  expect(problems).toEqual([]);
+});

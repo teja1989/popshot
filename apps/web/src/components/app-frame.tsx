@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { onHomeLinkClick } from "./home-refresh";
 import { SignOutButton } from "./sign-out-button";
 import { Brand } from "./ui/brand";
 import { BoardIcon, GamesIcon, HomeIcon, YouIcon } from "./ui/icons";
@@ -24,7 +25,14 @@ export function AppFrame({ children }: { children: ReactNode }) {
       {/* The column carries the background, so it runs the full height of long pages. */}
       <div className="hidden border-r border-line bg-surface lg:block">
         <aside className="sticky top-0 flex h-dvh flex-col gap-8 px-4 py-8">
-          <Link href="/" aria-label="Popshot home" className="self-start rounded-xl px-2 py-1 text-ink no-underline">
+          <Link
+            href="/"
+            aria-label="Popshot home"
+            className="self-start rounded-xl px-2 py-1 text-ink no-underline"
+            onClick={(event) => {
+              onHomeLinkClick(pathname, event);
+            }}
+          >
             <Brand />
           </Link>
           <nav aria-label="Main">
@@ -36,6 +44,11 @@ export function AppFrame({ children }: { children: ReactNode }) {
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
+                      onClick={(event) => {
+                        if (item.href === "/") {
+                          onHomeLinkClick(pathname, event);
+                        }
+                      }}
                       className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-[16px] font-bold no-underline transition-colors duration-150 ${active ? "bg-chip text-primary" : "text-muted hover:bg-bg hover:text-ink"}`}
                     >
                       {item.icon}
@@ -53,7 +66,14 @@ export function AppFrame({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-col pb-24 lg:pb-0">
         <header className="px-5 pt-8 lg:hidden">
-          <Link href="/" aria-label="Popshot home" className="inline-flex min-h-11 items-center text-ink no-underline">
+          <Link
+            href="/"
+            aria-label="Popshot home"
+            className="inline-flex min-h-11 items-center text-ink no-underline"
+            onClick={(event) => {
+              onHomeLinkClick(pathname, event);
+            }}
+          >
             <Brand />
           </Link>
         </header>
@@ -72,6 +92,11 @@ export function AppFrame({ children }: { children: ReactNode }) {
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
+                  onClick={(event) => {
+                    if (item.href === "/") {
+                      onHomeLinkClick(pathname, event);
+                    }
+                  }}
                   className={`flex min-h-16 flex-col items-center justify-center gap-1 pb-1 text-[12px] font-bold no-underline ${active ? "text-primary" : "text-muted"}`}
                 >
                   {item.icon}

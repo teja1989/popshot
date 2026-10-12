@@ -7,6 +7,7 @@ import { apiPost, ApiError } from "@/lib/api-client";
 import { timeLeft, type DeletedGroup, type GroupDetail } from "@/lib/groups";
 
 import { useSignedIn } from "./auth";
+import { useHomeRefresh } from "./home-refresh";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
 
@@ -15,6 +16,7 @@ export function DeletedGroups() {
   const { user } = useSignedIn();
   const router = useRouter();
   const { result, reload } = useApiGet<DeletedGroup[]>("/v1/groups/deleted");
+  useHomeRefresh(reload);
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   if (result.kind !== "ready" || result.data.length === 0) {
