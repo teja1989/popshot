@@ -37,9 +37,7 @@ ANSWERS_CLOSE_AFTER = timedelta(hours=2)
 # Lists show nights until a few hours after they start.
 SHOWN_AFTER_START = timedelta(hours=4)
 
-NIGHT_NOT_FOUND = HTTPException(
-    status.HTTP_404_NOT_FOUND, detail="We couldn't find that play night."
-)
+NIGHT_NOT_FOUND = HTTPException(status.HTTP_404_NOT_FOUND, detail="We couldn't find that meetup.")
 
 Venue = Annotated[
     str,
@@ -294,7 +292,7 @@ def plan_night(
     if upcoming + body.weeks > MAX_UPCOMING:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            detail=f"A group can have up to {MAX_UPCOMING} upcoming play nights.",
+            detail=f"A group can have up to {MAX_UPCOMING} upcoming meetups.",
         )
     series = (
         session.execute(text("SELECT gen_random_uuid()")).scalar_one() if body.weeks > 1 else None
@@ -342,7 +340,7 @@ def plan_night(
         _members_except(session, group_id, me),
         "play_nights",
         Message(
-            title=f"{planner} planned a play night"
+            title=f"{planner} planned a meetup"
             + (f" (weekly, {body.weeks} weeks)" if body.weeks > 1 else ""),
             body=f"At {first.venue}. Tap to say if you're in.",
             url=f"/groups/{group_id}/nights/{first.id}",
@@ -405,9 +403,9 @@ def answer(
     if not night.open:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            detail="This play night was cancelled."
+            detail="This meetup was cancelled."
             if night.cancelled
-            else "Answers for this play night have closed.",
+            else "Answers for this meetup have closed.",
         )
     before = [p.user_id for p in night.going]
     # Saying "in" again keeps your place; switching to "in" puts you at the back.
@@ -440,10 +438,10 @@ def _editable(session: Session, me: UUID, group_id: UUID, night_id: UUID) -> Nig
     if not night.can_edit:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            detail="Only whoever planned it, the lead or a co-lead can change this night.",
+            detail="Only whoever planned it, the lead or a co-lead can change this meetup.",
         )
     if night.cancelled:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="This play night was cancelled.")
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="This meetup was cancelled.")
     return night
 
 
@@ -503,8 +501,8 @@ def cancel_night(
         coming,
         "play_nights",
         Message(
-            title="Play night cancelled",
-            body=f"The play night at {night.venue} is off.",
+            title="Meetup cancelled",
+            body=f"The meetup at {night.venue} is off.",
             url=f"/groups/{group_id}/nights/{night_id}",
             tag=f"night-{night_id}",
         ),

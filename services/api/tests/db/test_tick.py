@@ -115,7 +115,7 @@ def test_day_before_and_two_hours_before(
     plan(people, crew["casey"], crew["group_id"], starts_at=soon(72))
 
     tick(jobs_engine, sender)
-    assert who(sender, crew) == {"Casey": "Play night in about 20 hours", "Sam": "Are you in?"}
+    assert who(sender, crew) == {"Casey": "Meetup in about 20 hours", "Sam": "Are you in?"}
     urls = {m.url for e, m in sender.sent if e in crew["devices"].values()}
     assert urls == {f"/groups/{crew['group_id']}/nights/{night['id']}"}
     # Not twice. (Other tests' nights can be due too, so only this crew's devices count.)
@@ -131,8 +131,8 @@ def test_day_before_and_two_hours_before(
         )
     tick(jobs_engine, sender)
     assert who(sender, crew) == {
-        "Casey": "Play night in about 2 hours",
-        "Sam": "Play night in about 2 hours",
+        "Casey": "Meetup in about 2 hours",
+        "Sam": "Meetup in about 2 hours",
     }
 
 
@@ -144,7 +144,7 @@ def test_short_notice_gets_one_reminder(
 ) -> None:
     plan(people, crew["casey"], crew["group_id"], starts_at=soon(1))
     tick(jobs_engine, sender)
-    assert who(sender, crew) == {"Casey": "Play night in about 1 hour"}
+    assert who(sender, crew) == {"Casey": "Meetup in about 1 hour"}
     tick(jobs_engine, sender)
     assert who(sender, crew) == {}
 
@@ -163,7 +163,7 @@ def test_no_reminders_for_cancelled_or_muted(
     people.client.put("/v1/me/notifications", json={"muted": ["play_nights"]}, headers=crew["sam"])
     tick(jobs_engine, sender)
     # Sam muted play nights; Jo hasn't answered, so is asked.
-    assert who(sender, crew) == {"Casey": "Play night in about 12 hours", "Jo": "Are you in?"}
+    assert who(sender, crew) == {"Casey": "Meetup in about 12 hours", "Jo": "Are you in?"}
 
 
 def test_a_new_time_means_new_reminders(
@@ -181,7 +181,7 @@ def test_a_new_time_means_new_reminders(
     )
     assert changed.status_code == 200
     tick(jobs_engine, sender)
-    assert who(sender, crew)["Casey"] == "Play night in about 8 hours"
+    assert who(sender, crew)["Casey"] == "Meetup in about 8 hours"
     # Same time, other details: no new reminder.
     people.client.patch(
         f"/v1/groups/{crew['group_id']}/nights/{night['id']}",

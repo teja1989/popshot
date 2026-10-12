@@ -12,7 +12,7 @@ import { Sheet } from "./ui/sheet";
 
 const field = "min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink placeholder:text-muted";
 
-/** Plan a play night (optionally weekly), or change one. */
+/** Plan a meetup (optionally weekly), or change one. */
 export function PlanNightSheet({
   groupId,
   trigger,
@@ -101,7 +101,7 @@ export function PlanNightSheet({
         }
         setOpen(next);
       }}
-      title={editing ? "Change this play night" : "Plan a play night"}
+      title={editing ? "Change this meetup" : "Plan a meetup"}
       description={editing ? "Everyone's answers stay as they are." : "Your crew gets a notification to say if they're in."}
       fullOnPhone
     >

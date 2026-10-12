@@ -27,15 +27,15 @@ export function NightView({ groupId, nightId }: { groupId: string; nightId: stri
         <BackIcon />
         {result.kind === "ready" ? result.data.group_name : "Back to the group"}
       </Link>
-      {result.kind === "loading" && <p className="text-muted">Loading the play night…</p>}
+      {result.kind === "loading" && <p className="text-muted">Loading the meetup…</p>}
       {result.kind === "error" && result.status === 404 && (
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-          <h1 className="text-[26px] font-extrabold">We couldn&apos;t find that play night.</h1>
+          <h1 className="text-[26px] font-extrabold">We couldn&apos;t find that meetup.</h1>
         </section>
       )}
       {result.kind === "error" && result.status !== 404 && (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
-          <p>We couldn&apos;t load this play night just now.</p>
+          <p>We couldn&apos;t load this meetup just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
           </button>
@@ -68,7 +68,7 @@ function NightDetail({ night, onChange }: { night: Night; onChange: (night: Nigh
           <RsvpButtons night={night} onChange={onChange} />
         </section>
       )}
-      {!night.open && !night.cancelled && <p className="text-muted">Answers for this night have closed.</p>}
+      {!night.open && !night.cancelled && <p className="text-muted">Answers for this meetup have closed.</p>}
 
       <PeopleList title={`Going · ${String(night.going.length)}${night.spots ? ` of ${String(night.spots)}` : ""}`} people={night.going} />
       <PeopleList title={`Waitlist · ${String(night.waitlist.length)}`} people={night.waitlist} numbered />
@@ -145,7 +145,7 @@ function CancelNight({ night, onCancelled }: { night: Night; onCancelled: (night
       }
       open={open}
       onOpenChange={setOpen}
-      title="Cancel this play night?"
+      title="Cancel this meetup?"
       description="Everyone who said they're in or maybe gets a notification. This can't be undone."
     >
       <div className="flex flex-col gap-3">

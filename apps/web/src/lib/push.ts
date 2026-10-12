@@ -20,7 +20,7 @@ export type Category = "games" | "play_nights" | "tab" | "milestones";
 
 export const CATEGORY_LABEL: Record<Category, { title: string; body: string }> = {
   games: { title: "Games you played", body: "When someone logs a game you were in." },
-  play_nights: { title: "Play nights", body: "New nights, reminders and open spots." },
+  play_nights: { title: "Meetups", body: "New meetups, reminders and open spots." },
   tab: { title: "Crew tab", body: "Expenses and settle-ups that involve you." },
   milestones: { title: "Milestones", body: "When you reach one." },
 };

@@ -126,7 +126,7 @@ test("the landing page explains the app and offers sign-in top and bottom", asyn
     "Pickleball is better together.",
     "Logged before the next game starts.",
     "Every game, on the record.",
-    "Know your nemesis.",
+    "Know your best partners.",
     "Climb your crew's board.",
     "Up and running in three steps.",
     "Private by default.",

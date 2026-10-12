@@ -17,7 +17,7 @@ export function NextNight() {
   return (
     <section aria-labelledby="next-night-heading" className="flex animate-rise flex-col gap-2">
       <h2 id="next-night-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-        Next play night
+        Next meetup
       </h2>
       <NightCard night={next} showGroup onChange={reload} />
     </section>

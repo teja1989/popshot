@@ -65,7 +65,7 @@ function OverviewSections({ overview }: { overview: Overview }) {
       <Section title="Each week">
         <Table
           label="Each week, newest first"
-          head={["Week of", "Active", "New", "Crews", "Games", "Nights", "Answers"]}
+          head={["Week of", "Active", "New", "Crews", "Games", "Meetups", "Answers"]}
           rows={[...overview.weeks]
             .reverse()
             .map((w) => [
@@ -127,7 +127,7 @@ function crewLine(g: AdminGroup): string {
   const games = g.last_game_at
     ? `${plural(g.games, "game")}, ${String(g.games_30d)} in 30 days · last ${shortDate(g.last_game_at)}`
     : "no games yet";
-  const nights = g.upcoming_nights > 0 ? ` · ${plural(g.upcoming_nights, "night")} ahead` : "";
+  const nights = g.upcoming_nights > 0 ? ` · ${plural(g.upcoming_nights, "meetup")} ahead` : "";
   return `${plural(g.members, "member")} · ${games}${nights} · started ${shortDate(g.created_at)}`;
 }
 

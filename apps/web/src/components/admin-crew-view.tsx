@@ -58,7 +58,7 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
             value={c.games}
             note={c.last_game_at ? `last ${shortDate(c.last_game_at)}` : "none yet"}
           />
-          <Stat label="Nights ahead" value={c.upcoming_nights} />
+          <Stat label="Meetups ahead" value={c.upcoming_nights} />
           <Stat label="Open invites" value={c.open_invites} />
         </dl>
         <p className="text-[13px] text-muted">ID {c.id}</p>

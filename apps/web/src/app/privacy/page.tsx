@@ -28,7 +28,7 @@ export default async function PrivacyPage() {
         </li>
         <li>
           <strong>What you add:</strong> the groups you start or join, invites, games (players, scores, rules and when
-          they were played), play nights (time, venue, note, who&apos;s going), your playing level, the focus areas and
+          they were played), meetups (time, venue, note, who&apos;s going), your playing level, the focus areas and
           game notes you pick, and your notification choices.
         </li>
         <li>
@@ -52,7 +52,7 @@ export default async function PrivacyPage() {
 
       <H2>How we use it</H2>
       <List>
-        <li>To run Popshot: show games, stats, crew points and play nights to your crew, and send reminders.</li>
+        <li>To run Popshot: show games, stats, crew points and meetups to your crew, and send reminders.</li>
         <li>To keep it safe and working: stopping abuse, fixing problems, and helping when you contact us.</li>
         <li>To understand use in totals, like how many people played this week.</li>
       </List>
@@ -61,8 +61,8 @@ export default async function PrivacyPage() {
       <H2>Who can see what</H2>
       <List>
         <li>
-          <strong>Your crew:</strong> people in a group see each member&apos;s name, photo, games, crew points and play
-          night answers in that group. Groups are private: nobody outside one can find or see it.
+          <strong>Your crew:</strong> people in a group see each member&apos;s name, photo, games, crew points and
+          meetup answers in that group. Groups are private: nobody outside one can find or see it.
         </li>
         <li>
           <strong>Only you:</strong> your focus areas and game notes.
