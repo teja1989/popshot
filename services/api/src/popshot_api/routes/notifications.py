@@ -19,10 +19,10 @@ from popshot_api.push import Message, PushSender, Subscription, is_push_endpoint
 
 router = APIRouter(prefix="/v1")
 
-Category = Literal["games", "play_nights", "recaps", "invites", "tab", "milestones"]
+Category = Literal["games", "play_nights", "recaps", "invites", "requests", "tab", "milestones"]
 # The categories people can turn off, in the order the You page lists them. Others are added
 # here as the features that send them ship.
-OFFERED: tuple[Category, ...] = ("invites", "play_nights", "recaps", "games")
+OFFERED: tuple[Category, ...] = ("invites", "requests", "play_nights", "recaps", "games")
 
 Base64Url = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]+={0,2}$", max_length=128)]
 
@@ -112,6 +112,25 @@ class Notifier:
         rows = session.execute(
             text("SELECT * FROM app_claim_invite_push(:g, :u)"), {"g": group_id, "u": invitee}
         ).all()
+        self._queue([Subscription(r.endpoint, r.p256dh, r.auth) for r in rows], message)
+
+    def notify_join_request(self, session: Session, group_id: UUID) -> None:
+        """Tell `group_id`'s lead and co-leads that the caller just asked to join: once per
+        request, and not anyone who turned join requests off (app_claim_join_request_push)."""
+        if self._sender is None:
+            return
+        rows = session.execute(
+            text("SELECT * FROM app_claim_join_request_push(:g)"), {"g": group_id}
+        ).all()
+        if not rows:
+            return
+        asker = rows[0].asker.split(maxsplit=1)[0] if rows[0].asker.strip() else "Someone"
+        message = Message(
+            title=f"{asker} asked to join {rows[0].group_name}",
+            body="Tap to let them in or say no.",
+            url=f"/groups/{group_id}",
+            tag=f"request-{group_id}",
+        )
         self._queue([Subscription(r.endpoint, r.p256dh, r.auth) for r in rows], message)
 
     def notify_own_devices(self, session: Session, me: UUID, message: Message) -> int:

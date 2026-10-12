@@ -84,6 +84,10 @@ class Member(BaseModel):
     avatar_url: str | None
     role: Role
     status: MemberStatus
+    # When they first joined (or asked to).
+    joined_at: datetime
+    # Their latest game in this group, if any.
+    last_played_at: datetime | None = None
 
 
 class FormerMember(BaseModel):
@@ -255,7 +259,13 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
         rows = session.execute(
             text(
                 """
-                SELECT u.id AS user_id, u.display_name, u.avatar_url, gm.role, gm.status
+                SELECT u.id AS user_id, u.display_name, u.avatar_url, gm.role, gm.status,
+                       gm.created_at AS joined_at,
+                       (SELECT max(m.played_at) FROM players p
+                        JOIN match_players mp ON mp.player_id = p.id
+                        JOIN matches m ON m.id = mp.match_id
+                        WHERE p.group_id = gm.group_id AND p.user_id = gm.user_id
+                       ) AS last_played_at
                 FROM group_members gm
                 JOIN users u ON u.id = gm.user_id
                 WHERE gm.group_id = :group_id

@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from popshot_api.db import CurrentUserSession
 from popshot_api.routes.groups import NOT_FOUND, GroupDetail, Role, group_detail
+from popshot_api.routes.notifications import CurrentNotifier
 
 router = APIRouter()
 
@@ -238,7 +239,7 @@ def preview_invite(body: InviteToken, user: CurrentUserSession) -> InvitePreview
 
 
 @router.post("/v1/invites/join")
-def join(body: InviteToken, user: CurrentUserSession) -> Joined:
+def join(body: InviteToken, user: CurrentUserSession, notifier: CurrentNotifier) -> Joined:
     row = (
         user.session.execute(
             text("SELECT * FROM app_redeem_invite(:token_hash)"),
@@ -249,6 +250,8 @@ def join(body: InviteToken, user: CurrentUserSession) -> Joined:
     )
     if row is None:
         raise DEAD_INVITE
+    if row["status"] == "pending":
+        notifier.notify_join_request(user.session, row["group_id"])
     # Someone removed from a group doesn't learn its ID again.
     group_id = None if row["status"] == "removed" else row["group_id"]
     return Joined(group_id=group_id, status=row["status"])
