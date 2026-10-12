@@ -9,13 +9,21 @@ import { namesOn, playedWhen, type Match } from "@/lib/games";
 import type { GroupSummary } from "@/lib/groups";
 import type { Team } from "@/lib/scoring";
 
+import { recall, remember } from "@/lib/remember";
+
 import { useSignedIn } from "./auth";
+import { GamesCalendar } from "./games-calendar";
 import { GroupScoped } from "./group-scoped";
 import { ReflectionSheet } from "./reflection-sheet";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
 import { CourtArt } from "./ui/court-art";
 import { LockIcon, PlusIcon } from "./ui/icons";
+import { segmentOption, segmentTrack } from "./ui/segmented";
+
+type View = "list" | "calendar";
+const VIEWS: readonly View[] = ["list", "calendar"];
+const VIEW_KEY = "popshot.games.view";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -35,7 +43,9 @@ export function GamesView() {
 
   return (
     <GroupScoped title="Games">
-      {(group) => <GroupGames key={group.id} group={group} justLogged={arrival.logged} reflectFirst={arrival.reflect} />}
+      {(group) => (
+        <GroupGames key={group.id} group={group} justLogged={arrival.logged} reflectFirst={arrival.reflect} />
+      )}
     </GroupScoped>
   );
 }
@@ -55,6 +65,9 @@ function GroupGames({
   const [reflecting, setReflecting] = useState<string | null>(reflectFirst);
   const reflectingMatch = result.kind === "ready" ? result.data.find((m) => m.id === reflecting) : undefined;
   const labels = options.result.kind === "ready" ? options.result.data : [];
+  const [view, setView] = useState<View>(() => recall(VIEW_KEY, VIEWS, "list"));
+  // A game opened for reflecting from the calendar, and how to refresh the calendar after.
+  const [fromCalendar, setFromCalendar] = useState<{ match: Match; reload: () => void } | null>(null);
 
   function saved(matchId: string, reflection: Reflection) {
     if (result.kind === "ready") {
@@ -76,9 +89,49 @@ function GroupGames({
         </p>
       )}
 
-      {result.kind === "loading" && <p className="text-muted">Loading games…</p>}
+      <fieldset className={`${segmentTrack} grid-cols-2`}>
+        <legend className="sr-only">Show games as</legend>
+        {VIEWS.map((value) => (
+          <label key={value} className={segmentOption}>
+            <input
+              type="radio"
+              name="games-view"
+              checked={view === value}
+              onChange={() => {
+                remember(VIEW_KEY, value);
+                setView(value);
+              }}
+              className="sr-only"
+            />
+            {value === "list" ? "List" : "Calendar"}
+          </label>
+        ))}
+      </fieldset>
 
-      {result.kind === "error" && (
+      {view === "calendar" && (
+        <GamesCalendar
+          group={group}
+          renderGame={(match, reloadCalendar) => (
+            <GameCard
+              key={match.id}
+              groupId={group.id}
+              match={match}
+              labels={labels}
+              onDeleted={() => {
+                reloadCalendar();
+                reload();
+              }}
+              onReflect={() => {
+                setFromCalendar({ match, reload: reloadCalendar });
+              }}
+            />
+          )}
+        />
+      )}
+
+      {view === "list" && result.kind === "loading" && <p className="text-muted">Loading games…</p>}
+
+      {view === "list" && result.kind === "error" && (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
           <p>We couldn&apos;t load the games just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
@@ -87,18 +140,18 @@ function GroupGames({
         </div>
       )}
 
-      {result.kind === "ready" && result.data.length === 0 && (
+      {view === "list" && result.kind === "ready" && result.data.length === 0 && (
         <section className="flex animate-rise flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
           <CourtArt className="w-40" />
           <h2 className="text-[20px] font-extrabold">No games in {group.name} yet</h2>
           <p className="text-[16px] leading-relaxed text-muted">
-            Log your first one: pick who played and tap in the score. It counts right away, and
-            you can fix it later if needed.
+            Log your first one: pick who played and tap in the score. It counts right away, and you can fix it later if
+            needed.
           </p>
         </section>
       )}
 
-      {result.kind === "ready" && result.data.length > 0 && (
+      {view === "list" && result.kind === "ready" && result.data.length > 0 && (
         <section aria-labelledby="recent-heading" className="flex animate-rise flex-col gap-2">
           <h2 id="recent-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
             Recent games
@@ -119,6 +172,24 @@ function GroupGames({
           </ul>
           {result.data.length >= 50 && <p className="text-[14px] text-muted">Showing the latest 50 games.</p>}
         </section>
+      )}
+
+      {fromCalendar?.match.i_played && (
+        <ReflectionSheet
+          groupId={group.id}
+          match={fromCalendar.match}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setFromCalendar(null);
+            }
+          }}
+          onSaved={() => {
+            fromCalendar.reload();
+            reload();
+            setFromCalendar(null);
+          }}
+        />
       )}
 
       {reflectingMatch?.i_played && (
@@ -188,9 +259,15 @@ function GameCard({
             const won = match.winner === team;
             return (
               <tr key={team}>
-                <th scope="row" className={`w-full truncate pr-3 text-left text-[16px] ${won ? "font-extrabold" : "font-normal text-muted"}`}>
+                <th
+                  scope="row"
+                  className={`w-full truncate pr-3 text-left text-[16px] ${won ? "font-extrabold" : "font-normal text-muted"}`}
+                >
                   <span className="flex items-center gap-2">
-                    <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${won ? "bg-ball" : "bg-transparent"}`} />
+                    <span
+                      aria-hidden="true"
+                      className={`size-2 shrink-0 rounded-full ${won ? "bg-ball" : "bg-transparent"}`}
+                    />
                     <span className="truncate">{namesOn(match, team)}</span>
                   </span>
                 </th>
@@ -258,7 +335,12 @@ function GameCard({
             >
               Keep
             </button>
-            <button type="button" className={buttonClass("danger", "min-h-11 text-[15px]")} disabled={busy} onClick={() => void remove()}>
+            <button
+              type="button"
+              className={buttonClass("danger", "min-h-11 text-[15px]")}
+              disabled={busy}
+              onClick={() => void remove()}
+            >
               Delete game
             </button>
           </div>
@@ -272,7 +354,15 @@ function GameCard({
 }
 
 /** Your own notes on a game. Only ever sent to you. */
-function MyNotes({ reflection, labels, onEdit }: { reflection: Reflection; labels: FocusOption[]; onEdit: () => void }) {
+function MyNotes({
+  reflection,
+  labels,
+  onEdit,
+}: {
+  reflection: Reflection;
+  labels: FocusOption[];
+  onEdit: () => void;
+}) {
   const skipped = reflection.went_well.length === 0 && reflection.to_improve.length === 0;
   const names = (ids: string[]) => ids.map((id) => labelFor(labels, id)).join(", ");
   return (

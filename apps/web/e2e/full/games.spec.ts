@@ -312,3 +312,59 @@ test("other players see a logged game straight away, but only the scorer can edi
   await expect(other.getByText("Only the person who logged this game can edit it.")).toBeVisible();
   await other.close();
 });
+
+test("the calendar shows games and play nights by day, and remembers week or month", async ({ page }) => {
+  const dee = newUser("Dee");
+  await signIn(page, dee);
+  const problems = await watchProblems(page);
+  const groupUrl = await startGroup(page, "Calendar Crew");
+
+  // A play night (tomorrow at 6 by default) and a game today.
+  await page.getByRole("region", { name: "Play nights" }).getByRole("button", { name: "Plan one" }).click();
+  const sheet = page.getByRole("dialog", { name: "Plan a play night" });
+  await sheet.getByLabel("Where").fill("Riverside courts");
+  await sheet.getByRole("button", { name: "Plan it" }).click();
+  await expect(sheet).toBeHidden();
+  await page.goto(`${groupUrl}/log`);
+  await page.getByRole("button", { name: "Change rules" }).click();
+  await page.getByText("Singles", { exact: true }).click();
+  await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Pat");
+  await page.getByLabel(`Game 1, ${dee.name}`).fill("11");
+  await page.getByLabel("Game 1, Pat").fill("7");
+  await page.getByRole("button", { name: "Log game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
+  await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
+
+  // The list is the default; the calendar opens on this week with today chosen.
+  await expect(page.getByRole("radio", { name: "List" })).toBeChecked();
+  await page.getByText("Calendar", { exact: true }).click();
+  const calendar = page.getByRole("region", { name: "Calendar" });
+  await expect(calendar.getByRole("radio", { name: "Week" })).toBeChecked();
+  // Seven days, each a button that can be chosen.
+  await expect(calendar.locator("button[aria-pressed]")).toHaveCount(7);
+  const today = calendar.getByRole("button", { pressed: true });
+  await expect(today).toHaveAccessibleName(/, 1 game$/);
+  const chosen = calendar.getByRole("region", { name: "Selected day" });
+  await expect(chosen.getByRole("listitem").filter({ hasText: "Pat" })).toContainText("Logged by you");
+
+  // Tomorrow has the night; on a Saturday it's in next week.
+  const withNight = calendar.getByRole("button", { name: /, 1 play night$/ });
+  if ((await withNight.count()) === 0) {
+    await calendar.getByRole("button", { name: "Next week" }).click();
+  }
+  await withNight.click();
+  await expect(chosen.getByRole("article", { name: "Play night at Riverside courts" })).toBeVisible();
+  await expect(chosen.getByRole("listitem")).toHaveCount(0);
+
+  // Month shows whole weeks; both choices are remembered on this device.
+  await calendar.getByText("Month", { exact: true }).click();
+  await calendar.getByRole("button", { name: "Today" }).click();
+  await expect(calendar.getByRole("heading", { level: 2 })).toHaveText(
+    new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+  );
+  await expect(calendar.getByRole("button", { pressed: true })).toHaveAccessibleName(/, 1 game$/);
+  await page.reload();
+  await expect(page.getByRole("radio", { name: "Calendar" })).toBeChecked();
+  await expect(page.getByRole("radio", { name: "Month" })).toBeChecked();
+  expect(problems).toEqual([]);
+});

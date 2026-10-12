@@ -33,6 +33,8 @@ MAX_LOG_DELAY = timedelta(days=30)
 # Clock slack between the phone and the server.
 CLOCK_SLACK = timedelta(minutes=10)
 GAMES_SHOWN = 50
+# The calendar's six weeks: far more than a crew plays, but bounded.
+GAMES_IN_WINDOW = 500
 
 TEAM_SIZE: dict[str, int] = {"doubles": 2, "singles": 1}
 
@@ -439,8 +441,15 @@ def delete_game(group_id: UUID, match_id: UUID, user: CurrentUserSession) -> Res
 
 
 def _matches(
-    session: Session, me: UUID, group_id: UUID, match_id: UUID | None = None
+    session: Session,
+    me: UUID,
+    group_id: UUID,
+    *,
+    match_id: UUID | None = None,
+    window: tuple[datetime, datetime] | None = None,
 ) -> list[Match]:
+    """The group's games, newest first: the latest GAMES_SHOWN, one game, or those played
+    in `window` (start inclusive, end exclusive; at most GAMES_IN_WINDOW)."""
     rows = session.execute(
         text(
             """
@@ -465,11 +474,20 @@ def _matches(
             LEFT JOIN users u ON u.id = m.entered_by
             LEFT JOIN match_reflections r ON r.match_id = m.id AND r.user_id = :me
             WHERE m.group_id = :group_id AND (CAST(:match_id AS uuid) IS NULL OR m.id = :match_id)
+              AND (CAST(:start AS timestamptz) IS NULL OR m.played_at >= :start)
+              AND (CAST(:end AS timestamptz) IS NULL OR m.played_at < :end)
             ORDER BY m.played_at DESC, m.id
             LIMIT :limit
             """
         ),
-        {"group_id": group_id, "me": me, "match_id": match_id, "limit": GAMES_SHOWN},
+        {
+            "group_id": group_id,
+            "me": me,
+            "match_id": match_id,
+            "start": window[0] if window else None,
+            "end": window[1] if window else None,
+            "limit": GAMES_IN_WINDOW if window else GAMES_SHOWN,
+        },
     ).mappings()
     matches = []
     for row in rows:
