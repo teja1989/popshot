@@ -203,3 +203,42 @@ test("the crash report endpoint takes only small, well-formed, same-site reports
   );
   expect((await request.get("/api/client-errors")).status()).toBe(405);
 });
+
+test("privacy, terms and contact open signed out, from the landing page, within the CSP", async ({ page }) => {
+  const problems: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      problems.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => problems.push(error.message));
+
+  await page.goto("/");
+  // Signing in is agreeing to the terms, said under both buttons.
+  await expect(page.getByText("By continuing, you agree to the")).toHaveCount(2);
+  const legal = page.getByRole("navigation", { name: "Legal" });
+  for (const [label, heading] of [
+    ["Privacy", "Privacy policy"],
+    ["Terms", "Terms of use"],
+    ["Contact", "Contact us"],
+  ] as const) {
+    await legal.getByRole("link", { name: label }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+    await expect(page.getByText(/^Last updated /)).toBeVisible();
+    // Placeholders left: the page says so.
+    await expect(page.getByText("Draft.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Legal" }).getByRole("link")).toHaveCount(3);
+    await page.goto("/");
+  }
+
+  const response = await page.goto("/contact");
+  expect(response?.status()).toBe(200);
+  expect(response?.headers()["content-security-policy"]).toContain("'strict-dynamic'");
+  await expect(page.getByRole("link", { name: "hello@example.com" }).first()).toHaveAttribute(
+    "href",
+    "mailto:hello@example.com",
+  );
+  await page.getByRole("link", { name: "Popshot home" }).click();
+  await expect(page).toHaveURL("/");
+  expect(problems).toEqual([]);
+});

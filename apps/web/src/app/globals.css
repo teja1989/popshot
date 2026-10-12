@@ -231,6 +231,14 @@
 }
 
 @layer components {
+  /* Links inside running text on the privacy, terms and contact pages. */
+  .legal a {
+    color: var(--color-primary);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
   /* A path drawn on with pathLength="1": hidden until the draw animation runs. */
   .court-line {
     stroke-dasharray: 1;
