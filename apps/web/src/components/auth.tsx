@@ -13,6 +13,8 @@ export interface Me {
   avatar_url: string | null;
   // Self-rated level: where crew points start. Null when not set.
   self_level?: string | null;
+  // Shown as "Crew member" on recaps shared outside the app.
+  hide_on_shared_cards?: boolean;
 }
 
 export type AuthState =

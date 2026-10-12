@@ -5,6 +5,7 @@ import Link from "next/link";
 import { namesOn, playedWhen, scoreLine, type Match } from "@/lib/games";
 import { describeAward, outingSize, outingWindow, type Recap } from "@/lib/recaps";
 
+import { ShareRecap } from "./share-recap";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
@@ -73,6 +74,8 @@ function RecapBody({ groupId, recap }: { groupId: string; recap: Recap }) {
           <p className="text-[13px] font-bold text-on-hero-muted">Written by AI (Google Gemini) from your games.</p>
         )}
       </section>
+
+      <ShareRecap groupId={groupId} recapKey={recap.key} headline={recap.headline} />
 
       {recap.awards.length > 0 && (
         <section aria-labelledby="awards-heading" className="flex flex-col gap-2">

@@ -242,3 +242,15 @@ test("privacy, terms and contact open signed out, from the landing page, within 
   await expect(page).toHaveURL("/");
   expect(problems).toEqual([]);
 });
+
+test("a malformed share link is a friendly 404, and the browser can't reach the public recap API signed out", async ({
+  page,
+  request,
+}) => {
+  const response = await page.goto("/r/not-a-real-token");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("This recap link isn't available any more.");
+  // The card page reads it server side; the /api proxy still wants a signed-in user.
+  const direct = await request.post("/api/v1/public/recap", { data: { token: "A".repeat(43) } });
+  expect(direct.status()).toBe(401);
+});
