@@ -7,14 +7,14 @@ import type { ReactNode } from "react";
 import { onHomeLinkClick } from "./home-refresh";
 import { SignOutButton } from "./sign-out-button";
 import { Brand } from "./ui/brand";
-import { BoardIcon, GamesIcon, HomeIcon, YouIcon } from "./ui/icons";
+import { CrewIcon, GamesIcon, HomeIcon, YouIcon } from "./ui/icons";
 
 // The signed-in frame: a sidebar on wide screens, a bottom tab bar on phones.
 
 const NAV = [
   { href: "/", label: "Home", icon: <HomeIcon />, matches: (p: string) => p === "/" || p.startsWith("/groups/") },
   { href: "/games", label: "Games", icon: <GamesIcon />, matches: (p: string) => p.startsWith("/games") },
-  { href: "/board", label: "Board", icon: <BoardIcon />, matches: (p: string) => p.startsWith("/board") },
+  { href: "/crew", label: "Crew", icon: <CrewIcon />, matches: (p: string) => p.startsWith("/crew") },
   { href: "/you", label: "You", icon: <YouIcon />, matches: (p: string) => p.startsWith("/you") },
 ] as const;
 

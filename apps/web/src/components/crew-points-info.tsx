@@ -77,17 +77,18 @@ export function CrewPointsInfo({ tone = "default" }: { tone?: "default" | "hero"
         </section>
 
         <section className="flex flex-col gap-2">
-          <h3 className="text-[17px] font-extrabold">On the Board</h3>
+          <h3 className="text-[17px] font-extrabold">What they&apos;re for</h3>
+          <p>
+            Crew points help keep games even and show how you&apos;re playing. Popshot doesn&apos;t rank your crew:
+            the Crew tab lists everyone A to Z.
+          </p>
           <ul className="flex flex-col gap-1.5">
             <li>
-              <strong>Ranked</strong>: {CREW_POINTS.rankedAfter} or more games.
+              <strong>Settling</strong>: early on your points move more, as Popshot gets to know your game. After{" "}
+              {CREW_POINTS.rankedAfter} games they reflect how you play.
             </li>
             <li>
-              <strong>Getting started</strong>: fewer than {CREW_POINTS.rankedAfter} games. Your points already count.
-            </li>
-            <li>
-              <strong>Resting</strong>: no games in {CREW_POINTS.restingAfterDays} days. Your points are kept, and one
-              game brings you back.
+              <strong>Taking a break</strong>: no games in {CREW_POINTS.restingAfterDays} days. Your points are kept.
             </li>
           </ul>
           <p className="text-[15px] text-muted">

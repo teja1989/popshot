@@ -1,41 +1,55 @@
 "use client";
 
-import { points } from "@/lib/board";
-import { hasHighlights, upsetLine, type Highlights } from "@/lib/stats";
+import { hasHighlights, names, type Highlights } from "@/lib/stats";
 
 import { useApiGet } from "./use-api";
 
-/** The crew's highlights at the top of the Board. Says nothing until there's something to say. */
-export function HighlightsStrip({ groupId }: { groupId: string }) {
+/** What's worth celebrating in the crew lately. Says nothing until there's something to say. */
+export function CrewHighlights({ groupId }: { groupId: string }) {
   const { result } = useApiGet<Highlights>(`/v1/groups/${groupId}/highlights`);
   if (result.kind !== "ready" || !hasHighlights(result.data)) {
     return null;
   }
   const h = result.data;
   const days = String(h.window_days);
+  const weekly = h.weeks_running[0];
 
   return (
     <section aria-labelledby="highlights-heading" className="flex animate-rise flex-col gap-2">
       <h2 id="highlights-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-        Highlights
+        Lately · {days} days
       </h2>
-      <ul className="grid gap-2 sm:grid-cols-3">
-        {h.longest_win_streak && (
-          <Card label="Longest win streak" value={`${String(h.longest_win_streak.length)} wins`} who={h.longest_win_streak.player.display_name} />
-        )}
+      <ul className="grid gap-2 sm:grid-cols-2">
         {h.most_games && (
           <Card
-            label={`Most games · ${days} days`}
+            label="Most games"
             value={`${String(h.most_games.matches)} games`}
             who={h.most_games.player.display_name}
           />
         )}
-        {h.biggest_upset && (
+        {weekly && (
           <Card
-            label={`Biggest upset · ${days} days`}
-            value={points(h.biggest_upset.gap)}
-            who={upsetLine(h.biggest_upset)}
-            hint="points behind"
+            label="Here every week"
+            value={`${String(weekly.weeks)} weeks`}
+            who={names(h.weeks_running.filter((w) => w.weeks === weekly.weeks).map((w) => w.player))}
+          />
+        )}
+        {h.best_partnership && (
+          <Card
+            label="Best partnership"
+            value={`${String(h.best_partnership.won)} of ${String(h.best_partnership.played)}`}
+            hint="won together"
+            who={names(h.best_partnership.players)}
+          />
+        )}
+        {h.newcomers.length > 0 && (
+          <Card label="Welcome to the crew" value={`${String(h.newcomers.length)} new`} who={names(h.newcomers)} />
+        )}
+        {h.longest_win_streak && (
+          <Card
+            label="Longest win streak"
+            value={`${String(h.longest_win_streak.length)} wins`}
+            who={h.longest_win_streak.player.display_name}
           />
         )}
       </ul>

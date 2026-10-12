@@ -113,6 +113,12 @@ def test_highlights(people: People, crew: dict[str, Any], app_engine: Engine) ->
     assert h["most_games"]["player"]["display_name"] in {"Casey", "Gary"}
     # Gary lost three times to Sam, so Casey was the favourite both times: no upset.
     assert h["biggest_upset"] is None
+    # Sam started 40 days ago; Casey's first games are this month. Gary (a guest) played
+    # Sam back then too, so isn't new.
+    assert [p["display_name"] for p in h["newcomers"]] == ["Casey"]
+    # Singles only, and nobody has played three weeks running yet.
+    assert h["best_partnership"] is None
+    assert h["weeks_running"] == []
 
     # Sam leaves: the streak goes to someone still in the group.
     people.client.patch(

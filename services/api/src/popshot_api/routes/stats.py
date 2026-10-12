@@ -93,10 +93,25 @@ class GamesHighlight(BaseModel):
     matches: int
 
 
+class WeeksHighlight(BaseModel):
+    player: PlayerRef
+    weeks: int
+
+
+class PartnershipHighlight(BaseModel):
+    players: list[PlayerRef]
+    played: int
+    won: int
+
+
 class Highlights(BaseModel):
     longest_win_streak: StreakHighlight | None
     most_games: GamesHighlight | None
     biggest_upset: UpsetOut | None
+    # Who has played every week lately, the crew's best partnership, and who's new.
+    weeks_running: list[WeeksHighlight] = []
+    best_partnership: PartnershipHighlight | None = None
+    newcomers: list[PlayerRef] = []
     window_days: int = stats.HIGHLIGHT_WINDOW.days
 
 
@@ -231,4 +246,15 @@ def highlights(group_id: UUID, user: CurrentUserSession) -> Highlights:
         if found.most_games
         else None,
         biggest_upset=_upset_out(found.biggest_upset, names),
+        weeks_running=[
+            WeeksHighlight(player=names[pid], weeks=weeks) for pid, weeks in found.weeks_running
+        ],
+        best_partnership=PartnershipHighlight(
+            players=[names[found.best_partnership[0]], names[found.best_partnership[1]]],
+            played=found.best_partnership[2].played,
+            won=found.best_partnership[2].won,
+        )
+        if found.best_partnership
+        else None,
+        newcomers=[names[pid] for pid in found.newcomers],
     )

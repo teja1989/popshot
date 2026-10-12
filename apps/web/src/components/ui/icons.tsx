@@ -116,10 +116,14 @@ export function GamesIcon() {
   );
 }
 
-export function BoardIcon() {
+export function CrewIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-      <path d="M4 18V11M11 18V5M18 18v-9" strokeWidth="1.8" {...stroke} />
+      <path
+        d="M8 10.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5zM2.5 18c.9-2.8 3-4.3 5.5-4.3s4.6 1.5 5.5 4.3M14.5 10a2.75 2.75 0 1 0 0-5.5M16 13.9c1.7.4 3 1.8 3.5 4.1"
+        strokeWidth="1.8"
+        {...stroke}
+      />
     </svg>
   );
 }

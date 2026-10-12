@@ -8,6 +8,7 @@ import {
   CREW_POINTS,
   DEFAULT_START,
   edgeText,
+  everyone,
   LEVELS,
   levelLabel,
   points,
@@ -103,7 +104,14 @@ describe("the crew points explanation", () => {
     ranked_after: number;
     resting_after_days: number;
     level_start: Record<string, number>;
-    example: { team: number; opponents: number; score: number[]; expected_share: number; change_settled: number; change_new: number };
+    example: {
+      team: number;
+      opponents: number;
+      score: number[];
+      expected_share: number;
+      change_settled: number;
+      change_new: number;
+    };
   };
 
   it("matches the rules the API uses", () => {
@@ -121,5 +129,34 @@ describe("the crew points explanation", () => {
       shared.example.change_settled,
       shared.example.change_new,
     ]);
+  });
+});
+
+describe("everyone", () => {
+  const row = (display_name: string) => ({
+    player_id: display_name,
+    display_name,
+    avatar_url: null,
+    is_guest: false,
+    is_me: false,
+    rating: 3,
+    reliability: 0,
+    matches: 1,
+    wins: 0,
+    form: [],
+    week_change: null,
+    rank: null,
+    to_go: 0,
+  });
+
+  it("lists the whole crew A to Z, never by points", () => {
+    const board = {
+      ranked: [row("Riley"), row("alex")],
+      getting_started: [row("Casey")],
+      resting: [row("Bo")],
+      ranked_after: 10,
+      resting_after_days: 60,
+    };
+    expect(everyone(board).map((r) => r.display_name)).toEqual(["alex", "Bo", "Casey", "Riley"]);
   });
 });

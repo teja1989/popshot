@@ -82,14 +82,19 @@ test("your stats and the crew's highlights fill in as games are logged", async (
   await expect(home).toContainText("2–1");
   await expect(home).toContainText("Last 7 days3 games");
 
-  await page.goto("/board");
-  const highlights = page.getByRole("region", { name: "Highlights" });
+  await page.goto("/crew");
+  const highlights = page.getByRole("region", { name: /^Lately/ });
   await expect(highlights).toContainText("Longest win streak");
   await expect(highlights).toContainText("2 wins");
   await expect(highlights).toContainText(user.name);
   await expect(highlights).toContainText("3 games");
-  // Lou came back from behind after two losses: an upset.
-  await expect(highlights).toContainText(`Lou beat ${user.name}`);
+  // Both started this month (in either order: their first game was the same one).
+  const welcome = highlights.getByRole("listitem").filter({ hasText: "Welcome to the crew" });
+  await expect(welcome).toContainText("2 new");
+  await expect(welcome).toContainText("Lou");
+  await expect(welcome).toContainText(user.name);
+  // Lou's upset stays on the You pages; the crew page doesn't name who lost.
+  await expect(highlights).not.toContainText(`Lou beat ${user.name}`);
   expect(problems).toEqual([]);
 });
 

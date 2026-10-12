@@ -14,7 +14,7 @@ Games are counted one by one for close games and skunks; everything else counts 
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
@@ -24,6 +24,11 @@ CLOSE_MARGIN = 2
 SKUNK_MAX = 2
 MIN_PAIRING = 5
 HIGHLIGHT_WINDOW = timedelta(days=30)
+# Weeks in a row with a game before it's worth celebrating, and how many people to name.
+MIN_WEEKS_RUNNING = 3
+# Matches together in the window before a partnership is the crew's best.
+MIN_PARTNERSHIP = 3
+SHOWN = 3
 
 Result = Literal["W", "L"]
 
@@ -208,6 +213,13 @@ class Highlights:
     most_games: tuple[UUID, int] | None
     # The biggest upset in the last HIGHLIGHT_WINDOW.
     biggest_upset: Upset | None
+    # (player, weeks): who has played every week for MIN_WEEKS_RUNNING weeks or more, up to
+    # this week or last, longest first.
+    weeks_running: list[tuple[UUID, int]] = field(default_factory=list)
+    # (partner, partner, record): the pair with the most wins together in the window.
+    best_partnership: tuple[UUID, UUID, Record] | None = None
+    # Players whose first game was in the window, earliest first.
+    newcomers: list[UUID] = field(default_factory=list)
 
 
 def highlights(
@@ -250,4 +262,69 @@ def highlights(
         streak=(best_streak[3], best_streak[0]) if best_streak else None,
         most_games=most,
         biggest_upset=biggest,
+        weeks_running=weeks_running(matches, listed, now),
+        best_partnership=best_partnership(recent, listed),
+        newcomers=newcomers(matches, listed, since),
     )
+
+
+def _week(when: datetime) -> int:
+    """Weeks since a fixed Monday, so consecutive weeks differ by one (ISO weeks, in UTC)."""
+    year, week, _ = when.isocalendar()
+    return date.fromisocalendar(year, week, 1).toordinal() // 7
+
+
+def weeks_running(
+    matches: Iterable[PlayedMatch], listed: set[UUID], now: datetime
+) -> list[tuple[UUID, int]]:
+    """Who has played every week, unbroken, up to this week or last (this week isn't over)."""
+    weeks: dict[UUID, set[int]] = {}
+    for match in matches:
+        for pid in (*match.team_a, *match.team_b):
+            if pid in listed:
+                weeks.setdefault(pid, set()).add(_week(match.played_at))
+    this_week = _week(now)
+    found: list[tuple[UUID, int]] = []
+    for pid, played in weeks.items():
+        week = this_week if this_week in played else this_week - 1
+        run = 0
+        while week in played:
+            run += 1
+            week -= 1
+        if run >= MIN_WEEKS_RUNNING:
+            found.append((pid, run))
+    found.sort(key=lambda item: (-item[1], str(item[0])))
+    return found[:SHOWN]
+
+
+def best_partnership(
+    recent: Iterable[PlayedMatch], listed: set[UUID]
+) -> tuple[UUID, UUID, Record] | None:
+    """The doubles pair with the most wins together, from at least MIN_PARTNERSHIP matches."""
+    pairs: dict[tuple[UUID, UUID], Record] = {}
+    for match in recent:
+        for team, side in ((match.team_a, "A"), (match.team_b, "B")):
+            if len(team) != 2 or not all(pid in listed for pid in team):
+                continue
+            first, second = sorted(team, key=str)
+            pairs.setdefault((first, second), Record()).add(match.winner == side)
+    eligible = [
+        (pair, rec) for pair, rec in pairs.items() if rec.played >= MIN_PARTNERSHIP and rec.won
+    ]
+    if not eligible:
+        return None
+    (first, second), rec = max(
+        eligible, key=lambda item: (item[1].won, item[1].share, item[1].played, str(item[0]))
+    )
+    return first, second, rec
+
+
+def newcomers(matches: Iterable[PlayedMatch], listed: set[UUID], since: datetime) -> list[UUID]:
+    """Listed players whose first game was after `since`, earliest first."""
+    first: dict[UUID, datetime] = {}
+    for match in matches:
+        for pid in (*match.team_a, *match.team_b):
+            if pid in listed and (pid not in first or match.played_at < first[pid]):
+                first[pid] = match.played_at
+    found = sorted((when, str(pid), pid) for pid, when in first.items() if when > since)
+    return [pid for _, _, pid in found]

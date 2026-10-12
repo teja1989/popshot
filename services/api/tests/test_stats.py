@@ -7,15 +7,20 @@ from hypothesis import strategies as st
 from popshot_api.rating import GameScore, PlayedMatch, replay
 from popshot_api.stats import (
     MIN_PAIRING,
+    MIN_PARTNERSHIP,
+    MIN_WEEKS_RUNNING,
     Record,
     best_partner,
+    best_partnership,
     highlights,
     nemesis,
+    newcomers,
     personal,
     rating_before,
     streaks,
     timeline,
     upset,
+    weeks_running,
 )
 
 T0 = datetime(2026, 9, 1, 18, tzinfo=UTC)
@@ -177,3 +182,82 @@ def test_rating_before_a_window() -> None:
     # Before any match: the start. Between the two: after the first.
     assert rating_before(rated[A], 4.0, T0 - timedelta(days=1)) == 4.0
     assert rating_before(rated[A], 4.0, T0 + timedelta(hours=1)) == rated[A].history[0][1]
+
+
+# T0 is Tuesday 1 September 2026. NOW is the Thursday four weeks later.
+NOW = T0 + timedelta(weeks=4, days=2)
+
+
+def weekly(player: UUID, weeks_ago: list[int]) -> list[PlayedMatch]:
+    return [match([player], [E], (11, 5), at=NOW - timedelta(weeks=w)) for w in weeks_ago]
+
+
+def test_weeks_running_counts_unbroken_weeks_up_to_this_week_or_last() -> None:
+    games = [
+        *weekly(A, [0, 1, 2, 3]),  # four weeks, including this one
+        *weekly(B, [1, 2, 3, 4]),  # not yet this week: still running from last week
+        *weekly(C, [0, 1, 3, 4]),  # missed a week: only two
+        *weekly(D, [2, 3, 4]),  # stopped two weeks ago
+    ]
+    found = weeks_running(games, {A, B, C, D}, NOW)
+    assert found == sorted([(A, 4), (B, 4)], key=lambda item: str(item[0]))
+    assert all(weeks >= MIN_WEEKS_RUNNING for _, weeks in found)
+
+
+def test_weeks_running_counts_a_week_once_and_only_listed_players() -> None:
+    twice = weekly(A, [0, 0, 1, 1, 2])
+    assert weeks_running(twice, {A}, NOW) == [(A, 3)]
+    assert weeks_running(twice, {B}, NOW) == []
+
+
+@given(st.sets(st.integers(min_value=0, max_value=20), max_size=20))
+def test_weeks_running_agrees_with_counting_back_week_by_week(weeks_ago: set[int]) -> None:
+    found = dict(weeks_running(weekly(A, sorted(weeks_ago)), {A}, NOW))
+    start = 0 if 0 in weeks_ago else 1
+    run = 0
+    while start + run in weeks_ago:
+        run += 1
+    assert found.get(A, 0) == (run if run >= MIN_WEEKS_RUNNING else 0)
+
+
+def test_best_partnership_needs_enough_games_and_goes_to_most_wins() -> None:
+    recent = [
+        *[match([A, B], [C, D], (11, 7)) for _ in range(3)],  # A&B 3-0 against C&D
+        *[match([C, D], [A, E], (11, 9)) for _ in range(4)],  # C&D 4-0 against A&E
+    ]
+    first, second, record = best_partnership(recent, {A, B, C, D, E}) or (None, None, None)
+    # C&D won 4 of 7; A&B won 3 of 3.
+    assert {first, second} == {C, D}
+    assert record == Record(played=7, won=4)
+    # Without C&D listed, A&B; A&E never won together, so they never count.
+    found = best_partnership(recent, {A, B, E})
+    assert found is not None
+    assert {found[0], found[1]} == {A, B}
+    assert best_partnership(recent[3:], {A, E}) is None
+    # Too few games together, or singles: no partnership.
+    assert best_partnership(recent[: MIN_PARTNERSHIP - 1], {A, B}) is None
+    assert best_partnership([match([A], [B], (11, 0))] * 5, {A, B}) is None
+
+
+def test_newcomers_are_first_games_in_the_window_earliest_first() -> None:
+    since = NOW - timedelta(days=30)
+    games = [
+        match([A], [B], (11, 4), at=since - timedelta(days=5)),  # A and B started before
+        match([C], [A], (11, 4), at=since + timedelta(days=3)),
+        match([D], [B], (11, 4), at=since + timedelta(days=1)),
+        match([E], [B], (11, 4), at=since + timedelta(days=2)),
+    ]
+    assert newcomers(games, {A, B, C, D, E}, since) == [D, E, C]
+    assert newcomers(games, {A, B, C}, since) == [C]
+    # Everyone new is counted, however many.
+    many = [match([uuid4()], [A], (11, 4), at=since + timedelta(hours=h)) for h in range(1, 9)]
+    found = newcomers(many, {pid for m in many for pid in m.team_a}, since)
+    assert len(found) == 8
+
+
+def test_highlights_include_the_friendly_ones() -> None:
+    games = weekly(A, [0, 1, 2])
+    found = highlights(games, {}, {}, {A}, NOW)
+    assert found.weeks_running == [(A, 3)]
+    assert found.newcomers == [A]
+    assert found.best_partnership is None
