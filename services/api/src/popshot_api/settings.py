@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     # Look up emails from Identity Platform for the admin pages (popshot_api.accounts). Needs
     # the service account to have roles/firebaseauth.viewer, so it's on in prod only.
     account_lookup: bool = False
+    # The AI commentator for recaps (popshot_api.ai_recap): Gemini on Vertex AI, processed in
+    # the US. Off unless set; the service account needs roles/aiplatform.user in gcp_project.
+    recap_ai: bool = False
+    gcp_project: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+    gemini_model: str = Field(default="gemini-3.5-flash-lite", pattern=r"^[a-z0-9.-]{1,64}$")
+    gemini_location: Literal["us", "eu", "global"] = "us"
 
     @model_validator(mode="after")
     def _auth_emulator_is_local_only(self) -> Self:
@@ -65,6 +71,12 @@ class Settings(BaseSettings):
             local, _, domain = email.partition("@")
             if not local or "." not in domain or any(c.isspace() for c in email):
                 raise ValueError("admin_emails must be comma-separated email addresses")
+        return self
+
+    @model_validator(mode="after")
+    def _recap_ai_needs_a_project(self) -> Self:
+        if self.recap_ai and self.gcp_project is None:
+            raise ValueError("recap_ai needs gcp_project")
         return self
 
     @property

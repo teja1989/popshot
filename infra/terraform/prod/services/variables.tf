@@ -36,3 +36,9 @@ variable "admin_emails" {
   type        = string
   default     = ""
 }
+
+variable "recap_ai" {
+  description = "Whether Gemini writes recap words (popshot_api.ai_recap): \"true\" or anything else for off. From the POPSHOT_RECAP_AI GitHub variable."
+  type        = string
+  default     = ""
+}

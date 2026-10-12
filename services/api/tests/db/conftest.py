@@ -371,6 +371,21 @@ def seed(app_engine: Engine) -> Seed:
             )
             nights[group] = night
 
+    # AI recap words for each group's outing (keyed by its first match).
+    for user, match, group in (
+        (users["alice"], match_a, group_a),
+        (users["bob"], match_b, group_b),
+    ):
+        with committed_as(app_engine, user) as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO recap_texts (group_id, outing_key, facts_hash, status, headline, "
+                    "lines, model) VALUES (:g, :k, repeat('a', 64), 'written', 'Paddles up!', "
+                    "ARRAY['Good games.'], 'gemini-test')"
+                ),
+                {"g": group, "k": match},
+            )
+
     return Seed(
         **users,
         group_a=group_a,

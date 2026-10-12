@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 from starlette.concurrency import run_in_threadpool
 
+from popshot_api.ai_recap import GeminiWriter, RecapWriter
 from popshot_api.auth.emulator import EmulatorTokenVerifier
 from popshot_api.auth.google import GoogleIdTokenVerifier
 from popshot_api.auth.verifier import TokenVerifier
@@ -36,6 +37,12 @@ def _push_sender_for(settings: Settings) -> PushSender | None:
     if settings.push_vapid_private_key is None:
         return None
     return PushSender(settings.push_vapid_private_key.get_secret_value(), settings.push_subject)
+
+
+def _recap_writer_for(settings: Settings) -> RecapWriter | None:
+    if not settings.recap_ai or settings.gcp_project is None:
+        return None
+    return GeminiWriter(settings.gcp_project, settings.gemini_location, settings.gemini_model)
 
 
 def base_app(
@@ -84,13 +91,14 @@ def base_app(
     return app
 
 
-def create_app(
+def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     settings: Settings | None = None,
     token_verifier: TokenVerifier | None = None,
     engine: Engine | None = None,
     *,
     verify_database_role: bool = True,
     push_sender: PushSender | None = None,
+    recap_writer: RecapWriter | None = None,
 ) -> FastAPI:
     """Build the API. `verify_database_role` exists for tests that don't use a database;
     it isn't reachable from configuration, so a deployed API always checks its role.
@@ -104,6 +112,9 @@ def create_app(
     )
     settings = app.state.settings
     app.state.push_sender = push_sender if push_sender is not None else _push_sender_for(settings)
+    app.state.recap_writer = (
+        recap_writer if recap_writer is not None else _recap_writer_for(settings)
+    )
     app.include_router(me.router)
     app.include_router(groups.router)
     app.include_router(invites.router)

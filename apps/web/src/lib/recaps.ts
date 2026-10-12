@@ -24,6 +24,8 @@ export interface RecapSummary {
 
 export interface Recap extends RecapSummary {
   lines: string[];
+  // Popshot's own commentator, or Gemini (labelled as AI).
+  written_by: "popshot" | "ai";
   newcomers: PlayerRef[];
   awards: Award[];
   played: { player: PlayerRef; games: number }[];

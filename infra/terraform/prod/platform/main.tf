@@ -25,6 +25,7 @@ locals {
 
 resource "google_project_service" "apis" {
   for_each = toset([
+    "aiplatform.googleapis.com",
     "apikeys.googleapis.com",
     "billingbudgets.googleapis.com",
     "cloudscheduler.googleapis.com",
@@ -167,6 +168,16 @@ resource "google_project_iam_member" "admin_account_lookup" {
   project = var.project_id
   role    = "roles/firebaseauth.viewer"
   member  = google_service_account.admin.member
+}
+
+# Recaps can be written by Gemini on Vertex AI (popshot_api.ai_recap), as the API's own
+# service account. It only runs when the services stack turns POPSHOT_RECAP_AI on.
+resource "google_project_iam_member" "api_vertex_ai" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = google_service_account.api.member
+
+  depends_on = [google_project_service.apis]
 }
 
 # ---------------------------------------------------------------- database
