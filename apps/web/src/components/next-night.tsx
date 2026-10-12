@@ -3,11 +3,13 @@
 import type { Night } from "@/lib/nights";
 
 import { NightCard } from "./night-card";
+import { useHomeRefresh } from "./home-refresh";
 import { useApiGet } from "./use-api";
 
 /** Home: the next play night across your groups, to answer in one tap. */
 export function NextNight() {
   const { result, reload } = useApiGet<Night[]>("/v1/me/nights");
+  useHomeRefresh(reload);
   const next = result.kind === "ready" ? result.data[0] : undefined;
   if (!next) {
     return null;

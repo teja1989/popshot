@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import { points, type MyRating } from "@/lib/board";
 import { ROLE_LABEL, type GroupDetail, type GroupSummary } from "@/lib/groups";
@@ -12,6 +12,7 @@ import { useSignedIn } from "./auth";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { CrewPointsInfo } from "./crew-points-info";
 import { DeletedGroups } from "./deleted-groups";
+import { useHomeRefresh } from "./home-refresh";
 import { InstallBanner } from "./install-banner";
 import { NextNight } from "./next-night";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
@@ -57,6 +58,21 @@ export function HomeView() {
   const ratings = useApiGet<MyRating[]>("/v1/me/ratings");
   const top = ratings.result.kind === "ready" ? ratings.result.data[0] : undefined;
   const ratingsCount = ratings.result.kind === "ready" ? ratings.result.data.length : 0;
+
+  // Asked to refresh (the logo or Home tab, tapped at the top of Home): "Updated." once the
+  // groups have come back, for a few seconds.
+  const [refreshedFrom, setRefreshedFrom] = useState<typeof result | null>(null);
+  const reloadRatings = ratings.reload;
+  const refresh = useCallback(() => {
+    setRefreshedFrom(result);
+    reload();
+    reloadRatings();
+    setTimeout(() => {
+      setRefreshedFrom(null);
+    }, 4000);
+  }, [result, reload, reloadRatings]);
+  useHomeRefresh(refresh);
+  const updated = refreshedFrom !== null && result !== refreshedFrom && result.kind === "ready";
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-5xl lg:px-8 lg:pt-10">
@@ -113,9 +129,14 @@ export function HomeView() {
             </>
           )}
           <div className="flex min-h-11 items-center justify-between">
-            <h2 id="groups-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
-              Your groups
-            </h2>
+            <div className="flex items-baseline gap-2">
+              <h2 id="groups-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+                Your groups
+              </h2>
+              <p role="status" className="text-[13px] font-bold text-primary">
+                {updated ? "Updated." : ""}
+              </p>
+            </div>
             {result.kind === "ready" && result.data.length > 0 && (
               <JoinByLinkSheet
                 trigger={
