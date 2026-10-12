@@ -315,6 +315,20 @@ TABLES += [
         ),
         cross_refs=[],
     ),
+    TableSpec(
+        name="recap_shares",
+        a_row="group_id = :g AND outing_key = :k",
+        a_params=lambda s: {"g": s.group_a, "k": s.match_a},
+        b_params=lambda s: {"g": s.group_b, "k": s.match_b},
+        noop_update="revoked_at = revoked_at",
+        deletable=False,
+        insert_into_a=(
+            "INSERT INTO recap_shares (token_hash, group_id, outing_key, created_by) "
+            "VALUES (:h, :g, :k, :u)",
+            lambda s: {"h": new_token_hash(), "g": s.group_a, "k": s.match_a, "u": s.bob},
+        ),
+        cross_refs=[],
+    ),
 ]
 
 TABLE_IDS = [t.name for t in TABLES]

@@ -186,3 +186,33 @@ def test_counts_read_right_even_for_one() -> None:
         for line in pool:
             filled = line.format(names="Jo and Sam", n=1)
             assert "1 games" not in filled, line
+
+
+def test_hidden_people_are_not_named() -> None:
+    # Eli is new and partners Ana; Bo and Eli win close games.
+    first = outings([match([A, B], [C, D], (11, 5), at=T0 - timedelta(days=7))])
+    today = outings(
+        [
+            match([A, E], [C, D], (11, 9)),
+            match([B, E], [C, D], (11, 9), at=T0 + timedelta(minutes=20)),
+        ]
+    )[0]
+    found = recap(today, first)
+    said = commentary(found, NAMES, "Crew", None, hidden={E})
+    text = " ".join([said.headline, *said.lines])
+    assert "Eli" not in text
+    # A line about only Eli (the welcome) is left out; shared lines say "and 1 more".
+    welcomes = [
+        re.compile(re.escape(t).replace(re.escape("{names}"), ".*"))
+        for t in recap_lines.WELCOME_ONE
+    ]
+    assert not any(w.fullmatch(line) for w in welcomes for line in said.lines)
+    assert any(
+        w.fullmatch(line) for w in welcomes for line in commentary(found, NAMES, "C", None).lines
+    )
+    assert "and 1 more" in text
+    assert said.lines
+    # Nothing hidden: the same as before.
+    assert commentary(found, NAMES, "Crew", None, hidden=set()) == commentary(
+        found, NAMES, "Crew", None
+    )

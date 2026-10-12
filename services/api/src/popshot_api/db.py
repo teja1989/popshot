@@ -199,3 +199,17 @@ def user_session(
 # default ("request") it would commit after, so a client could act on a success before the
 # change was visible to its next request, or be told it succeeded when the commit failed.
 CurrentUserSession = Annotated[UserSession, Depends(user_session, scope="function")]
+
+
+def public_session(engine: Annotated[Engine, Depends(get_engine)]) -> Iterator[Session]:
+    """A read-only transaction with no user set, for the few routes that need no sign-in.
+
+    With no app.user_id, row-level security shows no rows at all; such routes read only
+    through SECURITY DEFINER functions made for them (migration 0017).
+    """
+    with Session(engine) as session, session.begin():
+        session.execute(text("SET TRANSACTION READ ONLY"))
+        yield session
+
+
+PublicSession = Annotated[Session, Depends(public_session, scope="function")]
