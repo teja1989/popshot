@@ -20,7 +20,7 @@ from popshot_api.main import create_app
 from popshot_api.ops.tick import run
 from tests.conftest import make_settings
 from tests.db.conftest import People, as_user, committed_as, create
-from tests.db.test_games_api import join_and_approve
+from tests.db.test_games_api import join_and_approve, log, players
 from tests.db.test_nights_api import plan, rsvp
 from tests.db.test_notifications_api import RecordingSender, device
 from tests.fakes import FakeTokenVerifier
@@ -90,13 +90,17 @@ def tick(jobs_engine: Engine, sender: RecordingSender) -> Any:
 def test_the_jobs_role_can_only_run_its_functions(
     jobs_engine: Engine, app_engine: Engine, people: People
 ) -> None:
-    for table in ("play_nights", "users", "push_subscriptions", "groups"):
+    for table in ("play_nights", "users", "push_subscriptions", "groups", "recap_notifications"):
         with jobs_engine.connect() as conn, pytest.raises(ProgrammingError, match="denied"):
             conn.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
     riley = people.user_id(people.new("Riley"))
     for call in (
         "SELECT * FROM app_jobs_due_reminders('day')",
         "SELECT app_purge_deleted_groups()",
+        "SELECT * FROM app_jobs_recent_matches(now())",
+        "SELECT app_jobs_claim_recap(gen_random_uuid(), gen_random_uuid())",
+        "SELECT * FROM app_jobs_recap_targets(gen_random_uuid(), '{}')",
+        "SELECT * FROM recap_notifications",
     ):
         with as_user(app_engine, riley) as conn, pytest.raises(ProgrammingError, match="denied"):
             conn.execute(text(call))
@@ -230,3 +234,104 @@ def test_gone_devices_are_forgotten(
     tick(jobs_engine, sender)
     settings = people.client.get("/v1/me/notifications", headers=crew["casey"]).json()
     assert settings["devices"] == 0
+
+
+def singles(people: People, crew: dict[str, Any], a: str, b: str) -> str:
+    ids = {name: p["id"] for name, p in players(people, crew["casey"], crew["group_id"]).items()}
+    response = log(
+        people,
+        crew["casey"],
+        crew["group_id"],
+        format="singles",
+        team_a=[ids[a]],
+        team_b=[ids[b]],
+        games=[{"team_a": 11, "team_b": 7}],
+    )
+    assert response.status_code == 201, response.text
+    match_id: str = response.json()["id"]
+    return match_id
+
+
+def played_ago(app_engine: Engine, people: People, crew: dict[str, Any], hours: float) -> None:
+    """Move the crew's games back by `hours`, keeping their order."""
+    with committed_as(app_engine, people.user_id(crew["casey"])) as conn:
+        conn.execute(
+            text(
+                "UPDATE matches SET played_at = played_at - make_interval(secs => :s) "
+                "WHERE group_id = :g"
+            ),
+            {"s": hours * 3600, "g": crew["group_id"]},
+        )
+
+
+def recaps_sent(sender: RecordingSender, crew: dict[str, Any]) -> dict[str, Any]:
+    names = {e: n for n, e in crew["devices"].items()}
+    return {names[e]: m for e, m in sender.sent if e in names and m.title == "Your recap is ready"}
+
+
+def test_players_hear_their_recap_is_ready_once(
+    people: People,
+    crew: dict[str, Any],
+    sender: RecordingSender,
+    jobs_engine: Engine,
+    app_engine: Engine,
+) -> None:
+    first = singles(people, crew, "Casey", "Sam")
+    singles(people, crew, "Sam", "Casey")
+    # Just played: too soon.
+    tick(jobs_engine, sender)
+    assert recaps_sent(sender, crew) == {}
+
+    played_ago(app_engine, people, crew, 2)
+    summary = tick(jobs_engine, sender)
+    sent = recaps_sent(sender, crew)
+    # Casey and Sam played; Jo didn't, so isn't told.
+    assert set(sent) == {"Casey", "Sam"}
+    assert summary.announced_recaps == 1
+    message = sent["Casey"]
+    assert message.url == f"/groups/{crew['group_id']}/recaps/{first}"
+    # No one's name on the lock screen.
+    assert "Casey" not in message.body
+    assert "Sam" not in message.body
+    assert message.body.endswith("2 games. Tap to see the awards.")
+
+    # Once only.
+    tick(jobs_engine, sender)
+    assert recaps_sent(sender, crew) == {}
+
+
+def test_recaps_can_be_muted(
+    people: People,
+    crew: dict[str, Any],
+    sender: RecordingSender,
+    jobs_engine: Engine,
+    app_engine: Engine,
+) -> None:
+    muted = people.client.put(
+        "/v1/me/notifications", json={"muted": ["recaps"]}, headers=crew["sam"]
+    )
+    assert muted.status_code == 200, muted.text
+    singles(people, crew, "Casey", "Sam")
+    played_ago(app_engine, people, crew, 2)
+    tick(jobs_engine, sender)
+    assert set(recaps_sent(sender, crew)) == {"Casey"}
+
+
+def test_an_outing_over_for_more_than_six_hours_is_left_alone(
+    people: People,
+    crew: dict[str, Any],
+    sender: RecordingSender,
+    jobs_engine: Engine,
+    app_engine: Engine,
+) -> None:
+    singles(people, crew, "Jo", "Casey")
+    played_ago(app_engine, people, crew, 8)
+    summary = tick(jobs_engine, sender)
+    assert recaps_sent(sender, crew) == {}
+    assert summary.announced_recaps == 0
+    # Not claimed either: it's simply past its time.
+    with jobs_engine.connect() as conn:
+        rows = conn.execute(
+            text("SELECT * FROM app_jobs_recent_matches(now() - interval '1 day')")
+        ).all()
+    assert any(str(r.group_id) == crew["group_id"] for r in rows)

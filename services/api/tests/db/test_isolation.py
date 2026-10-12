@@ -342,6 +342,8 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "user_activity",
         "admin_views",
         "admin_actions",
+        # No role but the owner's job functions can touch it; test_tick.py covers it.
+        "recap_notifications",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 
