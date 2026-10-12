@@ -32,6 +32,11 @@ export default async function PrivacyPage() {
           game notes you pick, and your notification choices.
         </li>
         <li>
+          <strong>Invites:</strong> your Popshot code (a random code you can change any time), invites crews send
+          you and how you answered, crews you&apos;ve stopped from inviting you, and when leads looked codes up (to
+          limit how often they can, so codes can&apos;t be guessed).
+        </li>
+        <li>
           <strong>Names you add for others:</strong> when you add a guest to a game, the name you type is kept in that
           group, so please use names your crew would recognise and nothing more.
         </li>
@@ -69,6 +74,12 @@ export default async function PrivacyPage() {
           <strong>Only you:</strong> your focus areas and game notes.
         </li>
         <li>
+          <strong>Invites:</strong> there&apos;s no search for people on Popshot. A crew&apos;s lead or co-lead can
+          invite you only if you&apos;ve been in a crew together, or if you gave them your Popshot code. With your
+          code they see your first name and photo, to check it&apos;s you. You decide whether to join. If you say no,
+          they aren&apos;t told, and you can stop that crew from inviting you again.
+        </li>
+        <li>
           <strong>Shared recap links:</strong> anyone in a crew can share an outing&apos;s recap as a link. Anyone with
           the link can see that one recap, without signing in: the crew&apos;s name, first names, scores and awards,
           but not where you played. Links stop working after 30 days, and whoever shared one, or the crew&apos;s lead
@@ -104,8 +115,8 @@ export default async function PrivacyPage() {
 
       <H2>Your choices and rights</H2>
       <p>
-        You can change your name and level in the app, turn notifications off, keep your name off shared recaps, and
-        leave any group. To get a copy of
+        You can change your name and level in the app, turn notifications off, keep your name off shared recaps, change
+        your Popshot code, stop a crew from inviting you, and leave any group. To get a copy of
         your data, correct it, or delete your account, email {email}. We&apos;ll confirm it&apos;s you and reply within
         30 days. Deleting your account removes your name and photo from your groups&apos; games; the scores stay, so
         your crew&apos;s history still adds up.

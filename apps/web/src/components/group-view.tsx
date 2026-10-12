@@ -9,6 +9,7 @@ import type { MemberAction } from "@/lib/invites";
 
 import { useSignedIn } from "./auth";
 import { InvitePanel } from "./invite-panel";
+import { InvitePeople } from "./invite-people";
 import { PlayNightsSection } from "./play-nights-section";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
@@ -223,10 +224,13 @@ function Group({
           )}
 
           {isAdmin ? (
-            <InvitePanel groupId={group.id} groupName={group.name} />
+            <>
+              <InvitePeople groupId={group.id} />
+              <InvitePanel groupId={group.id} groupName={group.name} />
+            </>
           ) : (
             <p className="animate-rise text-[15px] text-muted [animation-delay:120ms]">
-              Want someone else in? Ask the lead or a co-lead for an invite link.
+              Want someone else in? Ask the lead or a co-lead to invite them.
             </p>
           )}
         </>
