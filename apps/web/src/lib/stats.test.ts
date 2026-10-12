@@ -4,6 +4,7 @@ import {
   busiestDay,
   hasHighlights,
   linePoints,
+  names,
   record,
   statsPath,
   streakText,
@@ -40,11 +41,39 @@ describe("stats formatting", () => {
     expect(upsetLine(upset)).toBe("Casey & Sam beat Riley & Alex");
   });
 
-  it("knows when there's nothing to highlight", () => {
-    expect(hasHighlights({ longest_win_streak: null, most_games: null, biggest_upset: null, window_days: 30 })).toBe(false);
-    expect(
-      hasHighlights({ longest_win_streak: { player: ref("Jo"), length: 2 }, most_games: null, biggest_upset: null, window_days: 30 }),
-    ).toBe(true);
+  it("knows when there's something to celebrate, and leaves upsets to the You page", () => {
+    const none = {
+      longest_win_streak: null,
+      most_games: null,
+      biggest_upset: null,
+      weeks_running: [],
+      best_partnership: null,
+      newcomers: [],
+      window_days: 30,
+    };
+    expect(hasHighlights(none)).toBe(false);
+    expect(hasHighlights({ ...none, longest_win_streak: { player: ref("Jo"), length: 2 } })).toBe(true);
+    expect(hasHighlights({ ...none, newcomers: [ref("Pat")] })).toBe(true);
+    expect(hasHighlights({ ...none, weeks_running: [{ player: ref("Jo"), weeks: 3 }] })).toBe(true);
+    expect(hasHighlights({ ...none, best_partnership: { players: [ref("A"), ref("B")], played: 3, won: 2 } })).toBe(
+      true,
+    );
+    const upset = {
+      winners: [ref("Jo")],
+      losers: [ref("Sam")],
+      gap: 0.4,
+      match_id: "m",
+      played_at: "2026-10-01T00:00:00Z",
+    };
+    expect(hasHighlights({ ...none, biggest_upset: upset })).toBe(false);
+  });
+
+  it("joins names the way people say them", () => {
+    expect(names([])).toBe("");
+    expect(names([ref("Jo")])).toBe("Jo");
+    expect(names([ref("Jo"), ref("Sam")])).toBe("Jo and Sam");
+    expect(names([ref("Jo"), ref("Sam"), ref("Pat")])).toBe("Jo, Sam and Pat");
+    expect(names([ref("Jo"), ref("Sam"), ref("Pat"), ref("Ana"), ref("Bo")])).toBe("Jo, Sam, Pat and 2 more");
   });
 });
 

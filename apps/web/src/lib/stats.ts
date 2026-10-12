@@ -65,6 +65,11 @@ export interface Highlights {
   longest_win_streak: { player: PlayerRef; length: number } | null;
   most_games: { player: PlayerRef; matches: number } | null;
   biggest_upset: UpsetOut | null;
+  // Played every week for a few weeks running, longest first.
+  weeks_running: { player: PlayerRef; weeks: number }[];
+  best_partnership: { players: PlayerRef[]; played: number; won: number } | null;
+  // First game in the window, earliest first.
+  newcomers: PlayerRef[];
   window_days: number;
 }
 
@@ -87,8 +92,24 @@ export function upsetLine(upset: UpsetOut): string {
   return `${teamNames(upset.winners.map((p) => p.display_name))} beat ${teamNames(upset.losers.map((p) => p.display_name))}`;
 }
 
+/** Whether the Crew tab has anything to celebrate. Upsets stay on your own You page. */
 export function hasHighlights(h: Highlights): boolean {
-  return h.longest_win_streak !== null || h.most_games !== null || h.biggest_upset !== null;
+  return (
+    h.longest_win_streak !== null ||
+    h.most_games !== null ||
+    h.weeks_running.length > 0 ||
+    h.best_partnership !== null ||
+    h.newcomers.length > 0
+  );
+}
+
+/** "Jo", "Jo and Sam", "Jo, Sam and Pat"; past `most` names, "Jo, Sam, Pat and 2 more". */
+export function names(people: PlayerRef[], most = 3): string {
+  const all = people.map((p) => p.display_name);
+  if (all.length > most) {
+    return `${all.slice(0, most).join(", ")} and ${String(all.length - most)} more`;
+  }
+  return all.length <= 1 ? (all[0] ?? "") : `${all.slice(0, -1).join(", ")} and ${all.at(-1) ?? ""}`;
 }
 
 /** The stats URL for a group and window. */

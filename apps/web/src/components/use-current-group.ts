@@ -17,7 +17,7 @@ function readSaved(): string | null {
   }
 }
 
-/** Make `groupId` the group Games and Board open on (say, after logging a game there). */
+/** Make `groupId` the group Games and Crew open on (say, after logging a game there). */
 export function rememberGroup(groupId: string): void {
   try {
     localStorage.setItem(KEY, groupId);

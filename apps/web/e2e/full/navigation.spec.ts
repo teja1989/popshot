@@ -25,7 +25,7 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
 
   for (const [label, path, heading] of [
     ["Games", "/games", "Games"],
-    ["Board", "/board", "Board"],
+    ["Crew", "/crew", "Crew"],
     ["You", "/you", user.name],
     ["Home", "/", /^Good (morning|afternoon|evening), Nia\.$/],
   ] as const) {
@@ -37,7 +37,7 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
-test("Games and Board follow the chosen group and remember it", async ({ page }) => {
+test("Games and Crew follow the chosen group and remember it", async ({ page }) => {
   await signIn(page, newUser("Omar"));
   await startGroup(page, "Alpha Crew");
   await startGroup(page, "Beta Crew");
@@ -49,29 +49,32 @@ test("Games and Board follow the chosen group and remember it", async ({ page })
   await expect(page.getByRole("heading", { name: "No games in Beta Crew yet" })).toBeVisible();
 
   // Remembered across pages and reloads on this device.
-  await page.goto("/board");
+  await page.goto("/crew");
   await expect(page.getByLabel("Group")).toHaveValue(
-    await page.getByLabel("Group").locator("option", { hasText: "Beta Crew" }).getAttribute("value") ?? "",
+    (await page.getByLabel("Group").locator("option", { hasText: "Beta Crew" }).getAttribute("value")) ?? "",
   );
   await page.reload();
   await expect(page.getByLabel("Group").locator("option:checked")).toHaveText("Beta Crew");
 });
 
-test("the board shows crew points from the first game", async ({ page }) => {
+test("the Crew tab lists everyone A to Z, never ranked, with your own crew points", async ({ page }) => {
   const user = newUser("Pia");
   await signIn(page, user);
   const problems = await watchProblems(page);
-  await page.goto("/board");
+  await page.goto("/crew");
   await expect(page.getByText("You're not in a group yet.", { exact: false })).toBeVisible();
 
   const groupUrl = await startGroup(page, "Pia's Crew");
+  // Old links to the Board land on the Crew tab.
   await page.goto("/board");
-  await expect(page.getByRole("heading", { name: "Nobody's ranked yet" })).toBeVisible();
-  const starting = page.getByRole("list", { name: /Getting started/ });
-  await expect(starting).toContainText(`${user.name} (you)`);
-  await expect(starting).toContainText("0 of 10 games");
+  await expect(page).toHaveURL(/\/crew$/);
+  await expect(page.getByRole("heading", { name: "No games yet" })).toBeVisible();
+  const everyone = page.getByRole("list", { name: /Everyone/ });
+  await expect(everyone).toContainText(`${user.name} (you)`);
+  await expect(everyone).toContainText("0 games");
+  await expect(page.getByRole("region", { name: "Your crew points" })).toHaveCount(0);
 
-  // One win against a guest: crew points move above the 3.00 start, still getting started.
+  // One win against a guest.
   await page.goto(`${groupUrl}/log`);
   await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
@@ -84,13 +87,21 @@ test("the board shows crew points from the first game", async ({ page }) => {
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/games$/);
 
-  await page.goto("/board");
-  const mine = starting.getByRole("listitem").filter({ hasText: user.name });
-  await expect(mine).toContainText("1 of 10 games");
+  await page.goto("/crew");
+  // A to Z with game counts; no ranks anywhere. (Each row starts with the avatar's initials.)
+  await expect(everyone.getByRole("listitem")).toHaveText([
+    /Lou · guest\s*1 game$/,
+    new RegExp(`${user.name} \\(you\\)\\s*1 game$`),
+  ]);
+  await expect(page.getByRole("heading", { name: /[Rr]anked/ })).toHaveCount(0);
+  // Your own crew points, still settling.
+  const mine = page.getByRole("region", { name: "Your crew points" });
   const points = Number(await mine.getByText(/^\d\.\d\d$/).textContent());
   expect(points).toBeGreaterThan(3);
   expect(points).toBeLessThanOrEqual(6);
-  await expect(starting.getByRole("listitem").filter({ hasText: "Lou" })).toContainText("guest");
+  await expect(mine).toContainText("Still settling: 9 more games");
+  await mine.getByRole("button", { name: "How crew points work" }).click();
+  await expect(page.getByRole("dialog", { name: "How crew points work" })).toContainText("doesn't rank your crew");
   expect(problems).toEqual([]);
 });
 
@@ -98,7 +109,7 @@ test("the ⓘ explains crew points and how they differ from your level", async (
   await signIn(page, newUser("Ines"));
   const problems = await watchProblems(page);
   await startGroup(page, "Ines's Crew");
-  for (const path of ["/board", "/you"]) {
+  for (const path of ["/you"]) {
     await page.goto(path);
     await page.getByRole("button", { name: "How crew points work" }).first().click();
     const sheet = page.getByRole("dialog", { name: "How crew points work" });
@@ -120,7 +131,9 @@ test("your level sets where crew points start", async ({ page }) => {
   await expect(section.getByRole("radio", { name: /Not set/ })).toBeChecked();
   await section.getByRole("radio", { name: /Advanced/ }).check();
   await page.reload();
-  await expect(page.getByRole("region", { name: "Crew points" }).getByRole("radio", { name: /Advanced/ })).toBeChecked();
+  await expect(
+    page.getByRole("region", { name: "Crew points" }).getByRole("radio", { name: /Advanced/ }),
+  ).toBeChecked();
 });
 
 test("appearance is remembered and applied before the page paints", async ({ page }) => {

@@ -59,7 +59,7 @@ export function EditNameSheet() {
         setOpen(next);
       }}
       title="Your name"
-      description="This is what your crew sees on games and the board, in every group you're in."
+      description="This is what your crew sees on games and the Crew tab, in every group you're in."
       onOpenAutoFocus={(event) => {
         event.preventDefault();
         inputRef.current?.select();

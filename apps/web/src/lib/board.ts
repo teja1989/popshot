@@ -1,4 +1,4 @@
-// Crew points and the Board. Shapes match the API's routes/board.py.
+// Crew points and the Crew tab. Shapes match the API's routes/board.py.
 
 export interface BoardRow {
   player_id: string;
@@ -86,6 +86,13 @@ export function change(value: number | null): { text: string; up: boolean } | nu
     return null;
   }
   return { text: `${value > 0 ? "▲" : "▼"} ${Math.abs(value).toFixed(2)}`, up: value > 0 };
+}
+
+/** Everyone who's a member or has played, A to Z: the Crew tab lists people, never ranks them. */
+export function everyone(board: Board): BoardRow[] {
+  return [...board.ranked, ...board.getting_started, ...board.resting].sort((a, b) =>
+    a.display_name.localeCompare(b.display_name, undefined, { sensitivity: "base" }),
+  );
 }
 
 /** "72%" of matches won, or "–" with none. */

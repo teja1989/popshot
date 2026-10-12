@@ -74,9 +74,9 @@ export function CrewPointsSection() {
                         {r.group_name}
                       </Link>
                       <span className="text-[14px] text-muted">
-                        {r.rank !== null
-                          ? `#${String(r.rank)} of ${String(r.ranked_of)} · ${String(r.matches)} games`
-                          : `${String(r.matches)} of ${String(r.matches + r.to_go)} games to be ranked`}
+                        {r.to_go > 0
+                          ? `${String(r.matches)} games · settling, ${String(r.to_go)} to go`
+                          : `${String(r.matches)} games`}
                       </span>
                     </span>
                     <span className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">

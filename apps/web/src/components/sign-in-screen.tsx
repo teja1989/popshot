@@ -156,10 +156,10 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
         />
         <Feature
           flip
-          eyebrow="Crew points"
-          title="Climb your crew's board."
-          body="Crew points from 2.00 to 6.00, updated after every game by how many points you won against what was expected. It compares you with your crew, not with strangers across the country."
-          visual={<BoardVisual />}
+          eyebrow="Your crew"
+          title="Celebrate the people you play with."
+          body="Who's been here every week, the partnerships that click, and who's new to the crew. No rankings: everyone's listed A to Z, and your crew points are there to keep games even."
+          visual={<CrewVisual />}
         />
 
         <section aria-labelledby="how-heading" className="flex flex-col gap-8">
@@ -302,25 +302,23 @@ function RivalsVisual() {
   );
 }
 
-function BoardVisual() {
+function CrewVisual() {
   const rows = [
-    ["Riley", "4.62", "w-[92%]"],
-    ["Casey", "4.18", "w-[76%]"],
-    ["You", "3.97", "w-[71%]"],
-    ["Alex", "3.55", "w-[60%]"],
+    ["Here every week", "Jo and Sam", "5 weeks"],
+    ["Best partnership", "Alex and Riley", "6 of 7"],
+    ["Welcome to the crew", "Pat", "1 new"],
   ] as const;
   return (
-    <ol className={`${card} flex flex-col gap-3`}>
-      {rows.map(([name, value, width], i) => (
-        <li key={name} className="flex items-center gap-3">
-          <span className="w-5 text-[22px] font-extrabold text-muted [font-stretch:72%]">{i + 1}</span>
-          <span className={`w-14 text-[16px] font-bold ${name === "You" ? "text-primary" : ""}`}>{name}</span>
-          <span className="h-2 grow overflow-hidden rounded-full bg-chip">
-            <span className={`block h-full origin-left animate-grow-x rounded-full ${i === 0 ? "bg-win" : "bg-primary"} ${width}`} />
+    <ul className={`${card} flex flex-col gap-3`}>
+      {rows.map(([label, who, value]) => (
+        <li key={label} className="flex items-center justify-between gap-3 border-b border-line pb-3 last:border-b-0 last:pb-0">
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[13px] font-bold text-muted">{label}</span>
+            <span className="truncate text-[16px] font-bold">{who}</span>
           </span>
-          <span className="w-12 text-right text-[22px] font-extrabold [font-stretch:75%]">{value}</span>
+          <span className="shrink-0 text-[22px] font-extrabold [font-stretch:75%]">{value}</span>
         </li>
       ))}
-    </ol>
+    </ul>
   );
 }

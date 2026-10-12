@@ -127,7 +127,7 @@ test("the landing page explains the app and offers sign-in top and bottom", asyn
     "Logged before the next game starts.",
     "Every game, on the record.",
     "Know your best partners.",
-    "Climb your crew's board.",
+    "Celebrate the people you play with.",
     "Up and running in three steps.",
     "Private by default.",
     "Tally every rally.",
