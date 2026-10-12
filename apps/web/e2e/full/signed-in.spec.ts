@@ -30,6 +30,17 @@ test("signing out returns to the sign-in screen and stays signed out", async ({ 
   await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
 });
 
+test("the You page links to privacy, terms and contact, and they keep you signed in", async ({ page }) => {
+  await signIn(page, newUser("Dana"));
+  const problems = await watchProblems(page);
+  await page.goto("/you");
+  await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy policy");
+  await page.getByRole("link", { name: "Popshot home" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Good (morning|afternoon|evening), Dana\.$/);
+  expect(problems).toEqual([]);
+});
+
 test("the API rejects a request without a token, even with a session in the browser", async ({
   page,
 }) => {
