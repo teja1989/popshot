@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { useAuth } from "./auth";
+import { LegalLinks } from "./legal-page";
 import { PhonePreview } from "./phone-preview";
 import { Brand } from "./ui/brand";
 import { buttonClass } from "./ui/button";
@@ -25,6 +27,23 @@ function SignInButton({ className = "" }: { className?: string }) {
       Continue with Google
       <ArrowIcon />
     </button>
+  );
+}
+
+// Under each sign-in button: signing in is agreeing to the terms.
+function AgreeNote() {
+  return (
+    <p className="text-[14px] text-on-hero-muted">
+      By continuing, you agree to the{" "}
+      <Link href="/terms" className="font-bold text-on-hero underline underline-offset-2">
+        terms
+      </Link>{" "}
+      and{" "}
+      <Link href="/privacy" className="font-bold text-on-hero underline underline-offset-2">
+        privacy policy
+      </Link>
+      .
+    </p>
   );
 }
 
@@ -77,6 +96,9 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
                 <LockIcon />
                 Private to your crew
               </span>
+            </div>
+            <div className="mt-3">
+              <AgreeNote />
             </div>
             <p role="status" className="mt-3 min-h-6 text-[15px] font-bold text-ball">
               {notice}
@@ -179,13 +201,17 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
           <h2 className="text-[34px] leading-[1.05] font-extrabold tracking-[-0.02em] [font-stretch:112%] lg:text-[46px]">
             Tally every <span className="text-ball">rally.</span>
           </h2>
-          <SignInButton />
+          <div className="flex flex-col items-start gap-3">
+            <SignInButton />
+            <AgreeNote />
+          </div>
         </section>
       </div>
 
       <footer className="mx-auto flex max-w-6xl flex-col gap-2 px-6 pb-12 text-[14px] text-muted sm:flex-row sm:items-center sm:justify-between lg:px-10">
         <Brand />
         <p>Pickleball stats for the people you actually play with. Screens show example data.</p>
+        <LegalLinks />
       </footer>
     </div>
   );

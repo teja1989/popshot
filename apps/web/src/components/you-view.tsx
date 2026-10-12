@@ -10,6 +10,7 @@ import { EditNameSheet } from "./edit-name-sheet";
 import { FocusSection } from "./focus-section";
 import { MyStatsSection } from "./my-stats-section";
 import { NotificationsSection } from "./notifications-section";
+import { LegalLinks } from "./legal-page";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./ui/avatar";
 
@@ -75,6 +76,7 @@ export function YouView() {
       </fieldset>
 
       <SignOutButton className="self-start" />
+      <LegalLinks className="text-[15px]" />
     </main>
   );
 }
