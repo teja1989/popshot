@@ -60,7 +60,7 @@ test("your stats and the crew's highlights fill in as games are logged", async (
       .filter({ hasText: /^\d+–\d+$/ })
       .first(),
   ).toHaveText("1–0"); // close games
-  await expect(stats).toContainText("Nobody has your number yet.");
+  await expect(stats).toContainText("No tough match-up yet.");
   await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("Lou");
   await expect(stats.getByRole("list", { name: "Head to head" })).toContainText("2–1");
 

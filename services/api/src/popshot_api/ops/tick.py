@@ -56,7 +56,7 @@ def _messages(kind: Kind, night: Row[Any], now: datetime) -> tuple[Message, Mess
     tag = f"night-{night.night_id}"
     when = _about(night.starts_at, now)
     going = Message(
-        title=f"Play night {when}",
+        title=f"Meetup {when}",
         body=f"At {night.venue}. You're in."
         if kind == "day"
         else f"At {night.venue}. See you on court!",
@@ -65,7 +65,7 @@ def _messages(kind: Kind, night: Row[Any], now: datetime) -> tuple[Message, Mess
     )
     unanswered = Message(
         title="Are you in?",
-        body=f"Play night at {night.venue} {when}. Tap to answer.",
+        body=f"Meetup at {night.venue} {when}. Tap to answer.",
         url=url,
         tag=tag,
     )

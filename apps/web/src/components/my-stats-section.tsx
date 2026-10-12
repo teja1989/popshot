@@ -117,7 +117,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
 
         <dl className="grid grid-cols-2 gap-2">
           <Tile label="Close games" value={record(s.close_won, s.close_lost)} hint="won–lost" />
-          <Tile label="Skunks" value={record(s.skunks_given, s.skunks_taken)} hint="given–taken" />
+          <Tile label="Shutouts" value={record(s.skunks_given, s.skunks_taken)} hint="given–taken" />
           <Tile label="Upset wins" value={String(s.upset_wins)} hint="vs higher-rated teams" />
           <Tile label="Best win streak" value={String(s.longest_win_streak)} hint="wins in a row" />
         </dl>
@@ -130,10 +130,10 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
             empty={`Shows up once you've played ${String(s.min_pairing)} games with the same partner.`}
           />
           <Pairing
-            label="Nemesis"
+            label="Toughest match-up"
             found={s.nemesis}
             describe={(r) => `You've won ${String(r.won)} of ${String(r.played)}, all time`}
-            empty="Nobody has your number yet."
+            empty="No tough match-up yet."
           />
         </div>
 

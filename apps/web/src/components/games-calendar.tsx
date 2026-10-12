@@ -134,7 +134,7 @@ export function GamesCalendar({
             const label = [
               day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
               games ? `${String(games)} game${games === 1 ? "" : "s"}` : "",
-              live ? `${String(live)} play night${live === 1 ? "" : "s"}` : "",
+              live ? `${String(live)} meetup${live === 1 ? "" : "s"}` : "",
             ]
               .filter(Boolean)
               .join(", ");
@@ -170,7 +170,7 @@ export function GamesCalendar({
           <span aria-hidden="true" className="size-2 rounded-full bg-ball" /> Games
         </span>
         <span className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-2 rounded-full border-2 border-muted" /> Play nights
+          <span aria-hidden="true" className="size-2 rounded-full border-2 border-muted" /> Meetups
         </span>
       </p>
 

@@ -20,7 +20,7 @@ export function NightCard({
   const status = myStatus(night);
   return (
     <article
-      aria-label={`Play night at ${night.venue}`}
+      aria-label={`Meetup at ${night.venue}`}
       className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4"
     >
       <Link href={`/groups/${night.group_id}/nights/${night.id}`} className="flex flex-col gap-1 text-ink no-underline">

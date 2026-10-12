@@ -47,7 +47,7 @@ function AgreeNote() {
   );
 }
 
-const HIGHLIGHTS = ["Meet new players", "Stay active", "Friendly rivalries"];
+const HIGHLIGHTS = ["Meet new players", "Stay active", "Play your way"];
 
 const TOGETHER = [
   {
@@ -61,8 +61,8 @@ const TOGETHER = [
     accent: "bg-primary",
   },
   {
-    title: "Rivalries that stay friendly",
-    body: "Keep score, trade bragging rights, and still tap paddles at the net.",
+    title: "Friendly, whatever your level",
+    body: "Keep score, celebrate the good shots, and still tap paddles at the net.",
     accent: "bg-win",
   },
 ];
@@ -88,7 +88,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
             <p className="mt-6 max-w-xl animate-rise text-[18px] leading-relaxed text-on-hero-muted [animation-delay:160ms] lg:text-[20px]">
               {invited
                 ? "Someone wants you in their Popshot group. Sign in to see which one and ask to join."
-                : "Play, laugh and stay active. Popshot keeps the score so you can enjoy the game, and your crew gets the streaks and bragging rights."}
+                : "Play, laugh and stay active. Popshot keeps the score so you can enjoy the game, and your crew gets the streaks and the stories."}
             </p>
             <div className="mt-8 flex animate-rise flex-col gap-4 [animation-delay:240ms] sm:flex-row sm:items-center">
               <SignInButton />
@@ -149,9 +149,9 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
           visual={<RecordVisual />}
         />
         <Feature
-          eyebrow="Rivals & partners"
-          title="Know your nemesis."
-          body="See who you beat, who beats you, and which partner makes you better. Head-to-head records, skunks, close games and streaks, all from your crew's games."
+          eyebrow="Partners & match-ups"
+          title="Know your best partners."
+          body="See which partner makes you better, who you click with, and your toughest match-ups. Records, close games and streaks, all from your crew's games."
           visual={<RivalsVisual />}
         />
         <Feature
@@ -283,7 +283,7 @@ function RivalsVisual() {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className={card}>
-        <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Your nemesis</p>
+        <p className="text-[12px] font-bold tracking-[0.1em] text-muted uppercase">Toughest match-up</p>
         <p className="mt-2 text-[30px] font-extrabold [font-stretch:108%]">Riley</p>
         <p className="text-[15px] text-muted">2–5 head to head</p>
         <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-chip">

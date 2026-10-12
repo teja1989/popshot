@@ -313,15 +313,15 @@ test("other players see a logged game straight away, but only the scorer can edi
   await other.close();
 });
 
-test("the calendar shows games and play nights by day, and remembers week or month", async ({ page }) => {
+test("the calendar shows games and meetups by day, and remembers week or month", async ({ page }) => {
   const dee = newUser("Dee");
   await signIn(page, dee);
   const problems = await watchProblems(page);
   const groupUrl = await startGroup(page, "Calendar Crew");
 
   // A play night (tomorrow at 6 by default) and a game today.
-  await page.getByRole("region", { name: "Play nights" }).getByRole("button", { name: "Plan one" }).click();
-  const sheet = page.getByRole("dialog", { name: "Plan a play night" });
+  await page.getByRole("region", { name: "Meetups" }).getByRole("button", { name: "Plan one" }).click();
+  const sheet = page.getByRole("dialog", { name: "Plan a meetup" });
   await sheet.getByLabel("Where").fill("Riverside courts");
   await sheet.getByRole("button", { name: "Plan it" }).click();
   await expect(sheet).toBeHidden();
@@ -348,12 +348,12 @@ test("the calendar shows games and play nights by day, and remembers week or mon
   await expect(chosen.getByRole("listitem").filter({ hasText: "Pat" })).toContainText("Logged by you");
 
   // Tomorrow has the night; on a Saturday it's in next week.
-  const withNight = calendar.getByRole("button", { name: /, 1 play night$/ });
+  const withNight = calendar.getByRole("button", { name: /, 1 meetup$/ });
   if ((await withNight.count()) === 0) {
     await calendar.getByRole("button", { name: "Next week" }).click();
   }
   await withNight.click();
-  await expect(chosen.getByRole("article", { name: "Play night at Riverside courts" })).toBeVisible();
+  await expect(chosen.getByRole("article", { name: "Meetup at Riverside courts" })).toBeVisible();
   await expect(chosen.getByRole("listitem")).toHaveCount(0);
 
   // Month shows whole weeks; both choices are remembered on this device.

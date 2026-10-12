@@ -85,7 +85,7 @@ def test_any_member_plans_a_night_and_the_crew_hears(
     assert night["open"] is True
     assert sent_to(sender, crew) == {"Casey", "Jo"}
     message = sender.sent[0][1]
-    assert message.title == "Sam planned a play night"
+    assert message.title == "Sam planned a meetup"
     assert message.url == f"/groups/{crew['group_id']}/nights/{night['id']}"
 
 
