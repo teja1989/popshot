@@ -32,9 +32,7 @@ export function EditGameView({ groupId, matchId }: { groupId: string; matchId: s
     );
   }
   if (!existing.result.data.can_edit) {
-    return (
-      <Shell title="Edit game" note={<Notice>Only the person who logged this game can edit it.</Notice>} />
-    );
+    return <Shell title="Edit game" note={<Notice>Only the person who logged this game can edit it.</Notice>} />;
   }
   return <LogGameView groupId={groupId} initial={existing.result.data} />;
 }
@@ -161,11 +159,8 @@ function LogGameForm({
         },
   );
   const [scores, setScores] = useState<Scores>(() => {
-    const rows: Scores = [
-      ["", ""],
-      ["", ""],
-      ["", ""],
-    ];
+    // Enough rows for the longest match (best of 5); only the ones still needed are shown.
+    const rows: Scores = Array.from({ length: 5 }, () => ["", ""] as [string, string]);
     initial?.games.forEach((g, i) => {
       rows[i] = [String(g.team_a), String(g.team_b)];
     });
@@ -304,8 +299,8 @@ function LogGameForm({
           </fieldset>
           <fieldset>
             <legend className="mb-2 text-[15px] font-bold">Match</legend>
-            <div className={`${segmentTrack} grid-cols-2`}>
-              {([1, 3] as const).map((value) => (
+            <div className={`${segmentTrack} grid-cols-3`}>
+              {([1, 3, 5] as const).map((value) => (
                 <label key={value} className={segmentOption}>
                   <input
                     type="radio"
@@ -316,7 +311,7 @@ function LogGameForm({
                     }}
                     className="sr-only"
                   />
-                  {value === 1 ? "1 game" : "Best of 3"}
+                  {value === 1 ? "1 game" : `Best of ${String(value)}`}
                 </label>
               ))}
             </div>
@@ -420,7 +415,11 @@ function LogGameForm({
           <p aria-live="polite" className="min-h-6 pt-1 text-[15px] font-bold">
             {check?.ok && teamsReady && (
               <span className="text-win">
-                ✓ {label(check.value)} {format === "singles" ? "wins" : "win"} {games.map(([x, y]) => (check.value === "A" ? `${String(x)}–${String(y)}` : `${String(y)}–${String(x)}`)).join(", ")}.
+                ✓ {label(check.value)} {format === "singles" ? "wins" : "win"}{" "}
+                {games
+                  .map(([x, y]) => (check.value === "A" ? `${String(x)}–${String(y)}` : `${String(y)}–${String(x)}`))
+                  .join(", ")}
+                .
               </span>
             )}
             {check && !check.ok && <span className="text-warn">{check.problem}</span>}

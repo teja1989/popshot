@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 POINTS_TO_OPTIONS = frozenset({11, 15, 21})
-BEST_OF_OPTIONS = frozenset({1, 3})
+BEST_OF_OPTIONS = frozenset({1, 3, 5})
 # Sanity cap so a typo like 1100 is rejected. A real win-by-2 game never gets close.
 MAX_POINTS = 99
 
@@ -67,7 +67,7 @@ def validate_game(rules: GameRules, team_a: int, team_b: int) -> Team:
 def validate_match(rules: GameRules, best_of: int, games: Sequence[tuple[int, int]]) -> Team:
     """Validate every game and the match shape; return the match winner."""
     if best_of not in BEST_OF_OPTIONS:
-        raise ScoreError("A match is a single game or best of 3.")
+        raise ScoreError("A match is a single game, best of 3 or best of 5.")
     if not games:
         raise ScoreError("Enter at least one game.")
 

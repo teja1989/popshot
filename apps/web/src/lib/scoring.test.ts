@@ -3,11 +3,25 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { gamesToShow, MAX_POINTS, validateGame, validateMatch, type BestOf, type GameRules, type PointsTo } from "./scoring";
+import {
+  gamesToShow,
+  MAX_POINTS,
+  validateGame,
+  validateMatch,
+  type BestOf,
+  type GameRules,
+  type PointsTo,
+} from "./scoring";
 
 interface Shared {
   games: { points_to: PointsTo; win_by_two: boolean; a: number; b: number; ok: boolean }[];
-  matches: { points_to: PointsTo; win_by_two: boolean; best_of: BestOf; games: [number, number][]; winner: "A" | "B" | null }[];
+  matches: {
+    points_to: PointsTo;
+    win_by_two: boolean;
+    best_of: BestOf;
+    games: [number, number][];
+    winner: "A" | "B" | null;
+  }[];
 }
 
 // The API's tests read the same file (services/api/tests/test_scoring.py).
@@ -82,7 +96,10 @@ describe("validateMatch", () => {
       [11, 4],
       [11, 10],
     ]);
-    expect(result).toEqual({ ok: false, problem: "Game 2: Past game point, the winner finishes exactly two points ahead." });
+    expect(result).toEqual({
+      ok: false,
+      problem: "Game 2: Past game point, the winner finishes exactly two points ahead.",
+    });
   });
 });
 
@@ -92,9 +109,87 @@ describe("gamesToShow", () => {
     [1, [], 1],
     [3, [], 2],
     [3, [[11, 4]], 2],
-    [3, [[11, 4], [11, 6]], 2],
-    [3, [[11, 4], [6, 11]], 3],
-    [3, [[11, 4], [6, 10]], 2],
+    [
+      3,
+      [
+        [11, 4],
+        [11, 6],
+      ],
+      2,
+    ],
+    [
+      3,
+      [
+        [11, 4],
+        [6, 11],
+      ],
+      3,
+    ],
+    [
+      3,
+      [
+        [11, 4],
+        [6, 10],
+      ],
+      2,
+    ],
+    [5, [], 3],
+    [
+      5,
+      [
+        [11, 4],
+        [11, 6],
+      ],
+      3,
+    ],
+    [
+      5,
+      [
+        [11, 4],
+        [11, 6],
+        [11, 2],
+      ],
+      3,
+    ],
+    [
+      5,
+      [
+        [11, 4],
+        [6, 11],
+        [11, 2],
+      ],
+      4,
+    ],
+    [
+      5,
+      [
+        [11, 4],
+        [6, 11],
+        [11, 2],
+        [3, 11],
+      ],
+      5,
+    ],
+    [
+      5,
+      [
+        [11, 4],
+        [6, 11],
+        [11, 2],
+        [11, 3],
+      ],
+      4,
+    ],
+    [
+      5,
+      [
+        [11, 4],
+        [6, 11],
+        [11, 2],
+        [3, 10],
+      ],
+      4,
+    ],
   ] as const)("best of %i with %j -> %i rows", (bestOf, games, rows) => {
     expect(gamesToShow(bestOf, rules, games)).toBe(rows);
   });

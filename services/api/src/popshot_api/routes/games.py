@@ -68,12 +68,12 @@ class LogGame(BaseModel):
     format: Format
     points_to: Literal[11, 15, 21]
     win_by_two: bool
-    best_of: Literal[1, 3]
+    best_of: Literal[1, 3, 5]
     # When it was played; defaults to now.
     played_at: datetime | None = None
     team_a: Annotated[list[UUID], Field(min_length=1, max_length=2)]
     team_b: Annotated[list[UUID], Field(min_length=1, max_length=2)]
-    games: Annotated[list[GameScore], Field(min_length=1, max_length=3)]
+    games: Annotated[list[GameScore], Field(min_length=1, max_length=5)]
 
 
 class MatchPlayer(BaseModel):
