@@ -19,10 +19,10 @@ from popshot_api.push import Message, PushSender, Subscription, is_push_endpoint
 
 router = APIRouter(prefix="/v1")
 
-Category = Literal["games", "play_nights", "tab", "milestones"]
+Category = Literal["games", "play_nights", "recaps", "tab", "milestones"]
 # The categories people can turn off, in the order the You page lists them. Others are added
 # here as the features that send them ship.
-OFFERED: tuple[Category, ...] = ("play_nights", "games")
+OFFERED: tuple[Category, ...] = ("play_nights", "recaps", "games")
 
 Base64Url = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]+={0,2}$", max_length=128)]
 
