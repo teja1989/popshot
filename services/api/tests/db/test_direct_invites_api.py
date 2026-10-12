@@ -418,3 +418,15 @@ def test_the_functions_check_roles_themselves(
             conn.execute(text("SELECT app_cancel_direct_invite(:i)"), {"i": invite_id}).scalar_one()
             is False
         )
+
+
+def test_accepting_makes_you_a_player_who_can_be_put_in_games(
+    people: People, crew: dict[str, Any]
+) -> None:
+    gid = crew["group_id"]
+    robin_id = invite_by_code(people, crew["casey"], gid, crew["robin"])
+    [mine] = inbox(people, crew["robin"])
+    assert answer(people, crew["robin"], mine["id"], "accept").status_code == 200
+    roster = people.client.get(f"/v1/groups/{gid}/players", headers=crew["casey"]).json()
+    robin = [p for p in roster if p.get("user_id") == str(robin_id)]
+    assert len(robin) == 1, roster
