@@ -41,9 +41,8 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
   const html = (await response?.text()) ?? "";
   const scriptNonces = await page.evaluate(
     (source) =>
-      Array.from(
-        new DOMParser().parseFromString(source, "text/html").querySelectorAll("script"),
-        (script) => script.getAttribute("nonce"),
+      Array.from(new DOMParser().parseFromString(source, "text/html").querySelectorAll("script"), (script) =>
+        script.getAttribute("nonce"),
       ),
     html,
   );
@@ -52,9 +51,7 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
     expect(value).toBe(nonce);
   }
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "More rallies, more friends.",
-  );
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("More rallies, more friends.");
   await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeEnabled();
   await page.waitForLoadState("networkidle");
   expect(problems).toEqual([]);
@@ -164,6 +161,47 @@ test("an invite link, signed out, says why you're here and leaks nothing", async
   const html = await (await request.get("/join")).text();
   expect(html).toContain("<title>You&#x27;re invited · Popshot</title>");
   expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"/);
+});
+
+test("an uncaught error is reported, cleaned, with a reference and nothing about the person", async ({ page }) => {
+  const token = "B".repeat(43);
+  await page.goto(`/join#${token}`);
+  await expect(page.getByText("You've been invited")).toBeVisible();
+  const sent = page.waitForRequest((request) => request.url().endsWith("/api/client-errors"));
+  const answered = page.waitForResponse((response) => response.url().endsWith("/api/client-errors"));
+  await page.evaluate(() => {
+    setTimeout(() => {
+      throw new Error("boom for casey@example.com");
+    });
+  });
+  const body = (await sent).postDataJSON() as Record<string, unknown>;
+  expect(body).toMatchObject({ source: "window", name: "Error", message: "boom for [email]", path: "/join" });
+  expect(body.ref).toMatch(/^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/);
+  expect(JSON.stringify(body)).not.toContain(token);
+  expect((await answered).status()).toBe(204);
+});
+
+test("the crash report endpoint takes only small, well-formed, same-site reports", async ({ request }) => {
+  const report = {
+    ref: "K7Q2-M9XD",
+    source: "window",
+    name: "Error",
+    message: "x",
+    stack: "",
+    path: "/",
+    digest: null,
+  };
+  expect((await request.post("/api/client-errors", { data: report })).status()).toBe(204);
+  const crossSite = await request.post("/api/client-errors", {
+    data: report,
+    headers: { "sec-fetch-site": "cross-site" },
+  });
+  expect(crossSite.status()).toBe(403);
+  expect((await request.post("/api/client-errors", { data: { ...report, userId: "u1" } })).status()).toBe(400);
+  expect((await request.post("/api/client-errors", { data: { ...report, message: "x".repeat(9000) } })).status()).toBe(
+    413,
+  );
+  expect((await request.get("/api/client-errors")).status()).toBe(405);
 });
 
 test("privacy, terms and contact open signed out, from the landing page, within the CSP", async ({ page }) => {
