@@ -7,6 +7,7 @@ import { change, everyone, points, type Board, type BoardRow } from "@/lib/board
 import { CrewHighlights } from "./crew-highlights";
 import { CrewPointsInfo } from "./crew-points-info";
 import { GroupScoped } from "./group-scoped";
+import { RecapCard } from "./recap-card";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
@@ -39,6 +40,8 @@ function GroupCrew({ groupId }: { groupId: string }) {
 
   return (
     <>
+      <RecapCard groupId={groupId} />
+
       <CrewHighlights groupId={groupId} />
 
       {noGames && (

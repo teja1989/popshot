@@ -26,6 +26,7 @@ from popshot_api.routes import (
     me,
     nights,
     notifications,
+    recaps,
     stats,
 )
 from popshot_api.settings import Settings
@@ -113,6 +114,7 @@ def create_app(
     app.include_router(notifications.router)
     app.include_router(nights.router)
     app.include_router(calendar.router)
+    app.include_router(recaps.router)
     return app
 
 

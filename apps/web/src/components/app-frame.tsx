@@ -11,10 +11,18 @@ import { CrewIcon, GamesIcon, HomeIcon, YouIcon } from "./ui/icons";
 
 // The signed-in frame: a sidebar on wide screens, a bottom tab bar on phones.
 
+// Recaps are opened from the Crew tab.
+const RECAP = /^\/groups\/[^/]+\/recaps\//;
+
 const NAV = [
-  { href: "/", label: "Home", icon: <HomeIcon />, matches: (p: string) => p === "/" || p.startsWith("/groups/") },
+  {
+    href: "/",
+    label: "Home",
+    icon: <HomeIcon />,
+    matches: (p: string) => p === "/" || (p.startsWith("/groups/") && !RECAP.test(p)),
+  },
   { href: "/games", label: "Games", icon: <GamesIcon />, matches: (p: string) => p.startsWith("/games") },
-  { href: "/crew", label: "Crew", icon: <CrewIcon />, matches: (p: string) => p.startsWith("/crew") },
+  { href: "/crew", label: "Crew", icon: <CrewIcon />, matches: (p: string) => p.startsWith("/crew") || RECAP.test(p) },
   { href: "/you", label: "You", icon: <YouIcon />, matches: (p: string) => p.startsWith("/you") },
 ] as const;
 
