@@ -16,6 +16,7 @@ async function startGroup(page: Page, name: string): Promise<string> {
 /** Log a singles game against the guest Gary (added the first time). Lands on Games. */
 async function logSingles(page: Page, groupUrl: string, firstTime: boolean): Promise<void> {
   await page.goto(`${groupUrl}/log`);
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
   const picker = page.getByRole("dialog", { name: "Pick a player" });

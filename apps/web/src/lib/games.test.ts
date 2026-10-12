@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { namesOn, playedWhen, scoreLine, teamNames, toLocalInput } from "./games";
+import { describeMatch, namesOn, playedWhen, scoreLine, teamNames, toLocalInput } from "./games";
 
 const players = [
   { player_id: "1", display_name: "Casey", is_guest: false, team: "A" as const },
@@ -42,5 +42,16 @@ describe("playedWhen", () => {
 describe("toLocalInput", () => {
   it("formats for datetime-local", () => {
     expect(toLocalInput(new Date(2026, 0, 5, 7, 3))).toBe("2026-01-05T07:03");
+  });
+});
+
+describe("describeMatch", () => {
+  it("puts the rules in one line", () => {
+    expect(describeMatch({ format: "doubles", bestOf: 1, pointsTo: 11, winByTwo: true })).toBe(
+      "Doubles · 1 game · to 11, win by 2",
+    );
+    expect(describeMatch({ format: "singles", bestOf: 5, pointsTo: 15, winByTwo: false })).toBe(
+      "Singles · best of 5 · to 15, no win by 2",
+    );
   });
 });

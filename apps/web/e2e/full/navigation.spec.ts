@@ -73,6 +73,7 @@ test("the board shows crew points from the first game", async ({ page }) => {
 
   // One win against a guest: crew points move above the 3.00 start, still getting started.
   await page.goto(`${groupUrl}/log`);
+  await page.getByRole("button", { name: "Change rules" }).click();
   await page.getByText("Singles", { exact: true }).click();
   await page.getByRole("button", { name: "Team B, player 1: pick a player" }).click();
   await page.getByRole("dialog", { name: "Pick a player" }).getByRole("button", { name: "Add a guest" }).click();
