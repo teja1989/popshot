@@ -19,10 +19,10 @@ from popshot_api.push import Message, PushSender, Subscription, is_push_endpoint
 
 router = APIRouter(prefix="/v1")
 
-Category = Literal["games", "play_nights", "recaps", "tab", "milestones"]
+Category = Literal["games", "play_nights", "recaps", "invites", "tab", "milestones"]
 # The categories people can turn off, in the order the You page lists them. Others are added
 # here as the features that send them ship.
-OFFERED: tuple[Category, ...] = ("play_nights", "recaps", "games")
+OFFERED: tuple[Category, ...] = ("invites", "play_nights", "recaps", "games")
 
 Base64Url = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]+={0,2}$", max_length=128)]
 
@@ -98,6 +98,19 @@ class Notifier:
         rows = session.execute(
             text("SELECT * FROM app_push_targets(CAST(:users AS uuid[]), :category)"),
             {"users": [str(u) for u in users], "category": category},
+        ).all()
+        self._queue([Subscription(r.endpoint, r.p256dh, r.auth) for r in rows], message)
+
+    def notify_invitee(
+        self, session: Session, group_id: UUID, invitee: UUID, message: Message
+    ) -> None:
+        """Queue `message` for the person the caller just invited to `group_id`: once per
+        invite, and only if it reaches them and they haven't turned invites off
+        (app_claim_invite_push)."""
+        if self._sender is None:
+            return
+        rows = session.execute(
+            text("SELECT * FROM app_claim_invite_push(:g, :u)"), {"g": group_id, "u": invitee}
         ).all()
         self._queue([Subscription(r.endpoint, r.p256dh, r.auth) for r in rows], message)
 

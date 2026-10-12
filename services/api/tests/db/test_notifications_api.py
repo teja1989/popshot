@@ -118,7 +118,7 @@ def test_a_device_belongs_to_whoever_turned_it_on_last(crew: People) -> None:
 def test_muting_a_category(crew: People) -> None:
     casey = crew.new("Casey")
     assert settings(crew, casey) == {
-        "categories": ["play_nights", "recaps", "games"],
+        "categories": ["invites", "play_nights", "recaps", "games"],
         "muted": [],
         "devices": 0,
     }

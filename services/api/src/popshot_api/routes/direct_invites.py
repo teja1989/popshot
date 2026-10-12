@@ -26,8 +26,10 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.orm import Session
 
 from popshot_api.db import CurrentUserSession
+from popshot_api.push import Message
 from popshot_api.recap_lines import first_name
 from popshot_api.routes.invites import _require_admin
+from popshot_api.routes.notifications import CurrentNotifier
 
 router = APIRouter(prefix="/v1")
 
@@ -232,13 +234,33 @@ def look_up_code(group_id: UUID, body: CodeLookup, user: CurrentUserSession) -> 
 
 
 @router.post("/groups/{group_id}/direct-invites", status_code=status.HTTP_201_CREATED)
-def send_invite(group_id: UUID, body: SendInvite, user: CurrentUserSession) -> Sent:
+def send_invite(
+    group_id: UUID, body: SendInvite, user: CurrentUserSession, notifier: CurrentNotifier
+) -> Sent:
     _require_admin(user.session, user.user_id, group_id)
     outcome = user.session.execute(
         text("SELECT app_send_direct_invite(:g, :u)"), {"g": group_id, "u": body.user_id}
     ).scalar_one()
     if outcome != "sent":
         raise SEND_REFUSED[outcome]
+    names = user.session.execute(
+        text(
+            "SELECT g.name AS crew, u.display_name AS lead FROM groups g, users u "
+            "WHERE g.id = :g AND u.id = :me"
+        ),
+        {"g": group_id, "me": user.user_id},
+    ).one()
+    notifier.notify_invitee(
+        user.session,
+        group_id,
+        body.user_id,
+        Message(
+            title=f"{first_name(names.lead)} invited you to {names.crew}",
+            body="Open Popshot to say yes or no.",
+            url="/",
+            tag=f"invite-{group_id}",
+        ),
+    )
     return Sent(outcome="sent")
 
 
