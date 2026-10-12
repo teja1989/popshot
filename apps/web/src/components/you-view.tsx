@@ -11,6 +11,7 @@ import { FocusSection } from "./focus-section";
 import { MyStatsSection } from "./my-stats-section";
 import { NotificationsSection } from "./notifications-section";
 import { LegalLinks } from "./legal-page";
+import { SharedCardsSection } from "./shared-cards-section";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./ui/avatar";
 
@@ -49,6 +50,8 @@ export function YouView() {
       <FocusSection />
 
       <NotificationsSection />
+
+      <SharedCardsSection />
 
       <fieldset className="flex animate-rise flex-col gap-3 [animation-delay:120ms]">
         <legend className="mb-3 text-xs font-bold tracking-[0.1em] text-muted uppercase">Appearance</legend>

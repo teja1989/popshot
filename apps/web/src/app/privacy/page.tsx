@@ -62,10 +62,19 @@ export default async function PrivacyPage() {
       <List>
         <li>
           <strong>Your crew:</strong> people in a group see each member&apos;s name, photo, games, crew points and
-          meetup answers in that group. Groups are private: nobody outside one can find or see it.
+          meetup answers in that group. Groups are private: nobody outside one can find or see it, except a recap
+          someone in it shares (below).
         </li>
         <li>
           <strong>Only you:</strong> your focus areas and game notes.
+        </li>
+        <li>
+          <strong>Shared recap links:</strong> anyone in a crew can share an outing&apos;s recap as a link. Anyone with
+          the link can see that one recap, without signing in: the crew&apos;s name, first names, scores and awards,
+          but not where you played. Links stop working after 30 days, and whoever shared one, or the crew&apos;s lead
+          or a co-lead, can turn it off sooner. If you&apos;d rather not be named, turn off &ldquo;Show my first
+          name&rdquo; on your You page and you&apos;ll show as &ldquo;Crew member&rdquo;. Guests added by name
+          can&apos;t change this themselves; ask your lead to rename a guest.
         </li>
         <li>
           <strong>Popshot support:</strong> a small number of our staff can look up an account or group, and its email
@@ -95,7 +104,8 @@ export default async function PrivacyPage() {
 
       <H2>Your choices and rights</H2>
       <p>
-        You can change your name and level in the app, turn notifications off, and leave any group. To get a copy of
+        You can change your name and level in the app, turn notifications off, keep your name off shared recaps, and
+        leave any group. To get a copy of
         your data, correct it, or delete your account, email {email}. We&apos;ll confirm it&apos;s you and reply within
         30 days. Deleting your account removes your name and photo from your groups&apos; games; the scores stay, so
         your crew&apos;s history still adds up.

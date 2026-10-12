@@ -35,7 +35,7 @@ export interface Recap extends RecapSummary {
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 /** An award's name and what it was for. */
-export function describeAward(award: Award): { title: string; why: string } {
+export function describeAward(award: Pick<Award, "kind" | "value">): { title: string; why: string } {
   const n = award.value;
   switch (award.kind) {
     case "always_there":
