@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { newUser, signIn } from "./auth";
+import { toMembers } from "./members";
 import { watchProblems } from "./problems";
 
 async function startGroup(page: Page, name: string): Promise<string> {
@@ -192,7 +193,7 @@ test("edit your name and see it across the app", async ({ page }) => {
   await expect(sheet).toBeHidden();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("JJ");
 
-  await page.goto(groupUrl);
+  await page.goto(`${groupUrl}/members`);
   await expect(page.getByRole("region", { name: /Members/ })).toContainText("JJ (you)");
   // It survives a reload (and so a fresh sign-in, which never overwrites it).
   await page.reload();
@@ -266,6 +267,7 @@ test("other players see a logged game straight away, but only the scorer can edi
   const groupUrl = await startGroup(page, "Open Book");
 
   // Sam joins through an invite link, and Casey lets Sam in.
+  await toMembers(page);
   await page.getByRole("button", { name: "Make an invite link" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Make link" }).click();
   const link = await page.getByRole("dialog", { name: "Your invite link" }).getByLabel("Link").inputValue();

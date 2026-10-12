@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { newUser, signIn } from "./auth";
+import { toMembers } from "./members";
 import { watchProblems } from "./problems";
 
 async function startGroup(page: Page, name: string): Promise<string> {
@@ -13,6 +14,7 @@ async function startGroup(page: Page, name: string): Promise<string> {
 }
 
 async function invite(lead: Page, other: Page): Promise<void> {
+  await toMembers(lead);
   await lead.getByRole("button", { name: "Make an invite link" }).click();
   await lead.getByRole("dialog", { name: "Make an invite link" }).getByText("Up to 5", { exact: true }).click();
   await lead.getByRole("dialog", { name: "Make an invite link" }).getByRole("button", { name: "Make link" }).click();
@@ -48,6 +50,7 @@ test("plan a night, answer from Home, the waitlist moves up, then cancel", async
   }
 
   // Casey plans a night with 2 spots, and is going.
+  await page.goto(groupUrl);
   const nights = page.getByRole("region", { name: "Meetups" });
   await expect(nights).toContainText("Nothing planned yet");
   await nights.getByRole("button", { name: "Plan one" }).click();

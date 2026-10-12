@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { newUser, signIn } from "./auth";
+import { toMembers } from "./members";
 import { watchProblems } from "./problems";
 
 async function startGroup(page: Page, name: string): Promise<string> {
@@ -14,6 +15,7 @@ async function startGroup(page: Page, name: string): Promise<string> {
 }
 
 async function makeLink(page: Page): Promise<string> {
+  await toMembers(page);
   await page.getByRole("button", { name: "Make an invite link" }).click();
   const dialog = page.getByRole("dialog", { name: "Make an invite link" });
   await dialog.getByText("Up to 5", { exact: true }).click();
@@ -72,7 +74,7 @@ test("settings, handing over, leaving, restoring, deleting and restoring a group
   await page.goto(`${groupUrl}/settings`);
   await expect(page.getByText("To leave, make someone else the lead first")).toBeVisible();
   await expect(page.getByRole("button", { name: "Leave group" })).toHaveCount(0);
-  await page.goto(groupUrl);
+  await page.goto(`${groupUrl}/members`);
   await page.getByRole("button", { name: `Manage ${riley.name}` }).click();
   const manage = page.getByRole("dialog", { name: riley.name });
   await manage.getByRole("button", { name: /^Make lead/ }).click();
@@ -90,7 +92,7 @@ test("settings, handing over, leaving, restoring, deleting and restoring a group
     .click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByText("Night Owls")).toHaveCount(0);
-  await other.goto(groupUrl);
+  await other.goto(`${groupUrl}/members`);
   await expect(other.getByRole("region", { name: /Members · 1/ })).toBeVisible();
   await expect(other.getByRole("region", { name: /Removed or declined/ })).toHaveCount(0);
 

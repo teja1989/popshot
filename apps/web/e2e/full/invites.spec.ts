@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { newUser, signIn } from "./auth";
+import { toMembers } from "./members";
 import { watchProblems } from "./problems";
 
 async function startGroup(page: Page, name: string): Promise<string> {
@@ -14,6 +15,7 @@ async function startGroup(page: Page, name: string): Promise<string> {
 }
 
 async function makeLink(page: Page, uses: "1 person" | "Up to 5" | "Up to 10"): Promise<string> {
+  await toMembers(page);
   await page.getByRole("button", { name: "Make an invite link" }).click();
   const dialog = page.getByRole("dialog", { name: "Make an invite link" });
   await dialog.getByText(uses, { exact: true }).click();
@@ -69,7 +71,7 @@ test("invite someone, let them in, promote them, then remove them", async ({ pag
   await expect(open).toContainText("1 joined");
 
   // Riley is in, as a plain member who can't invite.
-  await guest.reload();
+  await guest.goto(`${groupUrl}/members`);
   await expect(guest.getByRole("region", { name: /Members · 2/ })).toBeVisible();
   await expect(guest.getByText("Ask the lead or a co-lead to invite them.")).toBeVisible();
   await expect(guest.getByRole("button", { name: "Make an invite link" })).toHaveCount(0);
