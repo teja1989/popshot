@@ -14,6 +14,7 @@ import { CrewPointsInfo } from "./crew-points-info";
 import { DeletedGroups } from "./deleted-groups";
 import { useHomeRefresh } from "./home-refresh";
 import { InstallBanner } from "./install-banner";
+import { InviteInbox } from "./invite-inbox";
 import { NextNight } from "./next-night";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
@@ -119,6 +120,8 @@ export function HomeView() {
           />
         </dl>
       </section>
+
+      <InviteInbox onJoined={reload} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <section aria-labelledby="groups-heading" className="flex flex-col gap-3">

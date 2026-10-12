@@ -8,6 +8,7 @@ import { useSignedIn } from "./auth";
 import { CrewPointsSection } from "./crew-points-section";
 import { EditNameSheet } from "./edit-name-sheet";
 import { FocusSection } from "./focus-section";
+import { InviteCodeSection } from "./invite-code-section";
 import { MyStatsSection } from "./my-stats-section";
 import { NotificationsSection } from "./notifications-section";
 import { LegalLinks } from "./legal-page";
@@ -50,6 +51,8 @@ export function YouView() {
       <FocusSection />
 
       <NotificationsSection />
+
+      <InviteCodeSection />
 
       <SharedCardsSection />
 

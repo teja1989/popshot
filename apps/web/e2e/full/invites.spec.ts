@@ -71,7 +71,7 @@ test("invite someone, let them in, promote them, then remove them", async ({ pag
   // Riley is in, as a plain member who can't invite.
   await guest.reload();
   await expect(guest.getByRole("region", { name: /Members · 2/ })).toBeVisible();
-  await expect(guest.getByText("Ask the lead or a co-lead for an invite link.")).toBeVisible();
+  await expect(guest.getByText("Ask the lead or a co-lead to invite them.")).toBeVisible();
   await expect(guest.getByRole("button", { name: "Make an invite link" })).toHaveCount(0);
 
   // Promote to co-lead.
