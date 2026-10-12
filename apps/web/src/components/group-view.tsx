@@ -8,8 +8,6 @@ import { describeRules, ROLE_LABEL, type GroupDetail, type Member, type Role } f
 import type { MemberAction } from "@/lib/invites";
 
 import { useSignedIn } from "./auth";
-import { GroupExit } from "./group-exit";
-import { GroupSettingsSheet } from "./group-settings-sheet";
 import { InvitePanel } from "./invite-panel";
 import { PlayNightsSection } from "./play-nights-section";
 import { useApiGet } from "./use-api";
@@ -36,9 +34,7 @@ export function GroupView({ groupId }: { groupId: string }) {
       {result.kind === "error" && result.status === 404 && (
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
           <h1 className="text-[26px] font-extrabold [font-stretch:108%]">We couldn&apos;t find that group.</h1>
-          <p className="text-muted">
-            It may have been deleted, or you&apos;re not in it. Ask its lead for an invite.
-          </p>
+          <p className="text-muted">It may have been deleted, or you&apos;re not in it. Ask its lead for an invite.</p>
         </section>
       )}
 
@@ -107,11 +103,12 @@ function Group({
           {group.name}
         </h1>
         <p className="text-[15px] text-muted">{describeRules(group)}</p>
-        {isAdmin && (
-          <div className="mt-2">
-            <GroupSettingsSheet group={group} onSaved={onChange} />
-          </div>
-        )}
+        <Link
+          href={`/groups/${group.id}/settings`}
+          className={buttonClass("quiet", "mt-2 min-h-11 self-start px-4 text-[15px]")}
+        >
+          Settings
+        </Link>
       </section>
 
       {group.my_status === "pending" ? (
@@ -170,7 +167,10 @@ function Group({
             </section>
           )}
 
-          <section aria-labelledby="members-heading" className="flex animate-rise flex-col gap-2 [animation-delay:60ms]">
+          <section
+            aria-labelledby="members-heading"
+            className="flex animate-rise flex-col gap-2 [animation-delay:60ms]"
+          >
             <h2 id="members-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
               Members · {active.length}
             </h2>
@@ -189,7 +189,10 @@ function Group({
           </section>
 
           {isAdmin && group.former_members.length > 0 && (
-            <section aria-labelledby="former-heading" className="flex animate-rise flex-col gap-2 [animation-delay:90ms]">
+            <section
+              aria-labelledby="former-heading"
+              className="flex animate-rise flex-col gap-2 [animation-delay:90ms]"
+            >
               <h2 id="former-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
                 Removed or declined · {group.former_members.length}
               </h2>
@@ -200,7 +203,9 @@ function Group({
                     className="flex min-h-16 items-center gap-3 border-b border-line px-4 py-3 last:border-b-0"
                   >
                     <Avatar name={person.display_name} photoUrl={person.avatar_url} />
-                    <span className="min-w-0 grow truncate text-[17px] font-bold text-muted">{person.display_name}</span>
+                    <span className="min-w-0 grow truncate text-[17px] font-bold text-muted">
+                      {person.display_name}
+                    </span>
                     <button
                       type="button"
                       aria-label={`Restore ${person.display_name}`}
@@ -226,8 +231,6 @@ function Group({
           )}
         </>
       )}
-
-      <GroupExit group={group} />
     </>
   );
 }
@@ -235,11 +238,7 @@ function Group({
 function MemberRow({ member, isMe, children }: { member: Member; isMe: boolean; children?: ReactNode }) {
   return (
     <li className="flex min-h-16 flex-wrap items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:flex-nowrap">
-      <Avatar
-        name={member.display_name}
-        photoUrl={member.avatar_url}
-        tone={member.role === "lead" ? "ball" : "chip"}
-      />
+      <Avatar name={member.display_name} photoUrl={member.avatar_url} tone={member.role === "lead" ? "ball" : "chip"} />
       <span className="min-w-0 grow truncate text-[17px] font-bold">
         {member.display_name}
         {isMe && <span className="font-normal text-muted"> (you)</span>}
@@ -355,8 +354,8 @@ function ManageSheet({
           <div className="flex flex-col gap-3 rounded-2xl border border-warn p-4">
             <p className="font-bold">Remove {member.display_name} from the group?</p>
             <p className="text-[15px] text-muted">
-              Their past games stay on the record. They lose access and can&apos;t rejoin with an
-              invite link, but a lead or co-lead can restore them later.
+              Their past games stay on the record. They lose access and can&apos;t rejoin with an invite link, but a
+              lead or co-lead can restore them later.
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button

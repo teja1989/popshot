@@ -16,7 +16,7 @@ const RESTORE_DAYS = 30;
 export function GroupExit({ group }: { group: GroupDetail }) {
   const isLead = group.my_status === "active" && group.my_role === "lead";
   return (
-    <section aria-label="Leave or delete" className="flex animate-rise flex-col items-start gap-3 border-t border-line pt-5">
+    <div className="flex flex-col items-start gap-3">
       {isLead ? (
         <>
           <p className="text-[15px] text-muted">
@@ -27,7 +27,7 @@ export function GroupExit({ group }: { group: GroupDetail }) {
       ) : (
         <LeaveGroup group={group} />
       )}
-    </section>
+    </div>
   );
 }
 
@@ -143,7 +143,12 @@ function DeleteGroup({ group }: { group: GroupDetail }) {
         <p role="alert" className="text-[15px] text-warn empty:hidden">
           {problem}
         </p>
-        <button type="button" className={buttonClass("danger", "h-14 w-full")} disabled={!matches || busy} onClick={() => void remove()}>
+        <button
+          type="button"
+          className={buttonClass("danger", "h-14 w-full")}
+          disabled={!matches || busy}
+          onClick={() => void remove()}
+        >
           {busy ? "Deleting…" : "Delete group"}
         </button>
       </div>
