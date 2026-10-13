@@ -1,15 +1,14 @@
 """The growth funnel (migration 0024, routes/funnel.py, routes/admin_funnel.py): where people
 came from, anonymous visit counts, and the admin-only views of both."""
 
-import os
 from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Any, get_args
 from uuid import UUID
 
 import pytest
-from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.engine import make_url
+from sqlalchemy import Connection, Engine, text
 
 from popshot_api.main import create_app
 from popshot_api.routes.admin_funnel import stage_of
@@ -42,32 +41,38 @@ FUNNEL_FUNCTIONS = [
 BASE = datetime(2001, 2, 5, 12, tzinfo=UTC)
 
 
-@pytest.fixture(scope="module")
-def superuser(owner_engine: Engine) -> Iterator[Engine]:
-    """Rewinds timestamps for the tests below. Row-level security doesn't apply to it."""
-    admin = os.environ.get("POPSHOT_BOOTSTRAP_ADMIN_URL")
-    if not admin:
-        pytest.skip("POPSHOT_BOOTSTRAP_ADMIN_URL not set")
-    url = make_url(admin).set(drivername="postgresql+psycopg", database=owner_engine.url.database)
-    engine = create_engine(url, pool_size=1)
-    yield engine
-    engine.dispose()
+# The tables the tests below edit directly to move things back in time.
+EDITED = ["users", "groups", "players", "matches", "user_activity", "page_visits", "signup_sources"]
+
+
+@contextmanager
+def unlocked(owner_engine: Engine) -> Iterator[Connection]:
+    """A transaction as the tables' owner with row-level security lifted from EDITED, so tests
+    can rewind timestamps. It's lifted and put back inside the one transaction, so nothing
+    else ever sees it off; if anything fails, the rollback puts it back too."""
+    with owner_engine.begin() as conn:
+        conn.execute(text("SET LOCAL ROLE popshot_owner"))
+        for table in EDITED:
+            conn.execute(text(f"ALTER TABLE {table} NO FORCE ROW LEVEL SECURITY"))
+        yield conn
+        for table in EDITED:
+            conn.execute(text(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY"))
 
 
 def at(days: float) -> datetime:
     return BASE + timedelta(days=days)
 
 
-def source_of(superuser: Engine, user_id: UUID) -> str | None:
-    with superuser.connect() as conn:
+def source_of(owner_engine: Engine, user_id: UUID) -> str | None:
+    with unlocked(owner_engine) as conn:
         value: str | None = conn.execute(
             text("SELECT source FROM signup_sources WHERE user_id = :u"), {"u": user_id}
         ).scalar_one_or_none()
     return value
 
 
-def visits(superuser: Engine, page: str, source: str) -> int:
-    with superuser.connect() as conn:
+def visits(owner_engine: Engine, page: str, source: str) -> int:
+    with unlocked(owner_engine) as conn:
         value = conn.execute(
             text(
                 "SELECT coalesce(sum(visits), 0) FROM page_visits"
@@ -85,26 +90,26 @@ def record(people: People, who: Headers, source: str) -> Any:
 # --- Where people came from ------------------------------------------------------------
 
 
-def test_a_new_account_records_its_source_once(people: People, superuser: Engine) -> None:
+def test_a_new_account_records_its_source_once(people: People, owner_engine: Engine) -> None:
     riley = people.new("Riley")
     first = record(people, riley, "recap")
     assert first.status_code == 200, first.text
     assert first.json() == {"recorded": True}
     # The first one stays.
     assert record(people, riley, "reddit").json() == {"recorded": False}
-    assert source_of(superuser, people.user_id(riley)) == "recap"
+    assert source_of(owner_engine, people.user_id(riley)) == "recap"
 
 
-def test_only_a_new_account_gets_a_source(people: People, superuser: Engine) -> None:
+def test_only_a_new_account_gets_a_source(people: People, owner_engine: Engine) -> None:
     old = people.new("Morgan")
     old_id = people.user_id(old)
-    with superuser.begin() as conn:
+    with unlocked(owner_engine) as conn:
         conn.execute(
             text("UPDATE users SET created_at = now() - interval '2 days' WHERE id = :u"),
             {"u": old_id},
         )
     assert record(people, old, "poster").json() == {"recorded": False}
-    assert source_of(superuser, old_id) is None
+    assert source_of(owner_engine, old_id) is None
 
 
 def test_unknown_sources_are_refused(people: People, app_engine: Engine) -> None:
@@ -153,17 +158,17 @@ def test_no_response_in_the_api_carries_a_source() -> None:
     assert set(schemas["SourceRecorded"]["properties"]) == {"recorded"}
 
 
-def test_deleting_an_account_forgets_its_source(people: People, superuser: Engine) -> None:
+def test_deleting_an_account_forgets_its_source(people: People, owner_engine: Engine) -> None:
     jo = people.new("Jo")
     jo_id = people.user_id(jo)
     record(people, jo, "partner")
-    with superuser.begin() as conn:
+    with unlocked(owner_engine) as conn:
         conn.execute(text("UPDATE users SET deleted_at = now() WHERE id = :u"), {"u": jo_id})
-    assert source_of(superuser, jo_id) is None
+    assert source_of(owner_engine, jo_id) is None
 
 
-def test_the_lists_match_the_database(superuser: Engine) -> None:
-    with superuser.connect() as conn:
+def test_the_lists_match_the_database(owner_engine: Engine) -> None:
+    with unlocked(owner_engine) as conn:
         checks: dict[str, str] = dict(
             conn.execute(
                 text(
@@ -185,14 +190,14 @@ def test_the_lists_match_the_database(superuser: Engine) -> None:
 # --- Anonymous visit counts ------------------------------------------------------------
 
 
-def test_visits_are_counted_by_page_and_source(people: People, superuser: Engine) -> None:
-    before = visits(superuser, "recap_try", "poster")
+def test_visits_are_counted_by_page_and_source(people: People, owner_engine: Engine) -> None:
+    before = visits(owner_engine, "recap_try", "poster")
     for _ in range(2):
         sent = people.client.post(
             "/v1/public/visits", json={"page": "recap_try", "source": "poster"}
         )
         assert sent.status_code == 204, sent.text
-    assert visits(superuser, "recap_try", "poster") == before + 2
+    assert visits(owner_engine, "recap_try", "poster") == before + 2
 
 
 def test_visits_accept_only_known_pages_and_sources(people: People, app_engine: Engine) -> None:
@@ -220,8 +225,8 @@ def test_the_app_can_add_visits_but_never_read_them(app_engine: Engine) -> None:
         )
 
 
-def test_old_visit_counts_are_purged(superuser: Engine, jobs_engine: Engine) -> None:  # noqa: F811
-    with superuser.begin() as conn:
+def test_old_visit_counts_are_purged(owner_engine: Engine, jobs_engine: Engine) -> None:  # noqa: F811
+    with unlocked(owner_engine) as conn:
         conn.execute(
             text(
                 "INSERT INTO page_visits (day, page, source, visits)"
@@ -231,7 +236,7 @@ def test_old_visit_counts_are_purged(superuser: Engine, jobs_engine: Engine) -> 
         )
     with jobs_engine.begin() as conn:
         assert conn.execute(text("SELECT app_jobs_purge_visits()")).scalar_one() >= 1
-    with superuser.connect() as conn:
+    with unlocked(owner_engine) as conn:
         left = conn.execute(
             text("SELECT count(*) FROM page_visits WHERE day < current_date - interval '13 months'")
         ).scalar_one()
@@ -301,9 +306,9 @@ def funnel(admin_engine: Engine, name: str, since: datetime, until: datetime) ->
         ).all()
 
 
-def rewind_crew(superuser: Engine, gid: str, created: datetime, games: list[datetime]) -> None:
+def rewind_crew(owner_engine: Engine, gid: str, created: datetime, games: list[datetime]) -> None:
     """Move a crew, its members' joins and its games (oldest first) back in time."""
-    with superuser.begin() as conn:
+    with unlocked(owner_engine) as conn:
         conn.execute(
             text("UPDATE groups SET created_at = :t WHERE id = :g"), {"t": created, "g": gid}
         )
@@ -336,22 +341,22 @@ def singles(people: People, lead: Headers, gid: str, times: int) -> None:
         assert logged.status_code == 201, logged.text
 
 
-def test_the_crew_funnel_steps(people: People, superuser: Engine, admin_engine: Engine) -> None:
+def test_the_crew_funnel_steps(people: People, owner_engine: Engine, admin_engine: Engine) -> None:
     # A: two members, 3 games in its first week, back in weeks 2 and 4.
     alex = people.new("Alex")
     a = create(people, alex, "Crew A")["id"]
     join_and_approve(people, alex, a, "Bea")
     singles(people, alex, a, 5)
-    rewind_crew(superuser, a, at(0), [at(1), at(2), at(3), at(9), at(23)])
+    rewind_crew(owner_engine, a, at(0), [at(1), at(2), at(3), at(9), at(23)])
     # B: one member, one game on day 2 with a guest.
     cam = people.new("Cam")
     b = create(people, cam, "Crew B")["id"]
     singles(people, cam, b, 1)
-    rewind_crew(superuser, b, at(0.5), [at(2.5)])
+    rewind_crew(owner_engine, b, at(0.5), [at(2.5)])
     # C: nothing yet.
     dee = people.new("Dee")
     c = create(people, dee, "Crew C")["id"]
-    rewind_crew(superuser, c, at(1), [])
+    rewind_crew(owner_engine, c, at(1), [])
 
     [row] = funnel(admin_engine, "app_admin_funnel_crews", at(-1), at(3))
     assert row.created == 3
@@ -367,7 +372,7 @@ def test_the_crew_funnel_steps(people: People, superuser: Engine, admin_engine: 
 
 
 def test_the_people_funnel_and_sources(
-    people: People, superuser: Engine, admin_engine: Engine
+    people: People, owner_engine: Engine, admin_engine: Engine
 ) -> None:
     eve = people.new("Eve")  # joins a crew and plays, back in week 2: from a recap
     fin = people.new("Fin")  # signs up and does nothing: from reddit
@@ -377,8 +382,8 @@ def test_the_people_funnel_and_sources(
     record(people, fin, "reddit")
     eve_id, fin_id = people.user_id(eve), people.user_id(fin)
     start = BASE + timedelta(days=100)
-    rewind_crew(superuser, gid, start, [start + timedelta(days=1)])
-    with superuser.begin() as conn:
+    rewind_crew(owner_engine, gid, start, [start + timedelta(days=1)])
+    with unlocked(owner_engine) as conn:
         conn.execute(
             text("UPDATE users SET created_at = :t WHERE id IN (:e, :f)"),
             {"t": start, "e": eve_id, "f": fin_id},
