@@ -4,12 +4,10 @@ import { MotionConfig, motion, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { useRef } from "react";
 
-import { LANDING_PHOTOS } from "@/lib/landing-photos";
-
 import { useAuth } from "./auth";
 import { GameDayStory } from "./landing/game-day-story";
 import { CrewInsights, YourStats } from "./landing/insights";
-import { PhotoStrip } from "./landing/photo-strip";
+import { HeroPhoto, PhotoBand } from "./landing/photos";
 import { RallyDemo } from "./landing/rally-demo";
 import { Reveal } from "./landing/reveal";
 import { LegalLinks } from "./legal-page";
@@ -90,7 +88,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
     <MotionConfig reducedMotion="user">
       <div className="bg-bg">
         <section ref={hero} className="relative isolate overflow-hidden bg-hero text-on-hero">
-          <CourtPattern />
+          <HeroPhoto />
           <div className="mx-auto grid max-w-6xl gap-12 px-6 pt-8 pb-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-12 lg:px-10 lg:pt-10 lg:pb-24">
             <header className="lg:col-span-2">
               <Brand onHero />
@@ -152,19 +150,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
           </div>
         </section>
 
-        {LANDING_PHOTOS.length > 0 && (
-          <section aria-labelledby="courts-heading" className="flex flex-col gap-8 pt-20 lg:pt-28">
-            <Reveal className="mx-auto w-full max-w-6xl px-6 lg:px-10">
-              <h2
-                id="courts-heading"
-                className="max-w-2xl text-display-sm font-extrabold tracking-[-0.02em] lg:text-display"
-              >
-                Made for the courts you already play on.
-              </h2>
-            </Reveal>
-            <PhotoStrip />
-          </section>
-        )}
+        <PhotoBand />
 
         <div className="mx-auto flex max-w-6xl flex-col gap-20 px-6 py-20 lg:gap-28 lg:px-10 lg:py-28">
           <GameDayStory />

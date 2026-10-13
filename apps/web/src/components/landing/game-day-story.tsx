@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import { useRef, useState, type ReactNode } from "react";
 
-import { CourtArt } from "../ui/court-art";
+import { CourtPhoto } from "./photos";
 
 import { useEntrance } from "./reveal";
 
@@ -95,8 +95,8 @@ const card = "rounded-3xl border border-line bg-surface p-5 shadow-[0_18px_40px_
 function StepVisual({ index }: { index: number }) {
   if (index === 0) {
     return (
-      <div className={card}>
-        <CourtArt rally className="w-full" />
+      <div className="overflow-hidden rounded-3xl shadow-[0_18px_40px_-28px_rgb(15_27_38/0.5)]">
+        <CourtPhoto />
       </div>
     );
   }
