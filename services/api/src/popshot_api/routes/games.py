@@ -282,14 +282,12 @@ def _audit(session: Session, group_id: UUID, me: UUID, action: str, match_id: UU
     )
 
 
-@router.post("/matches", status_code=status.HTTP_201_CREATED)
-def log_game(
-    group_id: UUID, body: LogGame, user: CurrentUserSession, notifier: CurrentNotifier
-) -> Match:
-    session, me = user.session, user.user_id
-    _require_member(session, me, group_id)
+def insert_match(
+    session: Session, me: UUID, group_id: UUID, body: LogGame, event_id: UUID | None = None
+) -> UUID:
+    """Check and write a new game (lineup and scores), logged by `me`. Event courts use this
+    too (routes/events.py), so their games follow exactly the same rules."""
     played_at = _check_game(session, group_id, body)
-
     today = session.execute(
         text(
             "SELECT count(*) FROM matches "
@@ -307,9 +305,9 @@ def log_game(
         text(
             """
             INSERT INTO matches (group_id, format, points_to, win_by_two, best_of, played_at,
-                                 entered_by)
+                                 entered_by, event_id)
             VALUES (:group_id, CAST(:format AS match_format), :points_to, :win_by_two,
-                    :best_of, :played_at, :me)
+                    :best_of, :played_at, :me, :event_id)
             RETURNING id
             """
         ),
@@ -321,10 +319,21 @@ def log_game(
             "best_of": body.best_of,
             "played_at": played_at,
             "me": me,
+            "event_id": event_id,
         },
     ).scalar_one()
     _write_lineup(session, group_id, match_id, body)
     _audit(session, group_id, me, "match.logged", match_id)
+    return match_id
+
+
+@router.post("/matches", status_code=status.HTTP_201_CREATED)
+def log_game(
+    group_id: UUID, body: LogGame, user: CurrentUserSession, notifier: CurrentNotifier
+) -> Match:
+    session, me = user.session, user.user_id
+    _require_member(session, me, group_id)
+    match_id = insert_match(session, me, group_id, body)
     game = _matches(session, me, group_id, match_id=match_id)[0]
     _tell_players(session, notifier, game, me)
     return game
@@ -400,6 +409,14 @@ def edit_game(group_id: UUID, match_id: UUID, body: LogGame, user: CurrentUserSe
     session, me = user.session, user.user_id
     _require_member(session, me, group_id)
     kept = _own_game(session, me, group_id, match_id)
+    rewrite_match(session, me, group_id, match_id, body, kept=kept)
+    return _matches(session, me, group_id, match_id=match_id)[0]
+
+
+def rewrite_match(  # noqa: PLR0913 - each input is needed
+    session: Session, me: UUID, group_id: UUID, match_id: UUID, body: LogGame, *, kept: datetime
+) -> None:
+    """Check and replace a game's players, rules and scores. The caller decides who may."""
     played_at = _check_game(session, group_id, body, keep_played_at=kept)
     params = {"match_id": match_id, "group_id": group_id}
     session.execute(text("DELETE FROM match_players WHERE match_id = :match_id"), params)
@@ -424,7 +441,6 @@ def edit_game(group_id: UUID, match_id: UUID, body: LogGame, user: CurrentUserSe
         },
     )
     _audit(session, group_id, me, "match.edited", match_id)
-    return _matches(session, me, group_id, match_id=match_id)[0]
 
 
 @router.delete("/matches/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
