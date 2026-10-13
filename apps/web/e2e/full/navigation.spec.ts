@@ -24,7 +24,7 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
   await page.goto("/");
 
   for (const [label, path, heading] of [
-    ["Games", "/games", "Games"],
+    ["Play", "/play", "Play"],
     ["Crew", "/crew", "Crew"],
     ["You", "/you", user.name],
     ["Home", "/", /^Good (morning|afternoon|evening), Nia\.$/],
@@ -37,12 +37,12 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
-test("Games and Crew follow the chosen group and remember it", async ({ page }) => {
+test("Play and Crew follow the chosen group and remember it", async ({ page }) => {
   await signIn(page, newUser("Omar"));
   await startGroup(page, "Alpha Crew");
   await startGroup(page, "Beta Crew");
 
-  await page.goto("/games");
+  await page.goto("/play");
   const group = page.getByLabel("Group");
   await expect(group).toHaveValue(/.+/);
   await group.selectOption({ label: "Beta Crew" });
@@ -85,7 +85,7 @@ test("the Crew tab lists everyone A to Z, never ranked, with your own crew point
   await page.getByLabel(`Game 1, ${user.name}`).fill("11");
   await page.getByLabel("Game 1, Lou").fill("3");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
 
   await page.goto("/crew");
   // A to Z with game counts; no ranks anywhere. (Each row starts with the avatar's initials.)
@@ -186,5 +186,24 @@ test("on Home, the logo and the Home tab scroll to the top, or refresh at the to
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
     await expect(page).toHaveURL(/\/$/);
   }
+  expect(problems).toEqual([]);
+});
+
+test("Play shows the crew's meetups first, and old Games links still work", async ({ page }) => {
+  await signIn(page, newUser("Ivo"));
+  const problems = await watchProblems(page);
+  await startGroup(page, "Ivo's Crew");
+
+  // An old link (from a notification, say) lands on Play with its message intact.
+  await page.goto("/games?logged=1");
+  await expect(page).toHaveURL(/\/play$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Play");
+  await expect(page.getByRole("status").filter({ hasText: "Game logged." })).toBeVisible();
+
+  // Meetups come first, and one can be planned from here.
+  const meetups = page.getByRole("region", { name: "Meetups" });
+  await expect(meetups).toContainText("Nothing planned yet.");
+  await expect(meetups.getByRole("button", { name: "Plan one" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log a game" })).toBeVisible();
   expect(problems).toEqual([]);
 });

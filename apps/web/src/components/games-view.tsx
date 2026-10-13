@@ -14,6 +14,7 @@ import { recall, remember } from "@/lib/remember";
 import { useSignedIn } from "./auth";
 import { GamesCalendar } from "./games-calendar";
 import { GroupScoped } from "./group-scoped";
+import { PlayNightsSection } from "./play-nights-section";
 import { ReflectionSheet } from "./reflection-sheet";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
@@ -27,7 +28,11 @@ const VIEW_KEY = "popshot.games.view";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-export function GamesView() {
+/**
+ * Play: everything about getting on court for the chosen crew. Its meetups, logging a game,
+ * and the games so far as a list or a calendar.
+ */
+export function PlayView() {
   // After logging a game: "?logged=1", plus "&reflect=<id>" when you played in it. Read
   // once, then tidy the address so a reload doesn't repeat them.
   const [arrival] = useState(() => {
@@ -42,7 +47,7 @@ export function GamesView() {
   }, []);
 
   return (
-    <GroupScoped title="Games">
+    <GroupScoped title="Play">
       {(group) => (
         <GroupGames key={group.id} group={group} justLogged={arrival.logged} reflectFirst={arrival.reflect} />
       )}
@@ -78,6 +83,8 @@ function GroupGames({
 
   return (
     <>
+      <PlayNightsSection groupId={group.id} />
+
       <Link href={`/groups/${group.id}/log`} className={buttonClass("action", "h-14")}>
         <PlusIcon />
         Log a game

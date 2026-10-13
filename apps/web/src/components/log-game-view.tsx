@@ -49,7 +49,7 @@ function Shell({ title, note }: { title: string; note: ReactNode }) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-xl lg:px-8 lg:pt-10">
       <Link
-        href="/games"
+        href="/play"
         className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-body font-bold text-primary no-underline"
       >
         <BackIcon />
@@ -258,13 +258,13 @@ function LogGameForm({
       if (initial) {
         await apiPut<Match>(user, `/v1/groups/${group.id}/matches/${initial.id}`, body);
         rememberGroup(group.id);
-        router.push("/games");
+        router.push("/play");
         return;
       }
       const logged = await apiPost<Match>(user, `/v1/groups/${group.id}/matches`, body);
       rememberGroup(group.id);
       // If you played, the Games tab offers the optional "How did it go?" right away.
-      router.push(logged.i_played ? `/games?logged=1&reflect=${logged.id}` : "/games?logged=1");
+      router.push(logged.i_played ? `/play?logged=1&reflect=${logged.id}` : "/play?logged=1");
     } catch (error) {
       setProblem(
         error instanceof ApiError && error.detail

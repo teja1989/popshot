@@ -32,7 +32,7 @@ async function logSingles(page: Page, groupUrl: string, firstTime: boolean): Pro
   await page.getByRole("textbox", { name: /^Game 1,/ }).first().fill("11");
   await page.getByRole("textbox", { name: "Game 1, Gary" }).fill("4");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
 }
 
 test("reflect after a game, skip one, and keep it to yourself", async ({ page }) => {

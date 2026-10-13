@@ -108,10 +108,13 @@ export function HomeIcon() {
   );
 }
 
-export function GamesIcon() {
+/** A paddle and ball: the Play tab. */
+export function PaddleIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-      <path d="M4 5h14M4 11h14M4 17h9" strokeWidth="1.8" {...stroke} />
+      <rect x="3" y="1.5" width="11" height="12" rx="3.5" strokeWidth="1.8" {...stroke} />
+      <path d="M8.5 13.5v6.5" strokeWidth="3" {...stroke} />
+      <circle cx="18" cy="16.5" r="2" strokeWidth="1.8" {...stroke} />
     </svg>
   );
 }
