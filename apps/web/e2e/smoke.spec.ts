@@ -51,7 +51,7 @@ test("home page renders with a strict, nonce-based CSP and no violations", async
     expect(value).toBe(nonce);
   }
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("More rallies, more friends.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("The friendly pickleball app.");
   await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeEnabled();
   await page.waitForLoadState("networkidle");
   expect(problems).toEqual([]);
@@ -123,20 +123,20 @@ test("/favicon.ico serves the app icon instead of a 404", async ({ request }) =>
 test("the landing page explains the app and offers sign-in top and bottom", async ({ page }) => {
   await page.goto("/");
   for (const title of [
-    "Pickleball is better together.",
-    "Logged before the next game starts.",
-    "Every game, on the record.",
-    "Know your best partners.",
-    "Celebrate the people you play with.",
+    "Play. Log. Relive it.",
+    "The things your crew will talk about.",
+    "See yourself getting better.",
+    "Built for the people you play with.",
     "Up and running in three steps.",
-    "Private by default.",
-    "Tally every rally.",
+    "Your next game deserves a story.",
   ]) {
     await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
   }
   const signIn = page.getByRole("button", { name: "Continue with Google" });
   await expect(signIn).toHaveCount(2);
   await expect(page.getByText("Screens show example data.", { exact: false })).toBeVisible();
+  // The sample recap says it's an example, and that AI wrote it.
+  await expect(page.getByText("Example · Written by AI (Google Gemini)").first()).toBeAttached();
 });
 
 test("an invite link, signed out, says why you're here and leaks nothing", async ({ page, request }) => {

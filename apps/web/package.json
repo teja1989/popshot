@@ -23,6 +23,7 @@
     "@radix-ui/react-dialog": "1.1.23",
     "@tailwindcss/postcss": "4.3.3",
     "get-nonce": "1.0.1",
+    "motion": "13.4.4",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -43,5 +44,10 @@
   "allowScripts": {
     "@firebase/util": false,
     "unrs-resolver": false
+  },
+  "overrides": {
+    "framer-motion": "13.4.4",
+    "motion-dom": "13.4.4",
+    "motion-utils": "13.3.0"
   }
 }
