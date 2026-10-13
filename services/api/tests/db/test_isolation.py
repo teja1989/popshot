@@ -370,6 +370,13 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "features",
         "feature_crews",
         "crew_plans",
+        # Crew events (0028): per crew, but rows only exist while a format's switch is on,
+        # which the shared seed doesn't set up. test_events_api.py covers strangers, other
+        # crews' players and events, and direct writes.
+        "events",
+        "event_players",
+        "event_rounds",
+        "event_courts",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 
