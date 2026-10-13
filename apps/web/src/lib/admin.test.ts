@@ -43,5 +43,14 @@ describe("support history", () => {
     expect(actionSummary({ ...base, action: "crew.something_new", target_user_id: null, target_name: null })).toBe(
       "Admin: crew.something_new",
     );
+    const none = { target_user_id: null, target_name: null };
+    expect(actionSummary({ ...base, ...none, action: "plan.grant" })).toBe("Admin gave the crew Organizer");
+    expect(actionSummary({ ...base, ...none, action: "plan.end" })).toBe("Admin ended the crew's Organizer plan");
+    expect(actionSummary({ ...base, ...none, action: "feature.crew_add", details: { feature: "events.river" } })).toBe(
+      "Admin added the crew to events.river",
+    );
+    expect(actionSummary({ ...base, ...none, action: "feature.crew_remove" })).toBe(
+      "Admin took the crew off a feature",
+    );
   });
 });

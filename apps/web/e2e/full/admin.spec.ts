@@ -193,3 +193,59 @@ test("the admin's funnel shows how new crews are getting on, and nobody else can
   );
   expect(problems).toEqual([]);
 });
+
+test("the admin puts a crew on a feature's list and gives it Organizer", async ({ page }) => {
+  test.setTimeout(90_000);
+  const problems = await watchProblems(page);
+  await signIn(page, newUser("Noor"));
+  const crew = `Switch check ${String(Date.now())}`;
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start a group" }).first().click();
+  await page.getByLabel("Group name").fill(crew);
+  await page.getByRole("button", { name: "Create group" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(crew);
+  const crewId = new URL(page.url()).pathname.split("/").pop() ?? "";
+
+  await signIn(page, ADMIN);
+  await page.goto("/admin");
+  await page.getByRole("link", { name: "Features and plans →" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Features");
+  // Area tabs: Recaps has the AI recap switch.
+  await page.getByText("Recaps", { exact: true }).click();
+  await expect(page).toHaveURL(/area=recaps/);
+  const card = page.getByRole("article", { name: "AI recap writing" });
+  await expect(card).toContainText("recaps.ai");
+  await expect(card).toContainText("Everyone");
+
+  // Put the new crew on its list (the rollout stays Everyone, so nothing changes for anyone).
+  await card.getByRole("button", { name: /^Selected crews/ }).click();
+  await card.getByRole("button", { name: "Add a crew" }).click();
+  const add = page.getByRole("dialog", { name: "Add a crew to AI recap writing" });
+  await add.getByLabel("Find a crew").fill(crew);
+  await add.getByRole("radio", { name: crew }).check();
+  await add.getByLabel("Why").fill("Browser test: checking the beta list.");
+  await add.getByRole("button", { name: "Add crew" }).click();
+  await expect(add).toBeHidden();
+  await expect(card.getByRole("list", { name: "AI recap writing: selected crews" })).toContainText(crew);
+
+  // Organizer, from the crew's admin page.
+  await page.goto(`/admin/crews/${crewId}`);
+  const access = page.getByRole("region", { name: "Plan and features" });
+  await expect(access).toContainText("No plan running.");
+  await access.getByRole("button", { name: "Give or change Organizer" }).click();
+  const grant = page.getByRole("dialog", { name: `Organizer for ${crew}` });
+  await grant.getByLabel("Why").fill("Browser test: founding crew beta.");
+  await grant.getByRole("button", { name: "Save plan" }).click();
+  await expect(grant).toBeHidden();
+  await expect(access).toContainText("Organizer (Beta) since");
+  await expect(page.getByRole("region", { name: "Support history" })).toContainText(
+    "Browser test: founding crew beta.",
+  );
+
+  await access.getByRole("button", { name: "End plan" }).click();
+  const end = page.getByRole("dialog", { name: `End Organizer for ${crew}` });
+  await end.getByLabel("Why").fill("Browser test: the beta is over.");
+  await end.getByRole("button", { name: "End plan" }).click();
+  await expect(access).toContainText("No plan running.");
+  expect(problems).toEqual([]);
+});

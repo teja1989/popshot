@@ -139,10 +139,21 @@ export interface CrewAction {
 
 /** "Admin Test made Sam the lead". */
 export function actionSummary(a: CrewAction): string {
-  if (a.action === "crew.lead_changed") {
-    return `${a.admin_name} made ${a.target_name ?? "someone"} the lead`;
+  const feature = typeof a.details.feature === "string" ? a.details.feature : "a feature";
+  switch (a.action) {
+    case "crew.lead_changed":
+      return `${a.admin_name} made ${a.target_name ?? "someone"} the lead`;
+    case "plan.grant":
+      return `${a.admin_name} gave the crew Organizer`;
+    case "plan.end":
+      return `${a.admin_name} ended the crew's Organizer plan`;
+    case "feature.crew_add":
+      return `${a.admin_name} added the crew to ${feature}`;
+    case "feature.crew_remove":
+      return `${a.admin_name} took the crew off ${feature}`;
+    default:
+      return `${a.admin_name}: ${a.action}`;
   }
-  return `${a.admin_name}: ${a.action}`;
 }
 
 export interface Crew {

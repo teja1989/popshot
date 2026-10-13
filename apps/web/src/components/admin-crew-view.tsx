@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { actionSummary, membership, shortDate, type Crew } from "@/lib/admin";
 
+import { CrewAccessSection } from "./admin-features-view";
 import { MakeLeadSheet } from "./admin-make-lead";
 import { AdminGate, AdminMain, Section, Stat } from "./admin-ui";
 import { plural } from "./admin-view";
@@ -93,6 +94,7 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
           ))}
         </ul>
       </Section>
+      <CrewAccessSection crewId={c.id} crewName={c.name} onChanged={onChanged} />
       <Section title="Support history">
         {c.actions.length === 0 ? (
           <p className="text-muted">No changes by support.</p>

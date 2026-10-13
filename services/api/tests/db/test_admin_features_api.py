@@ -47,7 +47,12 @@ def test_everyone_else_gets_not_found(admins: Admins, switches: Switches) -> Non
     for method, path, body in (
         ("GET", "/v1/admin/features", None),
         ("GET", "/v1/admin/plans", None),
-        ("PUT", f"/v1/admin/features/{key}/rollout", {"rollout": "everyone", "reason": REASON}),
+        ("GET", f"/v1/admin/features/crews?key={key}", None),
+        (
+            "PUT",
+            "/v1/admin/features/rollout",
+            {"key": key, "rollout": "everyone", "reason": REASON},
+        ),
     ):
         response = admins.admin.request(method, path, json=body, headers=casey)
         assert (response.status_code, response.json()) == (404, {"detail": "Not Found"}), path
@@ -58,17 +63,21 @@ def test_changes_need_a_recent_sign_in_and_a_reason(
 ) -> None:
     key = switches.new()
     stale = sign_in(admins, ADMIN.lower(), signed_in_ago=FRESH_SIGN_IN + 60)
-    path = f"/v1/admin/features/{key}/rollout"
-    response = admins.admin.put(path, json={"rollout": "everyone", "reason": REASON}, headers=stale)
+    path = "/v1/admin/features/rollout"
+    response = admins.admin.put(
+        path, json={"key": key, "rollout": "everyone", "reason": REASON}, headers=stale
+    )
     assert response.status_code == 403
     # Looking is still fine.
     assert admins.admin.get("/v1/admin/features", headers=stale).status_code == 200
     boss = sign_in(admins, ADMIN.lower())
     for body in (
-        {"rollout": "everyone"},
-        {"rollout": "everyone", "reason": "too short"},
-        {"rollout": "sometimes", "reason": REASON},
-        {"rollout": "everyone", "reason": REASON, "extra": 1},
+        {"key": key, "rollout": "everyone"},
+        {"key": key, "rollout": "everyone", "reason": "too short"},
+        {"key": key, "rollout": "sometimes", "reason": REASON},
+        {"key": key, "rollout": "everyone", "reason": REASON, "extra": 1},
+        {"key": "../groups", "rollout": "everyone", "reason": REASON},
+        {"rollout": "everyone", "reason": REASON},
     ):
         assert admins.admin.put(path, json=body, headers=boss).status_code == 422, body
     assert logged(owner_engine, "feature.rollout", feature=key) == []
@@ -88,15 +97,17 @@ def test_rollout_and_plan_are_logged_and_apply_at_once(
         return crews.get(group_id, [])
 
     assert key not in mine()
-    path = f"/v1/admin/features/{key}"
+    path = "/v1/admin/features"
     put = admins.admin.put(
-        f"{path}/rollout", json={"rollout": "everyone", "reason": f"  {REASON} "}, headers=boss
+        f"{path}/rollout",
+        json={"key": key, "rollout": "everyone", "reason": f"  {REASON} "},
+        headers=boss,
     )
     assert put.status_code == 204, put.text
     assert key in mine()
     # The same again changes nothing and isn't logged twice.
     again = admins.admin.put(
-        f"{path}/rollout", json={"rollout": "everyone", "reason": REASON}, headers=boss
+        f"{path}/rollout", json={"key": key, "rollout": "everyone", "reason": REASON}, headers=boss
     )
     assert again.status_code == 204
     assert logged(owner_engine, "feature.rollout", feature=key) == [
@@ -105,7 +116,7 @@ def test_rollout_and_plan_are_logged_and_apply_at_once(
 
     # Organizer only: Casey's crew has no plan, so it's gone.
     paid = admins.admin.put(
-        f"{path}/plan", json={"needs_plan": "organizer", "reason": REASON}, headers=boss
+        f"{path}/plan", json={"key": key, "needs_plan": "organizer", "reason": REASON}, headers=boss
     )
     assert paid.status_code == 204
     assert key not in mine()
@@ -121,8 +132,8 @@ def test_rollout_and_plan_are_logged_and_apply_at_once(
     assert listed["recaps.ai"]["area"] == "recaps"
 
     missing = admins.admin.put(
-        "/v1/admin/features/test.nope/rollout",
-        json={"rollout": "off", "reason": REASON},
+        "/v1/admin/features/rollout",
+        json={"key": "test.nope", "rollout": "off", "reason": REASON},
         headers=boss,
     )
     assert (missing.status_code, missing.json()["detail"]) == (404, "No such feature.")
@@ -134,16 +145,17 @@ def test_a_beta_list(
     casey = admins.new("Casey")
     group_id = create(admins, casey, "Thursday Smashers")["id"]
     key = switches.new("crews", "organizer")
-    path = f"/v1/admin/features/{key}/crews/{group_id}"
-    assert admins.admin.post(path, json={"reason": REASON}, headers=boss).status_code == 204
-    crews = admins.admin.get(f"/v1/admin/features/{key}/crews", headers=boss).json()
+    path = f"/v1/admin/features/crews/{group_id}"
+    body = {"key": key, "reason": REASON}
+    assert admins.admin.post(path, json=body, headers=boss).status_code == 204
+    crews = admins.admin.get(f"/v1/admin/features/crews?key={key}", headers=boss).json()
     assert [(c["group_id"], c["name"]) for c in crews] == [(group_id, "Thursday Smashers")]
     # On the list, it's on even without a plan.
     access = admins.admin.get(f"/v1/admin/groups/{group_id}/access", headers=boss).json()
     assert key in access["features"]
     assert key in admins.client.get("/v1/me/features", headers=casey).json()["crews"][group_id]
 
-    removed = admins.admin.post(f"{path}/remove", json={"reason": REASON}, headers=boss)
+    removed = admins.admin.post(f"{path}/remove", json=body, headers=boss)
     assert removed.status_code == 204
     assert key not in admins.client.get("/v1/me/features", headers=casey).json()["crews"][group_id]
     assert [
@@ -153,8 +165,8 @@ def test_a_beta_list(
         e["details"]["after"] for e in logged(owner_engine, "feature.crew_remove", feature=key)
     ] == [False]
     unknown = admins.admin.post(
-        f"/v1/admin/features/{key}/crews/00000000-0000-0000-0000-000000000000",
-        json={"reason": REASON},
+        "/v1/admin/features/crews/00000000-0000-0000-0000-000000000000",
+        json=body,
         headers=boss,
     )
     assert (unknown.status_code, unknown.json()["detail"]) == (404, "No such crew.")
