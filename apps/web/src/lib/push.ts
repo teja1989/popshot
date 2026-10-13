@@ -16,12 +16,13 @@ export interface NotificationSettings {
   devices: number;
 }
 
-export type Category = "games" | "play_nights" | "recaps" | "invites" | "requests" | "tab" | "milestones";
+export type Category = "games" | "play_nights" | "recaps" | "your_week" | "invites" | "requests" | "tab" | "milestones";
 
 export const CATEGORY_LABEL: Record<Category, { title: string; body: string }> = {
   games: { title: "Games you played", body: "When someone logs a game you were in." },
   play_nights: { title: "Meetups", body: "New meetups, reminders and open spots." },
   recaps: { title: "Recaps", body: "When the recap of a game day you played in is ready." },
+  your_week: { title: "Your week", body: "On Mondays, a look back at your week, if you played." },
   invites: { title: "Invites", body: "When a crew invites you to join." },
   requests: { title: "Join requests", body: "When someone asks to join a crew you lead." },
   tab: { title: "Crew tab", body: "Expenses and settle-ups that involve you." },

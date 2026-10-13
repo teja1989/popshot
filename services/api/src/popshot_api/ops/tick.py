@@ -1,8 +1,9 @@
 """The scheduled job, run every 15 minutes by Cloud Scheduler: play-night reminders,
 "your recap is ready" for the people who played (an hour or more after an outing's last
-game), deleting groups whose 30 days to be restored have passed, deleting usage activity
-older than 13 months, and deleting accounts whose 7 days to change their mind have passed
-(their Firebase sign-in first, then their data: migration 0023).
+game), "your week is ready" on Mondays for people who played that week, deleting groups
+whose 30 days to be restored have passed, deleting usage activity older than 13 months, and
+deleting accounts whose 7 days to change their mind have passed (their Firebase sign-in
+first, then their data: migration 0023).
 
 It logs in as its own database user (a member of popshot_jobs), which can only call the
 functions migration 0008 grants it. Reminders are marked sent before they go out, so a
@@ -13,7 +14,7 @@ Usage: python -m popshot_api.ops.tick
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Any, Literal, Protocol
 from uuid import UUID
 
@@ -38,6 +39,10 @@ RECAP_AFTER = timedelta(hours=1)
 RECAP_WITHIN = timedelta(hours=6)
 # How far back to read games when looking for outings to announce.
 RECAP_LOOKBACK = timedelta(hours=24)
+# Your week: sent from this time (UTC) on Mondays until the day ends, so a missed run catches
+# up. 13:00 UTC is morning in the Americas and afternoon or evening in Europe and Asia.
+WEEK_SEND_AT = time(13, tzinfo=UTC)
+WEEK = timedelta(days=7)
 
 
 class JobSettings(BaseSettings):
@@ -61,6 +66,7 @@ class Summary:
     notifications: int
     deleted_accounts: int = 0
     purged_visit_days: int = 0
+    week_notifications: int = 0
 
 
 def _about(starts_at: datetime, now: datetime) -> str:
@@ -161,6 +167,46 @@ def announce_recaps(
     return announced, sent, gone
 
 
+def week_due(now: datetime) -> date | None:
+    """The Monday whose "your week" is due at `now`, or None outside its send window."""
+    now = now.astimezone(UTC)
+    if now.weekday() != 0 or now.timetz() < WEEK_SEND_AT:
+        return None
+    return now.date()
+
+
+WEEK_MESSAGE_TITLE = "Your week is ready"
+
+
+def _week_message(monday: date) -> Message:
+    # Nothing personal on the lock screen: no counts, no names.
+    return Message(
+        title=WEEK_MESSAGE_TITLE,
+        body="A short look back at your games. Tap to see it.",
+        url="/",
+        tag=f"week-{monday.isoformat()}",
+    )
+
+
+def announce_week(
+    engine: Engine, sender: PushSender | None, now: datetime
+) -> tuple[int, list[str]]:
+    """(notifications sent, endpoints that are gone). Claimed before sending: once only."""
+    monday = week_due(now)
+    if monday is None:
+        return 0, []
+    until = datetime.combine(monday, WEEK_SEND_AT)
+    with engine.begin() as conn:
+        targets = conn.execute(
+            text("SELECT * FROM app_jobs_claim_week(:week, :since, :until)"),
+            {"week": monday, "since": until - WEEK, "until": until},
+        ).all()
+    subs = [Subscription(t.endpoint, t.p256dh, t.auth) for t in targets]
+    if sender is None or not subs:
+        return 0, []
+    return len(subs), sender.send(subs, _week_message(monday))
+
+
 class AccountDeleter(Protocol):
     def delete(self, subject: str) -> None: ...
 
@@ -242,6 +288,9 @@ def run(
     announced, recap_sent, recap_gone = announce_recaps(engine, sender, now)
     sent += recap_sent
     gone += recap_gone
+    week_sent, week_gone = announce_week(engine, sender, now)
+    sent += week_sent
+    gone += week_gone
 
     if gone:
         with engine.begin() as conn:
@@ -255,6 +304,7 @@ def run(
         notifications=sent,
         deleted_accounts=deleted_accounts,
         purged_visit_days=old_visits,
+        week_notifications=week_sent,
     )
     log.info(
         "tick.done",
@@ -265,6 +315,7 @@ def run(
         notifications=summary.notifications,
         deleted_accounts=summary.deleted_accounts,
         purged_visit_days=summary.purged_visit_days,
+        week_notifications=summary.week_notifications,
     )
     return summary
 

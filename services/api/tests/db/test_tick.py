@@ -17,7 +17,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.pool import NullPool
 
 from popshot_api.main import create_app
-from popshot_api.ops.tick import run
+from popshot_api.ops.tick import WEEK_MESSAGE_TITLE, WEEK_SEND_AT, run
 from tests.conftest import make_settings
 from tests.db.conftest import People, as_user, committed_as, create
 from tests.db.test_games_api import join_and_approve, log, players
@@ -90,7 +90,14 @@ def tick(jobs_engine: Engine, sender: RecordingSender) -> Any:
 def test_the_jobs_role_can_only_run_its_functions(
     jobs_engine: Engine, app_engine: Engine, people: People
 ) -> None:
-    for table in ("play_nights", "users", "push_subscriptions", "groups", "recap_notifications"):
+    for table in (
+        "play_nights",
+        "users",
+        "push_subscriptions",
+        "groups",
+        "recap_notifications",
+        "week_notifications",
+    ):
         with jobs_engine.connect() as conn, pytest.raises(ProgrammingError, match="denied"):
             conn.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
     riley = people.user_id(people.new("Riley"))
@@ -101,6 +108,8 @@ def test_the_jobs_role_can_only_run_its_functions(
         "SELECT app_jobs_claim_recap(gen_random_uuid(), gen_random_uuid())",
         "SELECT * FROM app_jobs_recap_targets(gen_random_uuid(), '{}')",
         "SELECT * FROM recap_notifications",
+        "SELECT * FROM app_jobs_claim_week(current_date, now() - interval '7 days', now())",
+        "SELECT * FROM week_notifications",
     ):
         with as_user(app_engine, riley) as conn, pytest.raises(ProgrammingError, match="denied"):
             conn.execute(text(call))
@@ -335,3 +344,78 @@ def test_an_outing_over_for_more_than_six_hours_is_left_alone(
             text("SELECT * FROM app_jobs_recent_matches(now() - interval '1 day')")
         ).all()
     assert any(str(r.group_id) == crew["group_id"] for r in rows)
+
+
+def next_monday_send(now: datetime) -> datetime:
+    """The first Monday 13:00 UTC after `now`: games played now fall in the week before it."""
+    send = datetime.combine(now.date(), WEEK_SEND_AT)
+    while send <= now or send.weekday() != 0:
+        send += timedelta(days=1)
+    return send
+
+
+def weeks_sent(sender: RecordingSender, crew: dict[str, Any]) -> dict[str, Any]:
+    names = {e: n for n, e in crew["devices"].items()}
+    return {names[e]: m for e, m in sender.sent if e in names and m.title == WEEK_MESSAGE_TITLE}
+
+
+def week_tick(jobs_engine: Engine, sender: RecordingSender, now: datetime) -> Any:
+    sender.sent.clear()
+    return run(jobs_engine, sender, now=now)
+
+
+def test_people_who_played_hear_about_their_week_once_on_monday(
+    people: People, crew: dict[str, Any], sender: RecordingSender, jobs_engine: Engine
+) -> None:
+    singles(people, crew, "Casey", "Sam")
+    monday = next_monday_send(datetime.now(UTC))
+
+    # Not before 13:00 UTC.
+    week_tick(jobs_engine, sender, monday - timedelta(minutes=1))
+    assert weeks_sent(sender, crew) == {}
+
+    summary = week_tick(jobs_engine, sender, monday + timedelta(minutes=10))
+    sent = weeks_sent(sender, crew)
+    # Jo didn't play, so isn't nudged.
+    assert set(sent) == {"Casey", "Sam"}
+    # Others in the test database who played this week are told too.
+    assert summary.week_notifications >= 2
+    message = sent["Casey"]
+    assert message.url == "/"
+    # Nothing personal on the lock screen.
+    assert not any(ch.isdigit() for ch in message.body)
+    assert "Casey" not in message.body
+    assert "Sam" not in message.body
+
+    # Once only, however many runs that Monday.
+    week_tick(jobs_engine, sender, monday + timedelta(hours=5))
+    assert weeks_sent(sender, crew) == {}
+
+
+def test_muted_left_or_quiet_people_arent_told(
+    people: People, crew: dict[str, Any], sender: RecordingSender, jobs_engine: Engine
+) -> None:
+    muted = people.client.put(
+        "/v1/me/notifications", json={"muted": ["your_week"]}, headers=crew["sam"]
+    )
+    assert muted.status_code == 200, muted.text
+    singles(people, crew, "Casey", "Sam")
+    singles(people, crew, "Jo", "Casey")
+    left = people.client.post(f"/v1/groups/{crew['group_id']}/leave", headers=crew["jo"])
+    assert left.status_code == 204, left.text
+
+    week_tick(jobs_engine, sender, next_monday_send(datetime.now(UTC)))
+    assert set(weeks_sent(sender, crew)) == {"Casey"}
+
+
+def test_games_before_the_week_dont_count(
+    people: People,
+    crew: dict[str, Any],
+    sender: RecordingSender,
+    jobs_engine: Engine,
+    app_engine: Engine,
+) -> None:
+    singles(people, crew, "Casey", "Sam")
+    played_ago(app_engine, people, crew, 8 * 24)
+    week_tick(jobs_engine, sender, next_monday_send(datetime.now(UTC)))
+    assert weeks_sent(sender, crew) == {}

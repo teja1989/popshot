@@ -358,6 +358,7 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "admin_actions",
         # No role but the owner's job functions can touch it; test_tick.py covers it.
         "recap_notifications",
+        "week_notifications",
         # Only migration 0018's functions touch these; test_direct_invites_api.py covers them.
         "direct_invites",
         "invite_blocks",
