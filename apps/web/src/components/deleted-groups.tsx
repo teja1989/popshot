@@ -38,20 +38,20 @@ export function DeletedGroups() {
 
   return (
     <section aria-labelledby="deleted-heading" className="flex animate-rise flex-col gap-2">
-      <h2 id="deleted-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="deleted-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Recently deleted
       </h2>
       <ul className="overflow-hidden rounded-2xl border border-dashed border-line">
         {result.data.map((group) => (
           <li key={group.id} className="flex min-h-16 items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
             <span className="flex min-w-0 grow flex-col">
-              <span className="truncate text-[17px] font-bold">{group.name}</span>
-              <span className="text-[14px] text-muted">{timeLeft(group.restorable_until)} left to restore</span>
+              <span className="truncate text-lead font-bold">{group.name}</span>
+              <span className="text-small text-muted">{timeLeft(group.restorable_until)} left to restore</span>
             </span>
             <button
               type="button"
               aria-label={`Restore ${group.name}`}
-              className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-[15px]")}
+              className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-body")}
               disabled={busy === group.id}
               onClick={() => void restore(group)}
             >
@@ -60,7 +60,7 @@ export function DeletedGroups() {
           </li>
         ))}
       </ul>
-      <p role="alert" className="text-[15px] text-warn empty:hidden">
+      <p role="alert" className="text-body text-warn empty:hidden">
         {problem}
       </p>
     </section>

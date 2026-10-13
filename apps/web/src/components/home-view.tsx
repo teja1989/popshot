@@ -89,8 +89,8 @@ export function HomeView() {
             className="ring-4 ring-hero-line"
           />
           <div className="min-w-0">
-            <p className="text-[14px] font-bold text-on-hero-muted">{today}</p>
-            <h1 className="text-[30px] leading-[1.05] font-extrabold tracking-[-0.02em] break-words [font-stretch:112%] lg:text-[42px]">
+            <p className="text-small font-bold text-on-hero-muted">{today}</p>
+            <h1 className="text-display-sm leading-[1.05] font-extrabold tracking-[-0.02em] break-words font-display lg:text-display">
               {greeting}
               {name ? (
                 <>
@@ -100,8 +100,8 @@ export function HomeView() {
                 "."
               )}
             </h1>
-            <p className="mt-1 text-[16px] text-on-hero-muted">Play, laugh, stay active. Popshot keeps the score.</p>
-            {problem && <p className="text-[15px] font-bold text-ball">{problem}</p>}
+            <p className="mt-1 text-lead text-on-hero-muted">Play, laugh, stay active. Popshot keeps the score.</p>
+            {problem && <p className="text-body font-bold text-ball">{problem}</p>}
           </div>
         </div>
         <dl className="mt-7 grid max-w-lg grid-cols-3 gap-4 border-t border-hero-line pt-5">
@@ -136,17 +136,17 @@ export function HomeView() {
           )}
           <div className="flex min-h-11 items-center justify-between">
             <div className="flex items-baseline gap-2">
-              <h2 id="groups-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+              <h2 id="groups-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
                 Your groups
               </h2>
-              <p role="status" className="text-[13px] font-bold text-primary">
+              <p role="status" className="text-meta font-bold text-primary">
                 {updated ? "Updated." : ""}
               </p>
             </div>
             {result.kind === "ready" && result.data.length > 0 && (
               <JoinByLinkSheet
                 trigger={
-                  <button type="button" className="min-h-11 cursor-pointer px-1 text-[15px] font-bold text-primary">
+                  <button type="button" className="min-h-11 cursor-pointer px-1 text-body font-bold text-primary">
                     Have an invite link?
                   </button>
                 }
@@ -168,7 +168,7 @@ export function HomeView() {
           {result.kind === "ready" && result.data.length === 0 && (
             <div className="flex animate-rise flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
               <CourtArt className="w-40" />
-              <p className="text-[17px] leading-relaxed">
+              <p className="text-lead leading-relaxed">
                 No groups yet. Got an invite link from your crew? Join with it. Or start a group
                 for the people you play with.
               </p>
@@ -206,7 +206,7 @@ export function HomeView() {
                   trigger={
                     <button
                       type="button"
-                      className="flex h-full min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line text-[16px] font-bold text-muted transition-colors duration-150 hover:border-primary hover:text-primary"
+                      className="flex h-full min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line text-lead font-bold text-muted transition-colors duration-150 hover:border-primary hover:text-primary"
                     >
                       <span className="flex size-11 items-center justify-center rounded-full bg-chip text-primary">
                         <PlusIcon />
@@ -244,8 +244,8 @@ function GroupCard({ group }: { group: GroupSummary }) {
       <span className="flex grow flex-col gap-3 p-4">
         <span className="flex items-start justify-between gap-3">
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[19px] font-extrabold [font-stretch:105%]">{group.name}</span>
-            <span className="text-[14px] text-muted">
+            <span className="truncate text-title-sm font-extrabold font-display">{group.name}</span>
+            <span className="text-small text-muted">
               {group.my_status === "pending"
                 ? "Waiting for approval"
                 : `${ROLE_LABEL[group.my_role]} · ${String(count)} ${count === 1 ? "member" : "members"} · ${String(group.games_logged ?? 0)} ${group.games_logged === 1 ? "game" : "games"}`}
@@ -273,13 +273,13 @@ function ballSpot(id: string): number {
 function HeroStat({ label, value, note, info }: { label: string; value: string; note?: string; info?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="-my-2 flex items-center gap-0.5 text-[13px] font-bold text-on-hero-muted">
+      <dt className="-my-2 flex items-center gap-0.5 text-meta font-bold text-on-hero-muted">
         {label}
         {info}
       </dt>
       <dd className="flex flex-col gap-1">
-        <span className="text-[34px] leading-none font-extrabold [font-stretch:75%] lg:text-[40px]">{value}</span>
-        {note && <span className="text-[12px] text-on-hero-muted">{note}</span>}
+        <span className="text-display-sm leading-none font-extrabold font-numeral lg:text-display">{value}</span>
+        {note && <span className="text-meta text-on-hero-muted">{note}</span>}
       </dd>
     </div>
   );
@@ -292,11 +292,11 @@ function StatsPanel({ top, loading, groups }: { top: MyRating | undefined; loadi
       aria-labelledby="home-stats-heading"
       className="flex animate-rise flex-col gap-4 rounded-3xl border border-line bg-surface p-5 [animation-delay:120ms]"
     >
-      <h2 id="home-stats-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="home-stats-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Your stats{top && groups > 1 ? ` · ${top.group_name}` : ""}
       </h2>
       {!top && !loading && (
-        <p className="text-[15px] leading-relaxed text-muted">
+        <p className="text-body leading-relaxed text-muted">
           Log your first game and your crew points, form and weekly games show up here.
         </p>
       )}
@@ -317,15 +317,15 @@ function StatsPanel({ top, loading, groups }: { top: MyRating | undefined; loadi
                 aria-hidden="true"
                 className={
                   r === "W"
-                    ? "flex size-6 items-center justify-center rounded bg-win text-[11px] font-extrabold text-on-win"
-                    : "flex size-6 items-center justify-center rounded border border-dashed border-loss text-[11px] font-extrabold text-muted"
+                    ? "flex size-6 items-center justify-center rounded bg-win text-label font-extrabold text-on-win"
+                    : "flex size-6 items-center justify-center rounded border border-dashed border-loss text-label font-extrabold text-muted"
                 }
               >
                 {r}
               </span>
             ))}
           </span>
-          <Link href="/you" className="self-start text-[15px] font-bold text-primary">
+          <Link href="/you" className="self-start text-body font-bold text-primary">
             See all your stats
           </Link>
         </>
@@ -337,10 +337,10 @@ function StatsPanel({ top, loading, groups }: { top: MyRating | undefined; loadi
 function PanelStat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-[13px] text-muted">{label}</dt>
-      <dd className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">
+      <dt className="text-meta text-muted">{label}</dt>
+      <dd className="text-title-lg leading-none font-extrabold tabular-nums font-numeral">
         {value}
-        {note && <span className="text-[13px] font-bold text-muted [font-stretch:100%]"> {note}</span>}
+        {note && <span className="text-meta font-bold text-muted font-sans"> {note}</span>}
       </dd>
     </div>
   );

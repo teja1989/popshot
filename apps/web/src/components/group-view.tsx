@@ -18,7 +18,7 @@ export function GroupView({ groupId }: { groupId: string }) {
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
       <Link
         href="/"
-        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-[15px] font-bold text-primary no-underline"
+        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-body font-bold text-primary no-underline"
       >
         <BackIcon />
         Your groups
@@ -28,7 +28,7 @@ export function GroupView({ groupId }: { groupId: string }) {
 
       {result.kind === "error" && result.status === 404 && (
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-          <h1 className="text-[26px] font-extrabold [font-stretch:108%]">We couldn&apos;t find that group.</h1>
+          <h1 className="text-title-lg font-extrabold font-display">We couldn&apos;t find that group.</h1>
           <p className="text-muted">It may have been deleted, or you&apos;re not in it. Ask its lead for an invite.</p>
         </section>
       )}
@@ -54,16 +54,16 @@ function Group({ group }: { group: GroupDetail }) {
   return (
     <>
       <section className="flex animate-rise flex-col gap-1">
-        <h1 className="text-[32px] leading-[1.08] font-extrabold tracking-[-0.02em] break-words [font-stretch:110%]">
+        <h1 className="text-display-sm leading-[1.08] font-extrabold tracking-[-0.02em] break-words font-display">
           {group.name}
         </h1>
-        <p className="text-[15px] text-muted">{describeRules(group)}</p>
+        <p className="text-body text-muted">{describeRules(group)}</p>
         <div className="mt-2">
           <CrewProfileSummary profile={group} />
         </div>
         <Link
           href={`/groups/${group.id}/settings`}
-          className={buttonClass("quiet", "mt-2 min-h-11 self-start px-4 text-[15px]")}
+          className={buttonClass("quiet", "mt-2 min-h-11 self-start px-4 text-body")}
         >
           Settings
         </Link>
@@ -71,7 +71,7 @@ function Group({ group }: { group: GroupDetail }) {
 
       {group.my_status === "pending" ? (
         <section className="animate-rise rounded-2xl border border-line bg-surface p-5">
-          <h2 className="text-[17px] font-bold">Waiting for approval</h2>
+          <h2 className="text-lead font-bold">Waiting for approval</h2>
           <p className="mt-1 text-muted">
             The group&apos;s lead or a co-lead will let you in. You&apos;ll see the members and games once they do.
           </p>
@@ -92,11 +92,11 @@ function Group({ group }: { group: GroupDetail }) {
           >
             <AvatarStack people={active.slice(0, 4)} total={active.length} />
             <span className="flex min-w-0 grow flex-col">
-              <span className="text-[17px] font-bold">Members · {active.length}</span>
-              <span className="text-[14px] text-muted">See everyone, guests and invites</span>
+              <span className="text-lead font-bold">Members · {active.length}</span>
+              <span className="text-small text-muted">See everyone, guests and invites</span>
             </span>
             {waiting > 0 && (
-              <span className="shrink-0 rounded-full bg-ball px-2.5 py-1 text-[13px] font-bold text-on-ball">
+              <span className="shrink-0 rounded-full bg-ball px-2.5 py-1 text-meta font-bold text-on-ball">
                 {waiting} asking to join
               </span>
             )}

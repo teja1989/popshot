@@ -43,8 +43,8 @@ export function AdminMain({ children }: { children: ReactNode }) {
 export function NotFound() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col px-5 pt-10 pb-12">
-      <h1 className="text-[28px] leading-[1.1] font-extrabold">That page is out of bounds.</h1>
-      <p className="mt-3 text-[17px] text-muted">The link may be old, or the page may have moved.</p>
+      <h1 className="text-title-lg leading-[1.1] font-extrabold">That page is out of bounds.</h1>
+      <p className="mt-3 text-lead text-muted">The link may be old, or the page may have moved.</p>
       <Link className={buttonClass("primary", "mt-8 self-start")} href="/">
         Back to Popshot
       </Link>
@@ -58,8 +58,8 @@ export function SignInAgain({ onDone }: { onDone: () => void }) {
   const [problem, setProblem] = useState<string | null>(null);
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-5 pt-10 pb-12">
-      <h1 className="text-[28px] leading-tight font-extrabold">Sign in again</h1>
-      <p className="text-[17px] text-muted">
+      <h1 className="text-title-lg leading-tight font-extrabold">Sign in again</h1>
+      <p className="text-lead text-muted">
         The admin page needs a sign-in from the last 12 hours. Sign in with the same Google account to carry on.
       </p>
       <button
@@ -81,7 +81,7 @@ export function SignInAgain({ onDone }: { onDone: () => void }) {
       >
         Sign in with Google
       </button>
-      <p role="alert" className="text-[15px] text-warn empty:hidden">
+      <p role="alert" className="text-body text-warn empty:hidden">
         {problem}
       </p>
     </main>
@@ -92,7 +92,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
   const id = `admin-${title.toLowerCase().replace(/\W+/g, "-")}`;
   return (
     <section aria-labelledby={id} className="flex animate-rise flex-col gap-3">
-      <h2 id={id} className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id={id} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         {title}
       </h2>
       {children}
@@ -103,9 +103,9 @@ export function Section({ title, children }: { title: string; children: ReactNod
 export function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
   return (
     <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
-      <dt className="text-[14px] text-muted">{label}</dt>
-      <dd className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">{value}</dd>
-      {note && <dd className="text-[13px] text-muted">{note}</dd>}
+      <dt className="text-small text-muted">{label}</dt>
+      <dd className="text-title-lg leading-none font-extrabold tabular-nums font-numeral">{value}</dd>
+      {note && <dd className="text-meta text-muted">{note}</dd>}
     </div>
   );
 }
@@ -114,7 +114,7 @@ export function Stat({ label, value, note }: { label: string; value: number; not
 export function Table({ label, head, rows }: { label: string; head: string[]; rows: (string | number)[][] }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-      <table aria-label={label} className="w-full text-left text-[14px] tabular-nums">
+      <table aria-label={label} className="w-full text-left text-small tabular-nums">
         <thead>
           <tr className="border-b border-line text-muted">
             {head.map((h) => (

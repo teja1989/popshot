@@ -1,6 +1,8 @@
 @import "tailwindcss";
-/* Archivo, self-hosted (no request to Google Fonts), with its width axis for scoreboard numbers. */
-@import "@fontsource-variable/archivo/wdth.css";
+/* Fonts, self-hosted (no request to Google Fonts): Inter for reading, Bricolage Grotesque for
+   headings and, at its narrowest width, scoreboard numbers. */
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/bricolage-grotesque/wdth.css";
 
 /*
  * Court theme. Colors live here as CSS variables so light and dark switch in one place:
@@ -79,6 +81,34 @@
 /* Only the Court colors exist as utilities: Tailwind's stock palette is switched off. */
 @theme {
   --color-*: initial;
+
+  /* The type scale. Sizes are named for what they're for, so the whole app can be tuned
+     here. In rem, so a device's larger-text setting still works. text-field is for text
+     inputs: under 16px, iPhones zoom in when you tap the field. */
+  --text-*: initial;
+  --text-micro: 0.625rem;
+  --text-label: 0.6875rem;
+  --text-meta: 0.75rem;
+  --text-small: 0.8125rem;
+  --text-body: 0.875rem;
+  --text-lead: 0.9375rem;
+  --text-field: 1rem;
+  --text-title-sm: 1.0625rem;
+  --text-title-sm--line-height: 1.35;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.25;
+  --text-title-lg: 1.5rem;
+  --text-title-lg--line-height: 1.2;
+  --text-display-sm: 1.75rem;
+  --text-display-sm--line-height: 1.15;
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.1;
+  --text-jumbo: 2.75rem;
+  --text-jumbo--line-height: 1;
+  --text-jumbo-lg: 3.375rem;
+  --text-jumbo-lg--line-height: 1;
+  --text-jumbo-xl: 4rem;
+  --text-jumbo-xl--line-height: 1;
 }
 
 @theme inline {
@@ -101,7 +131,8 @@
   --color-on-hero-muted: var(--c-on-hero-muted);
   --color-hero-line: var(--c-hero-line);
 
-  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   --ease-court: cubic-bezier(0.3, 0.7, 0.2, 1);
   --animate-rise: rise 0.5s var(--ease-court) both;
@@ -224,10 +255,30 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Body only: on html it would change what 1rem means. */
+  body {
+    font-size: var(--text-body);
+    line-height: 1.5;
+  }
+
+  /* Headings use the display face unless a class says otherwise. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
   :focus-visible {
     outline: 3px solid var(--color-primary);
     outline-offset: 2px;
   }
+}
+
+/* Scoreboard numbers: the display face at its narrowest, with even-width digits. */
+@utility font-numeral {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
 }
 
 @layer components {

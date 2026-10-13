@@ -32,7 +32,7 @@ export function RsvpButtons({ night, onChange }: { night: Night; onChange: (nigh
       <legend className="sr-only">Are you coming to {night.venue}?</legend>
       <div className={`${segmentTrack} grid-cols-3`}>
         {ANSWERS.map((option) => (
-          <label key={option.value} className={`${segmentOption} px-1 text-[14px]`}>
+          <label key={option.value} className={`${segmentOption} px-1 text-small`}>
             <input
               type="radio"
               name={`rsvp-${night.id}`}
@@ -44,7 +44,7 @@ export function RsvpButtons({ night, onChange }: { night: Night; onChange: (nigh
           </label>
         ))}
       </div>
-      <p role="alert" className="text-[14px] text-warn empty:hidden">
+      <p role="alert" className="text-small text-warn empty:hidden">
         {problem}
       </p>
     </fieldset>

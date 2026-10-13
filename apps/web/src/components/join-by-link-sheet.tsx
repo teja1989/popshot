@@ -54,7 +54,7 @@ export function JoinByLinkSheet({ trigger }: { trigger: ReactNode }) {
     >
       <form className="flex flex-col gap-3" onSubmit={submit} noValidate>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Invite link</span>
+          <span className="text-body font-bold">Invite link</span>
           <input
             ref={inputRef}
             value={value}
@@ -70,16 +70,16 @@ export function JoinByLinkSheet({ trigger }: { trigger: ReactNode }) {
             enterKeyHint="go"
             placeholder="https://…/join#…"
             aria-invalid={problem ? true : undefined}
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[16px] text-ink placeholder:text-muted"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted"
           />
         </label>
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
         <button type="submit" className={buttonClass("primary", "h-14")}>
           Open invite
         </button>
-        <p className="text-[14px] text-muted">
+        <p className="text-small text-muted">
           You&apos;ll see the group&apos;s name before you ask to join, and its lead approves you.
         </p>
       </form>

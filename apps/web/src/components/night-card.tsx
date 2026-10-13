@@ -25,23 +25,23 @@ export function NightCard({
     >
       <Link href={`/groups/${night.group_id}/nights/${night.id}`} className="flex flex-col gap-1 text-ink no-underline">
         <span className="flex items-baseline justify-between gap-3">
-          <span className="text-[17px] font-extrabold">{nightWhen(night.starts_at)}</span>
+          <span className="text-lead font-extrabold">{nightWhen(night.starts_at)}</span>
           {night.cancelled && (
-            <span className="shrink-0 rounded-full bg-chip px-2.5 py-0.5 text-[13px] font-bold text-warn">Cancelled</span>
+            <span className="shrink-0 rounded-full bg-chip px-2.5 py-0.5 text-meta font-bold text-warn">Cancelled</span>
           )}
         </span>
-        <span className="truncate text-[15px] text-muted">
+        <span className="truncate text-body text-muted">
           {night.venue}
           {showGroup && ` · ${night.group_name}`}
         </span>
-        <span className="mt-1 flex items-center gap-2 text-[14px] text-muted">
+        <span className="mt-1 flex items-center gap-2 text-small text-muted">
           {night.going.length > 0 && <AvatarStack people={night.going.slice(0, 4)} total={night.going.length} />}
           {spotsLine(night)}
         </span>
       </Link>
       {night.open && (
         <>
-          {status && <p className="text-[14px] font-bold">{status}</p>}
+          {status && <p className="text-small font-bold">{status}</p>}
           <RsvpButtons night={night} onChange={onChange} />
         </>
       )}

@@ -10,9 +10,9 @@ export function CrewProfileSummary({ profile, onHero = false }: { profile: Parti
   const muted = onHero ? "text-on-hero-muted" : "text-muted";
   return (
     <div className="flex flex-col gap-1">
-      {profile.about && <p className="text-[16px] leading-snug break-words">{profile.about}</p>}
-      {usual && <p className={`text-[15px] font-bold ${muted}`}>{usual}</p>}
-      {courts.length > 0 && <p className={`text-[15px] ${muted}`}>Plays at {courts.join(", ")}</p>}
+      {profile.about && <p className="text-lead leading-snug break-words">{profile.about}</p>}
+      {usual && <p className={`text-body font-bold ${muted}`}>{usual}</p>}
+      {courts.length > 0 && <p className={`text-body ${muted}`}>Plays at {courts.join(", ")}</p>}
     </div>
   );
 }

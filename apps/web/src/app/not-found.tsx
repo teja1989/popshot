@@ -10,10 +10,10 @@ export default async function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-7 pt-14 pb-9">
       <Brand />
-      <h1 className="mt-16 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] [font-stretch:108%]">
+      <h1 className="mt-16 text-display-sm leading-[1.1] font-extrabold tracking-[-0.02em] font-display">
         That page is out of bounds.
       </h1>
-      <p className="mt-3 text-[17px] text-muted">
+      <p className="mt-3 text-lead text-muted">
         The link may be old, or the page may have moved.
       </p>
       <Link className={buttonClass("primary", "mt-8 self-start")} href="/">

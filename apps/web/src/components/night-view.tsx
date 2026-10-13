@@ -22,7 +22,7 @@ export function NightView({ groupId, nightId }: { groupId: string; nightId: stri
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
       <Link
         href={`/groups/${groupId}`}
-        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-[15px] font-bold text-primary no-underline"
+        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-body font-bold text-primary no-underline"
       >
         <BackIcon />
         {result.kind === "ready" ? result.data.group_name : "Back to the group"}
@@ -30,7 +30,7 @@ export function NightView({ groupId, nightId }: { groupId: string; nightId: stri
       {result.kind === "loading" && <p className="text-muted">Loading the meetup…</p>}
       {result.kind === "error" && result.status === 404 && (
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-          <h1 className="text-[26px] font-extrabold">We couldn&apos;t find that meetup.</h1>
+          <h1 className="text-title-lg font-extrabold">We couldn&apos;t find that meetup.</h1>
         </section>
       )}
       {result.kind === "error" && result.status !== 404 && (
@@ -52,12 +52,12 @@ function NightDetail({ night, onChange }: { night: Night; onChange: (night: Nigh
     <>
       <section className="flex animate-rise flex-col gap-1">
         {night.cancelled && (
-          <p className="self-start rounded-full bg-chip px-3 py-1 text-[14px] font-bold text-warn">Cancelled</p>
+          <p className="self-start rounded-full bg-chip px-3 py-1 text-small font-bold text-warn">Cancelled</p>
         )}
-        <h1 className="text-[30px] leading-tight font-extrabold [font-stretch:108%]">{nightWhen(night.starts_at)}</h1>
-        <p className="text-[18px] font-bold">{night.venue}</p>
-        {night.note && <p className="text-[16px] text-muted">{night.note}</p>}
-        <p className="text-[14px] text-muted">
+        <h1 className="text-display-sm leading-tight font-extrabold font-display">{nightWhen(night.starts_at)}</h1>
+        <p className="text-title-sm font-bold">{night.venue}</p>
+        {night.note && <p className="text-lead text-muted">{night.note}</p>}
+        <p className="text-small text-muted">
           Planned by {night.created_by_name} · {spotsLine(night)}
         </p>
       </section>
@@ -82,7 +82,7 @@ function NightDetail({ night, onChange }: { night: Night; onChange: (night: Nigh
             editing={night}
             onSaved={onChange}
             trigger={
-              <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}>
+              <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")}>
                 Change details
               </button>
             }
@@ -101,7 +101,7 @@ function PeopleList({ title, people, numbered = false }: { title: string; people
   const id = `list-${title.split(" ")[0]?.toLowerCase() ?? "people"}`;
   return (
     <section aria-labelledby={id} className="flex animate-rise flex-col gap-2">
-      <h2 id={id} className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id={id} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         {title}
       </h2>
       <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -109,7 +109,7 @@ function PeopleList({ title, people, numbered = false }: { title: string; people
           <li key={person.user_id} className="flex min-h-14 items-center gap-3 border-b border-line px-4 py-2 last:border-b-0">
             {numbered && <span className="w-5 text-center font-extrabold text-muted tabular-nums">{index + 1}</span>}
             <Avatar name={person.display_name} photoUrl={person.avatar_url} size="sm" />
-            <span className="truncate text-[16px] font-bold">{person.display_name}</span>
+            <span className="truncate text-lead font-bold">{person.display_name}</span>
           </li>
         ))}
       </ul>
@@ -139,7 +139,7 @@ function CancelNight({ night, onCancelled }: { night: Night; onCancelled: (night
   return (
     <Sheet
       trigger={
-        <button type="button" className={buttonClass("danger", "min-h-11 px-4 text-[15px]")}>
+        <button type="button" className={buttonClass("danger", "min-h-11 px-4 text-body")}>
           Cancel night
         </button>
       }
@@ -149,7 +149,7 @@ function CancelNight({ night, onCancelled }: { night: Night; onCancelled: (night
       description="Everyone who said they're in or maybe gets a notification. This can't be undone."
     >
       <div className="flex flex-col gap-3">
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
         <div className="grid grid-cols-2 gap-2">

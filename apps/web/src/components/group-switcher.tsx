@@ -13,14 +13,14 @@ export function GroupSwitcher({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-xs font-bold tracking-[0.1em] text-muted uppercase">Group</span>
+      <span className="text-label font-bold tracking-[0.1em] text-muted uppercase">Group</span>
       <span className="relative">
         <select
           value={current.id}
           onChange={(event) => {
             onChange(event.target.value);
           }}
-          className="min-h-12 w-full max-w-sm cursor-pointer appearance-none rounded-xl border border-line bg-surface py-2 pr-10 pl-4 text-[18px] font-bold text-ink"
+          className="min-h-12 w-full max-w-sm cursor-pointer appearance-none rounded-xl border border-line bg-surface py-2 pr-10 pl-4 text-title-sm font-bold text-ink"
         >
           {groups.map((group) => (
             <option key={group.id} value={group.id}>

@@ -17,7 +17,7 @@ export function AdminPersonView({ personId }: { personId: string }) {
   return (
     <AdminGate status={status} onSignedIn={reload}>
       <AdminMain>
-        <Link href="/admin" className="text-[15px] font-bold text-primary">
+        <Link href="/admin" className="text-body font-bold text-primary">
           ← Admin
         </Link>
         {result.kind === "loading" && <p className="text-muted">Loading…</p>}
@@ -48,8 +48,8 @@ function PersonDetail({ person: p }: { person: Person }) {
       <header className="flex animate-rise items-center gap-4">
         <Avatar name={p.display_name} photoUrl={p.avatar_url} size="lg" />
         <div className="min-w-0">
-          <h1 className="truncate text-[28px] leading-tight font-extrabold [font-stretch:110%]">{p.display_name}</h1>
-          <p className="text-[15px] break-all text-muted">{account(p)}</p>
+          <h1 className="truncate text-title-lg leading-tight font-extrabold font-display">{p.display_name}</h1>
+          <p className="text-body break-all text-muted">{account(p)}</p>
         </div>
       </header>
       <Section title="Account">
@@ -62,15 +62,15 @@ function PersonDetail({ person: p }: { person: Person }) {
           <Stat label="Crews" value={p.groups.filter((g) => g.status === "active" && !g.deleted_at).length} />
           <Stat label="Notification devices" value={p.push_devices} />
           <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
-            <dt className="text-[14px] text-muted">Joined</dt>
-            <dd className="text-[20px] font-extrabold">{shortDate(p.created_at)}</dd>
-            <dd className="text-[13px] text-muted">
+            <dt className="text-small text-muted">Joined</dt>
+            <dd className="text-title-sm font-extrabold">{shortDate(p.created_at)}</dd>
+            <dd className="text-meta text-muted">
               Level: {levelLabel(p.self_level) ?? "not set"}
               {p.last_sign_in ? ` · signed in ${shortDate(p.last_sign_in)}` : ""}
             </dd>
           </div>
         </dl>
-        <p className="text-[13px] text-muted">ID {p.id}</p>
+        <p className="text-meta text-muted">ID {p.id}</p>
       </Section>
       <Section title="Crews">
         {p.groups.length === 0 ? (
@@ -82,7 +82,7 @@ function PersonDetail({ person: p }: { person: Person }) {
                 <Link href={`/admin/crews/${g.group_id}`} className="truncate font-bold text-ink">
                   {g.name}
                 </Link>
-                <span className="text-[14px] text-muted">
+                <span className="text-small text-muted">
                   {membership(g)} · {plural(g.games, "game")} · joined {shortDate(g.joined_at)}
                   {g.deleted_at ? ` · crew deleted ${shortDate(g.deleted_at)}` : ""}
                 </span>

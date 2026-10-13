@@ -23,18 +23,18 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
 
       <section className="relative isolate flex animate-rise flex-col gap-3 overflow-hidden rounded-[28px] bg-hero p-6 text-on-hero">
         <CourtPattern />
-        <p className="text-[14px] font-bold text-on-hero-muted">
+        <p className="text-small font-bold text-on-hero-muted">
           {recap.crew} · {outingSize(recap)}
         </p>
-        <h1 className="text-[28px] leading-[1.1] font-extrabold tracking-[-0.01em] [font-stretch:108%]">
+        <h1 className="text-title-lg leading-[1.1] font-extrabold tracking-[-0.01em] font-display">
           {recap.headline}
         </h1>
-        <ul className="flex flex-col gap-2 text-[17px] leading-snug">
+        <ul className="flex flex-col gap-2 text-lead leading-snug">
           {recap.lines.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>
-        <p className="text-[13px] font-bold text-on-hero-muted">
+        <p className="text-meta font-bold text-on-hero-muted">
           <LocalDate iso={recap.start} />
           {recap.written_by === "ai" ? " · Written by AI (Google Gemini) from the games." : ""}
         </p>
@@ -42,7 +42,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
 
       {recap.awards.length > 0 && (
         <section aria-labelledby="awards-heading" className="flex flex-col gap-2">
-          <h2 id="awards-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="awards-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
             Awards
           </h2>
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -53,12 +53,12 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
                   key={`${award.kind}-${award.names.join()}-${String(award.more)}`}
                   className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4"
                 >
-                  <span className="flex items-center gap-2 text-[17px] font-extrabold">
+                  <span className="flex items-center gap-2 text-lead font-extrabold">
                     <span aria-hidden="true" className="size-2.5 rounded-full bg-ball" />
                     {title}
                   </span>
-                  <span className="text-[16px] font-bold">{namesText(award)}</span>
-                  <span className="text-[14px] text-muted">{why}</span>
+                  <span className="text-lead font-bold">{namesText(award)}</span>
+                  <span className="text-small text-muted">{why}</span>
                 </li>
               );
             })}
@@ -67,7 +67,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
       )}
 
       <section aria-labelledby="played-heading" className="flex flex-col gap-2">
-        <h2 id="played-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="played-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           Who played
         </h2>
         <ul className="flex flex-wrap gap-2">
@@ -78,15 +78,15 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
               className="flex items-center gap-2 rounded-full border border-line bg-surface py-1 pr-3 pl-1"
             >
               <Avatar name={name} size="sm" />
-              <span className="text-[15px] font-bold">{name}</span>
-              <span className="text-[14px] text-muted">{games}</span>
+              <span className="text-body font-bold">{name}</span>
+              <span className="text-small text-muted">{games}</span>
             </li>
           ))}
         </ul>
       </section>
 
       <section aria-labelledby="games-heading" className="flex flex-col gap-2">
-        <h2 id="games-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="games-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           The games
         </h2>
         <ol className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -96,8 +96,8 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
             const scores = aWon ? m.games : m.games.map(([a, b]): [number, number] => [b, a]);
             return (
               <li key={String(i)} className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0">
-                <span className="text-[16px] font-bold">{winners.join(" & ")}</span>
-                <span className="text-[15px] text-muted">
+                <span className="text-lead font-bold">{winners.join(" & ")}</span>
+                <span className="text-body text-muted">
                   {gamesText(scores)} · vs {others.join(" & ")}
                 </span>
               </li>
@@ -107,15 +107,15 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
       </section>
 
       <section className="mt-2 flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
-        <p className="text-[17px] font-extrabold">Keep score with your own crew.</p>
-        <p className="text-[15px] text-muted">
+        <p className="text-lead font-extrabold">Keep score with your own crew.</p>
+        <p className="text-body text-muted">
           Popshot logs your games, plans meetups and writes a recap like this after you play.
         </p>
         <Link href="/" className={buttonClass("primary")}>
           Try Popshot
         </Link>
       </section>
-      <p className="text-[13px] text-muted">
+      <p className="text-meta text-muted">
         Shared by someone in {recap.crew}. First names only. This link stops working on{" "}
         <LocalDate iso={recap.expires_at} />.
       </p>

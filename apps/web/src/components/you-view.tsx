@@ -33,10 +33,10 @@ export function YouView() {
       <section className="flex animate-rise items-center gap-4">
         <Avatar name={me?.display_name} photoUrl={me?.avatar_url} size="lg" />
         <div className="min-w-0 grow">
-          <h1 className="truncate text-[28px] leading-tight font-extrabold [font-stretch:110%]">
+          <h1 className="truncate text-title-lg leading-tight font-extrabold font-display">
             {me?.display_name ?? "You"}
           </h1>
-          <p className="text-[15px] text-muted">Signed in with Google</p>
+          <p className="text-body text-muted">Signed in with Google</p>
           {me && (
             <div className="mt-2">
               <EditNameSheet />
@@ -58,12 +58,12 @@ export function YouView() {
       <SharedCardsSection />
 
       <fieldset className="flex animate-rise flex-col gap-3 [animation-delay:120ms]">
-        <legend className="mb-3 text-xs font-bold tracking-[0.1em] text-muted uppercase">Appearance</legend>
+        <legend className="mb-3 text-label font-bold tracking-[0.1em] text-muted uppercase">Appearance</legend>
         <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
           {THEMES.map((option) => (
             <label
               key={option.value}
-              className="flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-2 text-center text-[15px] font-bold text-muted has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-sm has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
+              className="flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-2 text-center text-body font-bold text-muted has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-sm has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
             >
               <input
                 type="radio"
@@ -85,7 +85,7 @@ export function YouView() {
       <YourDataSection />
 
       <SignOutButton className="self-start" />
-      <LegalLinks className="text-[15px]" />
+      <LegalLinks className="text-body" />
     </main>
   );
 }

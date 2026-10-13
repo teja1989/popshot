@@ -107,7 +107,7 @@ function ReflectionForm({ groupId, match, onSaved }: { groupId: string; match: M
         blockedReason="picked under what went well"
         compact
       />
-      <p role="alert" className="text-[15px] text-warn empty:hidden">
+      <p role="alert" className="text-body text-warn empty:hidden">
         {problem}
       </p>
       {/* Pinned to the bottom of the sheet so Save is never a scroll away. */}

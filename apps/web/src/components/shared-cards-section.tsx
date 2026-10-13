@@ -31,7 +31,7 @@ export function SharedCardsSection() {
 
   return (
     <section aria-labelledby="sharing-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="sharing-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="sharing-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Shared recaps
       </h2>
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5">
@@ -45,12 +45,12 @@ export function SharedCardsSection() {
             onChange={(event) => void toggle(event.target.checked)}
             className="relative row-span-2 h-[26px] w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-line transition-colors duration-200 before:absolute before:top-[3px] before:left-[3px] before:size-5 before:rounded-full before:bg-surface before:shadow-sm before:transition-transform before:duration-200 before:ease-court checked:bg-primary checked:before:translate-x-[18px]"
           />
-          <span className="text-[13px] text-muted">
+          <span className="text-meta text-muted">
             When someone in your crew shares a recap link. Off, you show as &ldquo;Crew member&rdquo;. Inside Popshot,
             your crew still sees your name.
           </span>
         </label>
-        <p role="status" className="text-[15px] text-muted empty:hidden">
+        <p role="status" className="text-body text-muted empty:hidden">
           {note}
         </p>
       </div>

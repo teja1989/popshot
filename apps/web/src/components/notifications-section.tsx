@@ -99,27 +99,27 @@ function Notifications({ publicKey }: { publicKey: string }) {
 
   return (
     <section aria-labelledby="notify-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="notify-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="notify-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Notifications
       </h2>
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
         {support.kind === "install-first" && (
-          <p className="text-[15px] text-muted">
+          <p className="text-body text-muted">
             On iPhone, notifications work once Popshot is on your home screen: tap Share, then{" "}
             <strong>Add to Home Screen</strong>, and open it from there.
           </p>
         )}
         {support.kind === "unsupported" && (
-          <p className="text-[15px] text-muted">This browser can&apos;t show notifications.</p>
+          <p className="text-body text-muted">This browser can&apos;t show notifications.</p>
         )}
         {support.kind === "ready" && device === "blocked" && (
-          <p className="text-[15px] text-muted">
+          <p className="text-body text-muted">
             Notifications are blocked for Popshot. Allow them in your browser or phone settings, then come back here.
           </p>
         )}
         {support.kind === "ready" && device === "off" && (
           <div className="flex flex-col items-start gap-2">
-            <p className="text-[15px] text-muted">Hear when games are logged, and get reminders before you play.</p>
+            <p className="text-body text-muted">Hear when games are logged, and get reminders before you play.</p>
             <button type="button" className={buttonClass("primary")} disabled={busy} onClick={() => void enable()}>
               Turn on notifications
             </button>
@@ -127,11 +127,11 @@ function Notifications({ publicKey }: { publicKey: string }) {
         )}
         {support.kind === "ready" && device === "on" && (
           <div className="flex flex-wrap items-center gap-2">
-            <p className="grow text-[15px] font-bold">On for this device</p>
-            <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")} disabled={busy} onClick={() => void test()}>
+            <p className="grow text-body font-bold">On for this device</p>
+            <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")} disabled={busy} onClick={() => void test()}>
               Send a test
             </button>
-            <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")} disabled={busy} onClick={() => void disable()}>
+            <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")} disabled={busy} onClick={() => void disable()}>
               Turn off
             </button>
           </div>
@@ -139,7 +139,7 @@ function Notifications({ publicKey }: { publicKey: string }) {
 
         {settings.result.kind === "ready" && settings.result.data.devices > 0 && (
           <fieldset className="flex flex-col gap-2 border-t border-line pt-4">
-            <legend className="mb-1 text-[16px] font-extrabold">What you hear about</legend>
+            <legend className="mb-1 text-lead font-extrabold">What you hear about</legend>
             {knownCategories(settings.result.data.categories).map((category) => {
               const on = settings.result.kind === "ready" && !settings.result.data.muted.includes(category);
               return (
@@ -156,13 +156,13 @@ function Notifications({ publicKey }: { publicKey: string }) {
                     onChange={(event) => void toggle(category, event.target.checked)}
                     className="relative row-span-2 h-[26px] w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-line transition-colors duration-200 before:absolute before:top-[3px] before:left-[3px] before:size-5 before:rounded-full before:bg-surface before:shadow-sm before:transition-transform before:duration-200 before:ease-court checked:bg-primary checked:before:translate-x-[18px]"
                   />
-                  <span className="text-[13px] text-muted">{CATEGORY_LABEL[category].body}</span>
+                  <span className="text-meta text-muted">{CATEGORY_LABEL[category].body}</span>
                 </label>
               );
             })}
           </fieldset>
         )}
-        <p role="status" className="text-[15px] text-muted empty:hidden">
+        <p role="status" className="text-body text-muted empty:hidden">
           {note}
         </p>
       </div>

@@ -16,7 +16,7 @@ export function CrewHighlights({ groupId }: { groupId: string }) {
 
   return (
     <section aria-labelledby="highlights-heading" className="flex animate-rise flex-col gap-2">
-      <h2 id="highlights-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="highlights-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Lately · {days} days
       </h2>
       <ul className="grid gap-2 sm:grid-cols-2">
@@ -62,12 +62,12 @@ function Card({ label, value, who, hint }: { label: string; value: string; who: 
   return (
     <li className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 sm:flex-col sm:items-start sm:justify-start sm:gap-1">
       <span className="flex min-w-0 flex-col sm:contents">
-        <span className="text-[13px] font-bold text-muted sm:order-1">{label}</span>
-        <span className="truncate text-[15px] font-bold sm:order-3 sm:max-w-full">{who}</span>
+        <span className="text-meta font-bold text-muted sm:order-1">{label}</span>
+        <span className="truncate text-body font-bold sm:order-3 sm:max-w-full">{who}</span>
       </span>
-      <span className="shrink-0 text-right text-[24px] leading-none font-extrabold tabular-nums [font-stretch:75%] sm:order-2 sm:text-left">
+      <span className="shrink-0 text-right text-title leading-none font-extrabold tabular-nums font-numeral sm:order-2 sm:text-left">
         {value}
-        {hint && <span className="block text-[13px] font-bold text-muted [font-stretch:100%] sm:inline"> {hint}</span>}
+        {hint && <span className="block text-meta font-bold text-muted font-sans sm:inline"> {hint}</span>}
       </span>
     </li>
   );

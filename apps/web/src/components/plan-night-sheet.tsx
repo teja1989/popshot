@@ -10,7 +10,7 @@ import { useSignedIn } from "./auth";
 import { buttonClass } from "./ui/button";
 import { Sheet } from "./ui/sheet";
 
-const field = "min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink placeholder:text-muted";
+const field = "min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted";
 
 /** Plan a meetup (optionally weekly), or change one. */
 export function PlanNightSheet({
@@ -107,7 +107,7 @@ export function PlanNightSheet({
     >
       <form className="flex flex-col gap-5" onSubmit={(event) => void submit(event)} noValidate>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">When</span>
+          <span className="text-body font-bold">When</span>
           <input
             type="datetime-local"
             value={when}
@@ -118,7 +118,7 @@ export function PlanNightSheet({
           />
         </label>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Where</span>
+          <span className="text-body font-bold">Where</span>
           <input
             ref={venueRef}
             value={venue}
@@ -132,7 +132,7 @@ export function PlanNightSheet({
           />
         </label>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Spots</span>
+          <span className="text-body font-bold">Spots</span>
           <input
             type="number"
             inputMode="numeric"
@@ -145,11 +145,11 @@ export function PlanNightSheet({
             placeholder="No limit"
             className={`${field} w-40`}
           />
-          <span className="text-[14px] text-muted">When it&apos;s full, others join a waitlist and move up if someone drops out.</span>
+          <span className="text-small text-muted">When it&apos;s full, others join a waitlist and move up if someone drops out.</span>
         </label>
         {!editing && (
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] font-bold">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-body font-bold">
               <input
                 type="checkbox"
                 role="switch"
@@ -162,14 +162,14 @@ export function PlanNightSheet({
               Repeat weekly
             </label>
             {weekly && (
-              <label className="flex items-center gap-2 text-[15px]">
+              <label className="flex items-center gap-2 text-body">
                 for
                 <select
                   value={weeks}
                   onChange={(event) => {
                     setWeeks(Number(event.target.value));
                   }}
-                  className="min-h-11 rounded-xl border border-line bg-bg px-3 text-[16px] font-bold text-ink"
+                  className="min-h-11 rounded-xl border border-line bg-bg px-3 text-field font-bold text-ink"
                 >
                   {Array.from({ length: MAX_WEEKS - 1 }, (_, i) => i + 2).map((n) => (
                     <option key={n} value={n}>
@@ -182,7 +182,7 @@ export function PlanNightSheet({
           </div>
         )}
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Note (optional)</span>
+          <span className="text-body font-bold">Note (optional)</span>
           <input
             value={note}
             onChange={(event) => {
@@ -194,7 +194,7 @@ export function PlanNightSheet({
             className={field}
           />
         </label>
-        <p role="alert" className="min-h-6 text-[15px] text-warn">
+        <p role="alert" className="min-h-6 text-body text-warn">
           {problem}
         </p>
         <button type="submit" className={buttonClass("primary", "h-14 w-full")} disabled={saving}>

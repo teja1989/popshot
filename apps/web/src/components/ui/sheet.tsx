@@ -50,7 +50,7 @@ export function Sheet({
           className={fullOnPhone ? PANEL.full : PANEL.bottom}
         >
           <div className="flex items-start justify-between gap-4">
-            <Dialog.Title className="text-[24px] leading-tight font-extrabold tracking-[-0.01em] [font-stretch:110%]">
+            <Dialog.Title className="text-title leading-tight font-extrabold tracking-[-0.01em] font-display">
               {title}
             </Dialog.Title>
             <Dialog.Close
@@ -60,7 +60,7 @@ export function Sheet({
               <CloseIcon />
             </Dialog.Close>
           </div>
-          <Dialog.Description className="mt-1 text-[15px] text-muted">{description}</Dialog.Description>
+          <Dialog.Description className="mt-1 text-body text-muted">{description}</Dialog.Description>
           <div className="mt-5">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>

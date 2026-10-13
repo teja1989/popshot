@@ -10,10 +10,10 @@ export default async function SharedRecapGone() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-7 pt-14 pb-9">
       <Brand />
-      <h1 className="mt-16 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] [font-stretch:108%]">
+      <h1 className="mt-16 text-display-sm leading-[1.1] font-extrabold tracking-[-0.02em] font-display">
         This recap link isn&apos;t available any more.
       </h1>
-      <p className="mt-3 text-[17px] text-muted">
+      <p className="mt-3 text-lead text-muted">
         Shared links last 30 days, and whoever shared it can turn it off. Ask your crew for a new one.
       </p>
       <Link className={buttonClass("primary", "mt-8 self-start")} href="/">

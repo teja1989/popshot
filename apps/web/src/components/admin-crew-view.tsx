@@ -16,7 +16,7 @@ export function AdminCrewView({ crewId }: { crewId: string }) {
   return (
     <AdminGate status={result.kind === "error" ? result.status : null} onSignedIn={reload}>
       <AdminMain>
-        <Link href="/admin" className="text-[15px] font-bold text-primary">
+        <Link href="/admin" className="text-body font-bold text-primary">
           ← Admin
         </Link>
         {result.kind === "loading" && <p className="text-muted">Loading…</p>}
@@ -36,8 +36,8 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
   return (
     <>
       <header className="flex animate-rise flex-col gap-1">
-        <h1 className="text-[28px] leading-tight font-extrabold break-words [font-stretch:110%]">{c.name}</h1>
-        <p className="text-[15px] text-muted">
+        <h1 className="text-title-lg leading-tight font-extrabold break-words font-display">{c.name}</h1>
+        <p className="text-body text-muted">
           Started {shortDate(c.created_at)}
           {c.deleted_at ? ` · deleted ${shortDate(c.deleted_at)}` : ""}
         </p>
@@ -61,7 +61,7 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
           <Stat label="Meetups ahead" value={c.upcoming_nights} />
           <Stat label="Open invites" value={c.open_invites} />
         </dl>
-        <p className="text-[13px] text-muted">ID {c.id}</p>
+        <p className="text-meta text-muted">ID {c.id}</p>
       </Section>
       <Section title="People">
         <ul aria-label="People in this crew" className="flex flex-col rounded-2xl border border-line bg-surface">
@@ -74,7 +74,7 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
                 <Avatar name={m.display_name} photoUrl={m.avatar_url} size="sm" />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-bold">{m.display_name}</span>
-                  <span className="text-[14px] text-muted">
+                  <span className="text-small text-muted">
                     {membership(m)} · {plural(m.games, "game")} · joined {shortDate(m.joined_at)}
                     {m.user_id === c.created_by ? " · started the crew" : ""}
                   </span>
@@ -104,7 +104,7 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
                 className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0"
               >
                 <span className="font-bold">{actionSummary(a)}</span>
-                <span className="text-[14px] text-muted">
+                <span className="text-small text-muted">
                   {shortDate(a.created_at)} · {a.reason}
                 </span>
               </li>

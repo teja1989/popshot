@@ -30,16 +30,16 @@ export function InstallBanner() {
       className="flex animate-rise flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-center"
     >
       <div className="flex grow flex-col gap-0.5">
-        <h2 id="install-heading" className="text-[17px] font-extrabold">
+        <h2 id="install-heading" className="text-lead font-extrabold">
           Put Popshot on your home screen
         </h2>
-        <p className="text-[15px] text-muted">It opens like an app, and can remind you before games.</p>
+        <p className="text-body text-muted">It opens like an app, and can remind you before games.</p>
       </div>
       <div className="flex shrink-0 gap-2">
         {promptable ? (
           <button
             type="button"
-            className={buttonClass("primary", "min-h-11 px-4 text-[15px]")}
+            className={buttonClass("primary", "min-h-11 px-4 text-body")}
             onClick={() => {
               void promptInstall().then((installed) => {
                 if (installed) {
@@ -53,7 +53,7 @@ export function InstallBanner() {
         ) : (
           <Sheet
             trigger={
-              <button type="button" className={buttonClass("primary", "min-h-11 px-4 text-[15px]")}>
+              <button type="button" className={buttonClass("primary", "min-h-11 px-4 text-body")}>
                 Show me how
               </button>
             }
@@ -62,14 +62,14 @@ export function InstallBanner() {
             title="Add Popshot to your home screen"
             description="In Safari:"
           >
-            <ol className="flex list-decimal flex-col gap-2 pl-5 text-[17px]">
+            <ol className="flex list-decimal flex-col gap-2 pl-5 text-lead">
               <li>Tap the Share button (the square with an arrow).</li>
               <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
               <li>Open Popshot from your home screen, then turn on notifications on the You page.</li>
             </ol>
           </Sheet>
         )}
-        <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")} onClick={notNow}>
+        <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")} onClick={notNow}>
           Not now
         </button>
       </div>

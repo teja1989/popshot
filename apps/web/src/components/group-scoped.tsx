@@ -25,7 +25,7 @@ export function GroupScoped({
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
-      <h1 className="text-[32px] leading-tight font-extrabold tracking-[-0.02em] [font-stretch:110%]">{title}</h1>
+      <h1 className="text-display-sm leading-tight font-extrabold tracking-[-0.02em] font-display">{title}</h1>
 
       {result.kind === "loading" && <p className="text-muted">Loading…</p>}
 
@@ -40,7 +40,7 @@ export function GroupScoped({
 
       {result.kind === "ready" && !current && (
         <section className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
-          <p className="text-[17px]">You&apos;re not in a group yet. Start one or ask your crew&apos;s lead for an invite.</p>
+          <p className="text-lead">You&apos;re not in a group yet. Start one or ask your crew&apos;s lead for an invite.</p>
           <Link href="/" className={buttonClass("primary")}>
             Go to your groups
           </Link>
@@ -52,7 +52,7 @@ export function GroupScoped({
           {groups.length > 1 ? (
             <GroupSwitcher groups={groups} current={current} onChange={choose} />
           ) : (
-            <p className="text-[17px] font-bold">{current.name}</p>
+            <p className="text-lead font-bold">{current.name}</p>
           )}
           {children(current)}
         </>

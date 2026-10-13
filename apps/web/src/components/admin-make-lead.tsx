@@ -95,7 +95,7 @@ export function MakeLeadSheet({
         currentLead ? `, and ${currentLead} becomes a co-lead` : ""
       }. Your reason is kept with the change.`}
       trigger={
-        <button type="button" className={buttonClass("quiet", "min-h-10 shrink-0 px-3 text-[15px] whitespace-nowrap")}>
+        <button type="button" className={buttonClass("quiet", "min-h-10 shrink-0 px-3 text-body whitespace-nowrap")}>
           Make lead
         </button>
       }
@@ -119,9 +119,9 @@ export function MakeLeadSheet({
             rows={3}
             maxLength={REASON_MAX}
             placeholder="Who asked, and what happened"
-            className="rounded-xl border border-line bg-bg px-4 py-3 text-[17px]"
+            className="rounded-xl border border-line bg-bg px-4 py-3 text-field"
           />
-          <span className="text-[13px] text-muted">
+          <span className="text-meta text-muted">
             At least {REASON_MIN} characters · {trimmed.length}/{REASON_MAX}
           </span>
         </label>
@@ -134,12 +134,12 @@ export function MakeLeadSheet({
             }}
             autoComplete="off"
             placeholder={crewName}
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px]"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field"
           />
         </label>
         {stale ? (
           <div className="flex flex-col gap-2 rounded-xl bg-chip p-4">
-            <p className="text-[15px]">Changes need a sign-in from the last 15 minutes.</p>
+            <p className="text-body">Changes need a sign-in from the last 15 minutes.</p>
             <button
               type="button"
               disabled={busy}
@@ -154,7 +154,7 @@ export function MakeLeadSheet({
             {busy ? "Saving…" : `Make ${person.name} the lead`}
           </button>
         )}
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
       </form>

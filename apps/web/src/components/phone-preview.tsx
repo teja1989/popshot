@@ -16,19 +16,19 @@ export function PhonePreview({ className = "" }: { className?: string }) {
         <div className="relative flex h-[560px] flex-col gap-3 overflow-hidden rounded-[38px] bg-bg px-4 pt-9 pb-4 text-ink sm:h-[600px]">
           <span className="absolute top-3 left-1/2 h-5 w-20 -translate-x-1/2 rounded-full bg-[#06101a]" />
           <div className="flex items-center justify-between">
-            <span className="text-[17px] font-extrabold [font-stretch:110%]">Tuesday Dinkers</span>
-            <span className="rounded-full bg-chip px-2 py-0.5 text-[10px] font-bold text-muted">Example</span>
+            <span className="text-lead font-extrabold font-display">Tuesday Dinkers</span>
+            <span className="rounded-full bg-chip px-2 py-0.5 text-micro font-bold text-muted">Example</span>
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Your form</p>
-                <p className="text-[14px] font-bold">3-game win streak</p>
+                <p className="text-micro font-bold tracking-[0.1em] text-muted uppercase">Your form</p>
+                <p className="text-small font-bold">3-game win streak</p>
               </div>
               <div className="text-right">
-                <p className="text-[30px] leading-none font-extrabold [font-stretch:75%]">3.97</p>
-                <p className="text-[11px] font-bold text-win">▲ 0.14 this week</p>
+                <p className="text-display-sm leading-none font-extrabold font-numeral">3.97</p>
+                <p className="text-label font-bold text-win">▲ 0.14 this week</p>
               </div>
             </div>
             <div className="flex gap-1">
@@ -37,8 +37,8 @@ export function PhonePreview({ className = "" }: { className?: string }) {
                   key={`${r}-${String(i)}`}
                   className={
                     r === "W"
-                      ? "flex size-7 items-center justify-center rounded-md bg-win text-[11px] font-extrabold text-on-win"
-                      : "flex size-7 items-center justify-center rounded-md border border-dashed border-loss text-[11px] font-extrabold text-muted"
+                      ? "flex size-7 items-center justify-center rounded-md bg-win text-label font-extrabold text-on-win"
+                      : "flex size-7 items-center justify-center rounded-md border border-dashed border-loss text-label font-extrabold text-muted"
                   }
                 >
                   {r}
@@ -48,31 +48,31 @@ export function PhonePreview({ className = "" }: { className?: string }) {
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-            <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Latest game</p>
-            <div className="flex items-center justify-between text-[12px] font-semibold">
+            <p className="text-micro font-bold tracking-[0.1em] text-muted uppercase">Latest game</p>
+            <div className="flex items-center justify-between text-meta font-semibold">
               <span>Casey &amp; Sam</span>
-              <span className="text-[22px] font-extrabold [font-stretch:75%]">11 – 8</span>
+              <span className="text-title font-extrabold font-numeral">11 – 8</span>
               <span>You &amp; Alex</span>
             </div>
-            <p className="text-[11px] text-muted">Logged by Casey · 2 min ago</p>
+            <p className="text-label text-muted">Logged by Casey · 2 min ago</p>
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-            <p className="text-[10px] font-bold tracking-[0.1em] text-muted uppercase">Crew points</p>
+            <p className="text-micro font-bold tracking-[0.1em] text-muted uppercase">Crew points</p>
             {BOARD.map((row, i) => (
               <div key={row.name} className="flex items-center gap-2">
-                <span className="w-3 text-[13px] font-extrabold text-muted [font-stretch:72%]">{i + 1}</span>
-                <span className={`w-12 text-[12px] font-bold ${row.you ? "text-primary" : ""}`}>{row.name}</span>
+                <span className="w-3 text-meta font-extrabold text-muted font-numeral">{i + 1}</span>
+                <span className={`w-12 text-meta font-bold ${row.you ? "text-primary" : ""}`}>{row.name}</span>
                 <span className="h-1.5 grow overflow-hidden rounded-full bg-chip">
                   <span className={`block h-full origin-left animate-grow-x rounded-full ${i === 0 ? "bg-win" : "bg-primary"} ${row.width}`} />
                 </span>
-                <span className="w-8 text-right text-[14px] font-extrabold [font-stretch:75%]">{row.value}</span>
+                <span className="w-8 text-right text-small font-extrabold font-numeral">{row.value}</span>
               </div>
             ))}
           </div>
 
           <div className="grow" />
-          <span className="flex h-11 items-center justify-center rounded-xl bg-ball text-[14px] font-extrabold text-on-ball">
+          <span className="flex h-11 items-center justify-center rounded-xl bg-ball text-small font-extrabold text-on-ball">
             + Log a game
           </span>
         </div>

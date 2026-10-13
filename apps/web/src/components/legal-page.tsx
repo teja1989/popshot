@@ -40,18 +40,18 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
         >
           <Brand />
         </Link>
-        <h1 className="mt-10 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] [font-stretch:108%]">
+        <h1 className="mt-10 text-display-sm leading-[1.1] font-extrabold tracking-[-0.02em] font-display">
           {title}
         </h1>
-        <p className="mt-2 text-[15px] text-muted">Last updated {updatedOn()}</p>
+        <p className="mt-2 text-body text-muted">Last updated {updatedOn()}</p>
         {isDraft() && (
-          <p className="mt-5 rounded-2xl border border-line bg-chip p-4 text-[15px]">
+          <p className="mt-5 rounded-2xl border border-line bg-chip p-4 text-body">
             <strong>Draft.</strong> Some details here, like the company name, are placeholders and will be filled in
             soon.
           </p>
         )}
-        <div className="legal mt-8 flex flex-col gap-4 text-[17px] leading-relaxed">{children}</div>
-        <footer className="mt-12 border-t border-line pt-6 text-[15px]">
+        <div className="legal mt-8 flex flex-col gap-4 text-lead leading-relaxed">{children}</div>
+        <footer className="mt-12 border-t border-line pt-6 text-body">
           <LegalLinks />
           <p className="legal mt-2 text-muted">
             {LEGAL.company} · <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>
@@ -63,7 +63,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
 }
 
 export function H2({ children }: { children: ReactNode }) {
-  return <h2 className="mt-6 text-[22px] font-extrabold">{children}</h2>;
+  return <h2 className="mt-6 text-title font-extrabold">{children}</h2>;
 }
 
 export function List({ children }: { children: ReactNode }) {

@@ -5,7 +5,7 @@ export type ButtonVariant = "primary" | "action" | "quiet" | "danger";
 
 const base =
   "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 " +
-  "text-[17px] font-bold no-underline transition-transform duration-150 ease-court " +
+  "text-lead font-bold no-underline transition-transform duration-150 ease-court " +
   "hover:-translate-y-px active:translate-y-px " +
   "disabled:cursor-progress disabled:opacity-60 disabled:hover:translate-y-0";
 

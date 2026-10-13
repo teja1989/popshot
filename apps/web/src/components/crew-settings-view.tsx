@@ -46,12 +46,12 @@ export function CrewSettingsView({ groupId }: { groupId: string }) {
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
       <Link
         href={`/groups/${groupId}`}
-        className="flex items-center gap-1 self-start text-[15px] font-bold text-primary"
+        className="flex items-center gap-1 self-start text-body font-bold text-primary"
       >
         <BackIcon />
         {result.kind === "ready" ? result.data.name : "Back"}
       </Link>
-      <h1 className="text-[32px] leading-[1.08] font-extrabold tracking-[-0.02em] [font-stretch:110%]">Settings</h1>
+      <h1 className="text-display-sm leading-[1.08] font-extrabold tracking-[-0.02em] font-display">Settings</h1>
       {result.kind === "loading" && <p className="text-muted">Loading…</p>}
       {result.kind === "error" && (
         <p role="alert" className="text-warn">
@@ -80,10 +80,10 @@ function SettingsSection({
   return (
     <section aria-labelledby={id} className="flex animate-rise flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <h2 id={id} className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id={id} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           {title}
         </h2>
-        {description && <p className="text-[14px] text-muted">{description}</p>}
+        {description && <p className="text-small text-muted">{description}</p>}
       </div>
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">{children}</div>
     </section>
@@ -116,7 +116,7 @@ function useSave(group: GroupDetail, onSaved: (group: GroupDetail) => void) {
   }
 
   const status = (
-    <p role="status" className={`text-[15px] ${problem ? "text-warn" : "text-muted"} empty:hidden`}>
+    <p role="status" className={`text-body ${problem ? "text-warn" : "text-muted"} empty:hidden`}>
       {problem ?? (saved ? "Saved." : "")}
     </p>
   );
@@ -149,7 +149,7 @@ function CrewSection({ group, onSaved }: SectionProps) {
     <SettingsSection title="Group">
       <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Group name</span>
+          <span className="text-body font-bold">Group name</span>
           <input
             ref={nameRef}
             value={name}
@@ -159,7 +159,7 @@ function CrewSection({ group, onSaved }: SectionProps) {
             }}
             maxLength={GROUP_NAME_MAX}
             autoComplete="off"
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink"
           />
         </label>
         <div className="flex items-center gap-3">
@@ -227,7 +227,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
   }
 
   const chip =
-    "flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-line px-4 text-[15px] font-bold text-muted " +
+    "flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-line px-4 text-body font-bold text-muted " +
     "has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-on-primary " +
     "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
 
@@ -238,7 +238,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
     >
       <form className="flex flex-col gap-5" onSubmit={(event) => void submit(event)} noValidate>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">About</span>
+          <span className="text-body font-bold">About</span>
           <textarea
             value={about}
             onChange={(event) => {
@@ -248,15 +248,15 @@ function ProfileSection({ group, onSaved }: SectionProps) {
             maxLength={ABOUT_MAX}
             rows={3}
             placeholder="Friendly games, all levels. We rotate partners."
-            className="rounded-xl border border-line bg-bg px-4 py-3 text-[17px] text-ink"
+            className="rounded-xl border border-line bg-bg px-4 py-3 text-field text-ink"
           />
-          <span className="text-[13px] text-muted">
+          <span className="text-meta text-muted">
             {String(about.length)}/{String(ABOUT_MAX)} · No links or contact details.
           </span>
         </label>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-[15px] font-bold">Usual days</legend>
+          <legend className="mb-2 text-body font-bold">Usual days</legend>
           <div className="flex flex-wrap gap-2">
             {DAYS.map((day) => (
               <label key={day} className={chip}>
@@ -276,7 +276,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-[15px] font-bold">Usual times</legend>
+          <legend className="mb-2 text-body font-bold">Usual times</legend>
           <div className="flex flex-wrap gap-2">
             {TIMES.map((time) => (
               <label key={time} className={chip}>
@@ -296,8 +296,8 @@ function ProfileSection({ group, onSaved }: SectionProps) {
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-[15px] font-bold">Home courts</legend>
-          <p className="text-[13px] text-muted">A court or park name, not a home address. Only members see these.</p>
+          <legend className="mb-1 text-body font-bold">Home courts</legend>
+          <p className="text-meta text-muted">A court or park name, not a home address. Only members see these.</p>
           {courts.map((court, index) => (
             <input
               key={index}
@@ -309,7 +309,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
               }}
               maxLength={COURT_MAX}
               autoComplete="off"
-              className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink"
+              className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink"
             />
           ))}
         </fieldset>
@@ -318,7 +318,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
           <button type="submit" className={buttonClass("primary")} disabled={saving}>
             {saving ? "Saving…" : "Save profile"}
           </button>
-          <p role="status" className={`text-[15px] ${problem ? "text-warn" : "text-muted"} empty:hidden`}>
+          <p role="status" className={`text-body ${problem ? "text-warn" : "text-muted"} empty:hidden`}>
             {problem ?? (saved ? "Saved." : "")}
           </p>
         </div>

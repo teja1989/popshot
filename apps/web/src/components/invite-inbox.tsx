@@ -24,7 +24,7 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
 
   if (result.kind !== "ready" || result.data.length === 0) {
     return note ? (
-      <p role="status" className="text-[15px] text-muted">
+      <p role="status" className="text-body text-muted">
         {note}
       </p>
     ) : null;
@@ -59,15 +59,15 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
 
   return (
     <section aria-labelledby="invites-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="invites-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="invites-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Invites for you
       </h2>
       <ul className="flex flex-col gap-3">
         {result.data.map((invite) => (
           <li key={invite.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
             <div>
-              <p className="text-[19px] font-extrabold">{invite.group_name}</p>
-              <p className="text-[15px] text-muted">
+              <p className="text-title-sm font-extrabold">{invite.group_name}</p>
+              <p className="text-body text-muted">
                 {inviteLine(invite)} · {describeExpiry(invite.expires_at)}
               </p>
             </div>
@@ -92,7 +92,7 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
             </div>
             <button
               type="button"
-              className="self-start text-[14px] font-bold text-muted underline underline-offset-2"
+              className="self-start text-small font-bold text-muted underline underline-offset-2"
               disabled={busy !== null}
               onClick={() => void answer(invite, "block")}
             >
@@ -101,7 +101,7 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
           </li>
         ))}
       </ul>
-      <p role="status" className="text-[15px] text-muted empty:hidden">
+      <p role="status" className="text-body text-muted empty:hidden">
         {note}
       </p>
     </section>
