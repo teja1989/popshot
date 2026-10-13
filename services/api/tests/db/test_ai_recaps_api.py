@@ -1,6 +1,6 @@
 """The AI commentator in recaps (ai_recap, routes/recaps.py), with a fake Gemini."""
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from typing import Any
 
 import pytest
@@ -190,3 +190,41 @@ def test_the_daily_limit_holds(
     age(app_engine, people, crew, "2 hours")
     assert open_recap(people, crew)["written_by"] == "popshot"
     assert writer.calls == []
+
+
+@pytest.fixture
+def ai_switch(owner_engine: Engine) -> Iterator[Callable[[str], None]]:
+    """Set recaps.ai's rollout (migration 0027), and put it back to 'everyone' after."""
+
+    def set_rollout(rollout: str) -> None:
+        with owner_engine.begin() as conn:
+            conn.execute(text("SET LOCAL ROLE popshot_owner"))
+            conn.execute(
+                text("UPDATE features SET rollout = :r WHERE key = 'recaps.ai'"), {"r": rollout}
+            )
+
+    yield set_rollout
+    set_rollout("everyone")
+
+
+def test_the_switch_turns_ai_words_off_at_once(
+    people: People,
+    crew: dict[str, Any],
+    writer: FakeWriter,
+    app_engine: Engine,
+    ai_switch: Callable[[str], None],
+) -> None:
+    game(people, crew, "Casey", "Gary", (11, 9))
+    age(app_engine, people, crew, "2 hours")
+    ai_switch("off")
+    recap = open_recap(people, crew)
+    assert recap["written_by"] == "popshot"
+    assert writer.calls == []
+    # Back on: the next open writes them.
+    ai_switch("everyone")
+    assert open_recap(people, crew)["written_by"] == "ai"
+    # Off again: words already written aren't shown either.
+    ai_switch("off")
+    assert open_recap(people, crew)["written_by"] == "popshot"
+    listed = people.client.get(f"/v1/groups/{crew['group_id']}/recaps", headers=crew["sam"]).json()
+    assert listed[0]["headline"] != GOOD["headline"]

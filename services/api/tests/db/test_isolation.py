@@ -366,6 +366,10 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         # Only migration 0024's functions touch these; test_funnel.py covers them.
         "signup_sources",
         "page_visits",
+        # Only migration 0027's functions touch these; test_features.py covers them.
+        "features",
+        "feature_crews",
+        "crew_plans",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 

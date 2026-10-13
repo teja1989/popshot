@@ -12,7 +12,7 @@ from sqlalchemy import Engine
 from popshot_api.accounts import IdentityPlatformLookup, NoAccountLookup
 from popshot_api.auth.verifier import TokenVerifier
 from popshot_api.main import base_app
-from popshot_api.routes import admin, admin_actions, admin_funnel, admin_lookup
+from popshot_api.routes import admin, admin_actions, admin_features, admin_funnel, admin_lookup
 from popshot_api.settings import Settings
 
 
@@ -40,4 +40,6 @@ def create_admin_app(
     app.include_router(admin_lookup.router)
     app.include_router(admin_actions.router)
     app.include_router(admin_funnel.router)
+    app.include_router(admin_features.router)
+    app.include_router(admin_features.changes)
     return app
