@@ -82,7 +82,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
             <p className="animate-rise text-meta font-bold tracking-[0.14em] text-ball uppercase">
               {invited ? "You've been invited" : "Pickleball with your crew"}
             </p>
-            <h1 className="mt-4 animate-rise text-hero leading-[0.95] font-[820] tracking-[-0.035em] [animation-delay:80ms] font-display sm:text-hero-lg lg:text-hero-xl">
+            <h1 className="mt-4 animate-rise text-jumbo leading-[0.95] font-[820] tracking-[-0.035em] [animation-delay:80ms] font-display sm:text-jumbo-lg lg:text-jumbo-xl">
               More rallies, more <span className="text-ball">friends.</span>
             </h1>
             <p className="mt-6 max-w-xl animate-rise text-title-sm leading-relaxed text-on-hero-muted [animation-delay:160ms] lg:text-title-sm">

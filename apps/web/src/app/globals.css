@@ -103,12 +103,12 @@
   --text-display-sm--line-height: 1.15;
   --text-display: 2.25rem;
   --text-display--line-height: 1.1;
-  --text-hero: 2.75rem;
-  --text-hero--line-height: 1;
-  --text-hero-lg: 3.375rem;
-  --text-hero-lg--line-height: 1;
-  --text-hero-xl: 4rem;
-  --text-hero-xl--line-height: 1;
+  --text-jumbo: 2.75rem;
+  --text-jumbo--line-height: 1;
+  --text-jumbo-lg: 3.375rem;
+  --text-jumbo-lg--line-height: 1;
+  --text-jumbo-xl: 4rem;
+  --text-jumbo-xl--line-height: 1;
 }
 
 @theme inline {
