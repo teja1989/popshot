@@ -135,7 +135,10 @@ def test_redeem_needs_a_user(app_engine: Engine) -> None:
 def _preview(conn: Connection, user: UUID | None, token_hash: bytes) -> list[tuple[object, ...]]:
     value = "" if user is None else str(user)
     conn.execute(text("SELECT set_config('app.user_id', :u, true)"), {"u": value})
-    rows = conn.execute(text("SELECT * FROM app_preview_invite(:h)"), {"h": token_hash})
+    rows = conn.execute(
+        text("SELECT group_id, group_name, invited_by, my_status FROM app_preview_invite(:h)"),
+        {"h": token_hash},
+    )
     return [tuple(r) for r in rows]
 
 

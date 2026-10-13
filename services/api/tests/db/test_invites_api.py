@@ -127,6 +127,10 @@ def test_preview_shows_the_group_but_not_its_id(people: People) -> None:
         "invited_by": "Casey",
         "group_id": None,
         "my_status": None,
+        # No profile set.
+        "about": None,
+        "usual_days": [],
+        "usual_times": [],
     }
     # Looking doesn't use the link up.
     assert preview(people, riley, token).status_code == 200
