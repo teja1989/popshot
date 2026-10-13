@@ -338,3 +338,33 @@ def test_with_no_user_the_tables_stay_closed(
                 text(f"SELECT count(*) FROM {fn}(:h)"), {"h": secrets.token_bytes(32)}
             ).scalar_one()
             assert found == 0
+
+
+def test_the_ai_switch_reaches_shared_links(
+    people: People,
+    crew: dict[str, Any],
+    writer: FakeWriter,
+    app_engine: Engine,
+    owner_engine: Engine,
+) -> None:
+    doubles(people, crew, ["Sam"], ["Jo"], (11, 4))
+    age(app_engine, people, crew, "2 hours")
+    key = key_of(people, crew)
+    writer.reply = {"headline": "Paddles up, crew!", "lines": ["Sam and Jo kept rallying."]}
+    people.client.get(f"/v1/groups/{crew['group_id']}/recaps/{key}", headers=crew["jo"])
+    token = share(people, crew, key).json()["token"]
+    assert card(people, token)["written_by"] == "ai"
+
+    def set_rollout(rollout: str) -> None:
+        with owner_engine.begin() as conn:
+            conn.execute(text("SET LOCAL ROLE popshot_owner"))
+            conn.execute(
+                text("UPDATE features SET rollout = :r WHERE key = 'recaps.ai'"), {"r": rollout}
+            )
+
+    set_rollout("off")
+    try:
+        assert card(people, token)["written_by"] == "popshot"
+    finally:
+        set_rollout("everyone")
+    assert card(people, token)["written_by"] == "ai"

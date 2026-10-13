@@ -224,7 +224,13 @@ def _ai_words(  # noqa: PLR0913
     venue: str | None,
 ) -> Commentary | None:
     writer: ai_recap.RecapWriter | None = request.app.state.recap_writer
-    if writer is None:
+    # The switch (recaps.ai, migration 0027) hides AI words on shared links too.
+    if (
+        writer is None
+        or not session.execute(
+            text("SELECT app_share_feature_on(:h, 'recaps.ai')"), {"h": digest}
+        ).scalar_one()
+    ):
         return None
     row = session.execute(
         text("SELECT * FROM app_public_share_text(:h)"), {"h": digest}

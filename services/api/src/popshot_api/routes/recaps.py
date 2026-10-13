@@ -20,6 +20,7 @@ from popshot_api import recap as recaps
 from popshot_api.db import CurrentUserSession
 from popshot_api.recap_lines import commentary, first_name
 from popshot_api.routes.board import group_matches
+from popshot_api.routes.features import feature_on
 from popshot_api.routes.games import _require_member
 from popshot_api.routes.stats import PlayerRef, _players
 
@@ -163,6 +164,14 @@ def _build(
     )
 
 
+def _writer(session: Session, request: Request, group_id: UUID) -> ai_recap.RecapWriter | None:
+    """The AI writer, if this service has one and recaps.ai is on for the crew (0027)."""
+    writer: ai_recap.RecapWriter | None = request.app.state.recap_writer
+    if writer is None or not feature_on(session, "recaps.ai", group_id):
+        return None
+    return writer
+
+
 @router.get("")
 def list_recaps(group_id: UUID, user: CurrentUserSession, request: Request) -> list[RecapSummary]:
     session = user.session
@@ -170,7 +179,7 @@ def list_recaps(group_id: UUID, user: CurrentUserSession, request: Request) -> l
     all_outings = recaps.outings(group_matches(session, group_id))
     crew = _Crew.load(session, group_id)
     newest = list(enumerate(all_outings))[::-1][:LISTED]
-    writer: ai_recap.RecapWriter | None = request.app.state.recap_writer
+    writer = _writer(session, request, group_id)
     return [
         RecapSummary(**_build(crew, o, all_outings[:i], writer).model_dump()) for i, o in newest
     ]
@@ -185,5 +194,5 @@ def get_recap(group_id: UUID, key: UUID, user: CurrentUserSession, request: Requ
         raise NOT_FOUND
     outing, earlier = found
     # Only opening a recap asks the AI; the list shows words already written.
-    writer: ai_recap.RecapWriter | None = request.app.state.recap_writer
+    writer = _writer(session, request, group_id)
     return _build(_Crew.load(session, group_id), outing, earlier, writer, ask=True)
