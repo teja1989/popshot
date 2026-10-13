@@ -77,6 +77,15 @@ def subject_of(owner_engine: Engine, user_id: UUID) -> str:
     return subject
 
 
+def week_claims_of(owner_engine: Engine, user_id: UUID) -> int:
+    with owner_engine.begin() as conn:
+        conn.execute(text("SET LOCAL ROLE popshot_owner"))
+        count: int = conn.execute(
+            text("SELECT count(*) FROM week_notifications WHERE user_id = :u"), {"u": user_id}
+        ).scalar_one()
+    return count
+
+
 def test_asking_to_delete_and_changing_your_mind(people: People, crew: dict[str, Any]) -> None:
     asked = ask_to_delete(people, crew["sam"])
     assert asked.status_code == 200, asked.text
@@ -112,6 +121,15 @@ def test_after_seven_days_the_account_is_emptied_but_games_stay(
     device(people, crew["sam"])
     people.client.put("/v1/me/focus", json={"strengths": [], "improve": []}, headers=crew["sam"])
     subject = subject_of(owner_engine, sam_id)
+    # Sam played this week, so the Monday push claimed Sam.
+    with jobs_engine.begin() as conn:
+        conn.execute(
+            text(
+                "SELECT * FROM app_jobs_claim_week(current_date, now() - interval '7 days', "
+                "now() + interval '1 hour')"
+            )
+        )
+    assert week_claims_of(owner_engine, sam_id) == 1
     ask_to_delete(people, crew["sam"])
 
     # Not yet: 6 days in.
@@ -149,6 +167,7 @@ def test_after_seven_days_the_account_is_emptied_but_games_stay(
     assert row.auth_subject.startswith("deleted:")
     assert row.deleted_at is not None
     assert devices == 0
+    assert week_claims_of(owner_engine, sam_id) == 0
 
     # Signing in with the old Google account starts a brand-new, empty account.
     fresh = people.client.get("/v1/me", headers=crew["sam"]).json()
