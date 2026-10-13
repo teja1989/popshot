@@ -96,8 +96,8 @@ def score(  # noqa: PLR0913 - a test helper with defaults
 ) -> Any:
     n = number if number is not None else event["round_list"][-1]["number"]
     return people.client.put(
-        url(crew, event, f"/rounds/{n}/courts/{court}"),
-        json={"games": games or [{"team_a": 11, "team_b": 7}]},
+        url(crew, event, "/courts"),
+        json={"round": n, "court": court, "games": games or [{"team_a": 11, "team_b": 7}]},
         headers=who,
     )
 
@@ -228,10 +228,12 @@ def test_the_next_round_waits_for_every_court(people: People, crew: dict[str, An
     score(people, crew, event, 1, crew["sam"])
     # Court 2 couldn't finish: a lead skips it.
     member_skip = people.client.post(
-        url(crew, event, "/rounds/1/courts/2/skip"), headers=crew["sam"]
+        url(crew, event, "/courts/skip"), json={"round": 1, "court": 2}, headers=crew["sam"]
     )
     assert member_skip.status_code == 403
-    skip = people.client.post(url(crew, event, "/rounds/1/courts/2/skip"), headers=crew["casey"])
+    skip = people.client.post(
+        url(crew, event, "/courts/skip"), json={"round": 1, "court": 2}, headers=crew["casey"]
+    )
     assert skip.json()["can_start_round"] is True
     assert people.client.post(url(crew, event, "/rounds"), headers=crew["sam"]).status_code == 403
     second = people.client.post(url(crew, event, "/rounds"), headers=crew["casey"])

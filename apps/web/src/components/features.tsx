@@ -10,9 +10,11 @@ import { useSignedIn } from "./auth";
 interface FeaturesValue {
   features: MyFeatures;
   everywhere: ReadonlySet<string>;
+  // False until the first answer: a page can wait rather than say "not switched on".
+  loaded: boolean;
 }
 
-const FeaturesContext = createContext<FeaturesValue>({ features: NO_FEATURES, everywhere: new Set() });
+const FeaturesContext = createContext<FeaturesValue>({ features: NO_FEATURES, everywhere: new Set(), loaded: false });
 
 /**
  * What's switched on for you. Read when the app opens, whenever you come back to it, and every
@@ -22,12 +24,16 @@ const FeaturesContext = createContext<FeaturesValue>({ features: NO_FEATURES, ev
 export function FeaturesProvider({ children }: { children: ReactNode }) {
   const { user } = useSignedIn();
   const [features, setFeatures] = useState<MyFeatures>(NO_FEATURES);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(() => {
     apiGet<MyFeatures>(user, "/v1/me/features")
       .then(setFeatures)
       .catch(() => {
         // Keep what we had: a passing network blip shouldn't hide things already shown.
+      })
+      .finally(() => {
+        setLoaded(true);
       });
   }, [user]);
 
@@ -46,13 +52,18 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
     };
   }, [load]);
 
-  const value = useMemo(() => ({ features, everywhere: new Set(features.everywhere) }), [features]);
+  const value = useMemo(() => ({ features, everywhere: new Set(features.everywhere), loaded }), [features, loaded]);
   return <FeaturesContext.Provider value={value}>{children}</FeaturesContext.Provider>;
 }
 
 /** Keys that are on in at least one of your crews. */
 export function useEverywhere(): ReadonlySet<string> {
   return useContext(FeaturesContext).everywhere;
+}
+
+/** Whether the first answer about switches has come back (or failed). */
+export function useFeaturesLoaded(): boolean {
+  return useContext(FeaturesContext).loaded;
 }
 
 /** Is `key` (or, with "area.*", anything in that area) on for this crew? */

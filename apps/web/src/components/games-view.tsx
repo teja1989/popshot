@@ -12,6 +12,7 @@ import type { Team } from "@/lib/scoring";
 import { recall, remember } from "@/lib/remember";
 
 import { useSignedIn } from "./auth";
+import { EventsSection } from "./events-section";
 import { GamesCalendar } from "./games-calendar";
 import { GroupScoped } from "./group-scoped";
 import { PlayNightsSection } from "./play-nights-section";
@@ -84,6 +85,8 @@ function GroupGames({
   return (
     <>
       <PlayNightsSection groupId={group.id} />
+
+      <EventsSection group={group} />
 
       <Link href={`/groups/${group.id}/log`} className={buttonClass("action", "h-14")}>
         <PlusIcon />
