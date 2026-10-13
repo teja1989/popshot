@@ -8,6 +8,7 @@ import { inviteLine, type InviteAnswer, type MyInvite } from "@/lib/direct-invit
 import { describeExpiry } from "@/lib/invites";
 
 import { useSignedIn } from "./auth";
+import { CrewProfileSummary } from "./crew-profile-summary";
 import { useHomeRefresh } from "./home-refresh";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
@@ -70,6 +71,7 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
                 {inviteLine(invite)} · {describeExpiry(invite.expires_at)}
               </p>
             </div>
+            <CrewProfileSummary profile={invite} />
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"

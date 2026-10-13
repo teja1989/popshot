@@ -2,6 +2,8 @@
 // the fragment to a server, so it stays out of request logs and Referer headers.
 // Shapes match the API's routes/invites.py.
 
+import type { Day, TimeOfDay } from "./crew-profile";
+
 export const INVITE_PATH = "/join";
 export const INVITE_DAYS = 7;
 export const MAX_INVITE_USES = 10;
@@ -30,6 +32,10 @@ export interface InvitePreview {
   invited_by: string;
   group_id: string | null;
   my_status: JoinStatus | null;
+  // The crew's profile, without its home courts.
+  about?: string | null;
+  usual_days?: Day[];
+  usual_times?: TimeOfDay[];
 }
 
 export interface Joined {

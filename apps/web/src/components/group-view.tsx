@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { describeRules, type GroupDetail } from "@/lib/groups";
 
+import { CrewProfileSummary } from "./crew-profile-summary";
 import { PlayNightsSection } from "./play-nights-section";
 import { useApiGet } from "./use-api";
 import { AvatarStack } from "./ui/avatar";
@@ -57,6 +58,9 @@ function Group({ group }: { group: GroupDetail }) {
           {group.name}
         </h1>
         <p className="text-[15px] text-muted">{describeRules(group)}</p>
+        <div className="mt-2">
+          <CrewProfileSummary profile={group} />
+        </div>
         <Link
           href={`/groups/${group.id}/settings`}
           className={buttonClass("quiet", "mt-2 min-h-11 self-start px-4 text-[15px]")}

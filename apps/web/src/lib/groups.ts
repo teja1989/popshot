@@ -1,5 +1,7 @@
 // Shapes returned by the API's /v1/groups endpoints (services/api/.../routes/groups.py).
 
+import type { Day, TimeOfDay } from "./crew-profile";
+
 export type Role = "lead" | "co_lead" | "member";
 export type MemberStatus = "active" | "pending";
 export type Format = "doubles" | "singles";
@@ -43,6 +45,11 @@ export interface FormerMember {
 }
 
 export interface GroupDetail extends GroupSummary {
+  // The crew profile (lib/crew-profile.ts). Home courts are empty unless you're a member.
+  about?: string | null;
+  usual_days?: Day[];
+  usual_times?: TimeOfDay[];
+  home_courts?: string[];
   default_format: Format;
   default_points_to: PointsTo;
   default_win_by_two: boolean;

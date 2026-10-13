@@ -19,7 +19,7 @@ export interface SettingsContext {
   plan: Plan;
 }
 
-export type SectionId = "crew" | "rules" | "leave";
+export type SectionId = "crew" | "profile" | "rules" | "leave";
 
 interface Section {
   id: SectionId;
@@ -32,6 +32,7 @@ const runsTheCrew = (ctx: SettingsContext) =>
 /** In page order. */
 export const SECTIONS: readonly Section[] = [
   { id: "crew", show: runsTheCrew },
+  { id: "profile", show: runsTheCrew },
   { id: "rules", show: runsTheCrew },
   // Leave (or cancel a request to join) for everyone; the lead sees Delete here instead.
   { id: "leave", show: () => true },
