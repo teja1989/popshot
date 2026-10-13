@@ -207,3 +207,24 @@ test("Play shows the crew's meetups first, and old Games links still work", asyn
   await expect(page.getByRole("link", { name: "Log a game" })).toBeVisible();
   expect(problems).toEqual([]);
 });
+
+test("a tab behind a feature switch comes and goes without a reload", async ({ page }) => {
+  await signIn(page, newUser("Ivo"));
+  // The real answer first: the four tabs, with nothing extra switched on.
+  const real = page.waitForResponse((r) => r.url().endsWith("/api/v1/me/features"));
+  await page.goto("/");
+  expect((await real).status()).toBe(200);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
+
+  // Stand in for an admin switching Learn on, then off again.
+  let on = ["learn.tab"];
+  await page.route("**/api/v1/me/features", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify({ crews: {}, everywhere: on }) }),
+  );
+  const comeBack = () => page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await comeBack();
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "Learn", "You"]);
+  on = [];
+  await comeBack();
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
+});
