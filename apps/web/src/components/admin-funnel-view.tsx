@@ -170,9 +170,7 @@ function WeeklyCrews({ weeks }: { weeks: Funnel["active_crews"] }) {
       >
         {weeks.map((w, i) => {
           const h = Math.max(1, Math.round((38 * w.active_crews) / most));
-          return (
-            <rect key={w.week_start} x={i * 10 + 2} y={40 - h} width="6" height={h} className="fill-primary" />
-          );
+          return <rect key={w.week_start} x={i * 10 + 2} y={40 - h} width="6" height={h} className="fill-primary" />;
         })}
       </svg>
       <Table
