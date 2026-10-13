@@ -446,3 +446,34 @@ def test_crew_stages() -> None:
     assert stage(members=1) == "getting_going"
     assert stage(games=4, games_first_week=3) == "activated"
     assert stage(games=4, games_first_week=3, last_game_at=old) == "quiet"
+
+
+def test_today_counts(people: People, owner_engine: Engine, admin_engine: Engine) -> None:
+    """Visits and activity from today are in a window that ends now (migration 0025)."""
+    people.client.post("/v1/public/visits", json={"page": "home", "source": "partner"})
+    people.client.post("/v1/public/visits", json={"page": "recap", "source": "direct"})
+    people.client.get("/v1/me", headers=people.new("Toni"))  # active today
+    now = datetime.now(UTC)
+    since = now - timedelta(days=1)
+    sources = {s.source: s for s in funnel(admin_engine, "app_admin_funnel_sources", since, now)}
+    assert sources["partner"].visits >= 1
+    [loops] = funnel(admin_engine, "app_admin_funnel_loops", since, now)
+    assert loops.share_views >= 1
+    assert loops.active_users >= 1
+
+
+def test_a_window_ending_at_midnight_leaves_the_next_day_out(
+    owner_engine: Engine, admin_engine: Engine
+) -> None:
+    day = BASE.date() + timedelta(days=200)
+    with unlocked(owner_engine) as conn:
+        conn.execute(
+            text(
+                "INSERT INTO page_visits (day, page, source, visits) VALUES"
+                " (:d, 'recap', 'direct', 5), (:next, 'recap', 'direct', 70)"
+            ),
+            {"d": day, "next": day + timedelta(days=1)},
+        )
+    start = datetime(day.year, day.month, day.day, tzinfo=UTC)
+    [loops] = funnel(admin_engine, "app_admin_funnel_loops", start, start + timedelta(days=1))
+    assert loops.share_views == 5
