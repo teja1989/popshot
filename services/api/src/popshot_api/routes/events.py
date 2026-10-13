@@ -83,9 +83,15 @@ class AddPlayer(BaseModel):
     player_id: UUID
 
 
-class CourtScore(BaseModel):
+# Courts are named in the body, not the path: the web's proxy allows short paths only.
+class CourtRef(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    round: Annotated[int, Field(ge=1, le=200)]
+    court: Annotated[int, Field(ge=1, le=6)]
+
+
+class CourtScore(CourtRef):
     games: Annotated[list[GameScore], Field(min_length=1, max_length=5)]
 
 
@@ -628,17 +634,12 @@ def remove_player(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/{event_id}/rounds/{number}/courts/{court}")
-def score_court(  # noqa: PLR0913 - each input is needed
-    group_id: UUID,
-    event_id: UUID,
-    number: int,
-    court: int,
-    *,
-    body: CourtScore,
-    user: CurrentUserSession,
+@router.put("/{event_id}/courts")
+def score_court(
+    group_id: UUID, event_id: UUID, body: CourtScore, user: CurrentUserSession
 ) -> EventOut:
     """Fill in a court's score (anyone in the crew), or change it (leads and co-leads)."""
+    number, court = body.round, body.court
     session, me = user.session, user.user_id
     _require_member(session, me, group_id)
     e = _event(session, group_id, event_id)
@@ -687,11 +688,12 @@ def score_court(  # noqa: PLR0913 - each input is needed
     return _event_out(session, me, group_id, event_id)
 
 
-@router.post("/{event_id}/rounds/{number}/courts/{court}/skip")
+@router.post("/{event_id}/courts/skip")
 def skip_court(
-    group_id: UUID, event_id: UUID, number: int, court: int, user: CurrentUserSession
+    group_id: UUID, event_id: UUID, body: CourtRef, user: CurrentUserSession
 ) -> EventOut:
     """A court that couldn't finish: no game, and the next round can start without it."""
+    number, court = body.round, body.court
     session, me = user.session, user.user_id
     _require_admin(session, me, group_id)
     _require_live(_event(session, group_id, event_id))
