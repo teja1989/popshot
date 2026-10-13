@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -9,6 +10,9 @@ from popshot_api.db import CurrentUserSession
 from popshot_api.routes.groups import PersonName
 
 router = APIRouter(prefix="/v1")
+
+# How long you have to change your mind (migration 0023's UNDO_DAYS).
+DELETE_AFTER = timedelta(days=7)
 
 
 class Me(BaseModel):
@@ -19,6 +23,9 @@ class Me(BaseModel):
     self_level: str | None = None
     # Shown as "Crew member" on recap cards shared outside the app.
     hide_on_shared_cards: bool = False
+    # When you asked to delete your account; it's deleted for good DELETE_AFTER later.
+    delete_requested_at: datetime | None = None
+    delete_on: datetime | None = None
 
 
 class EditMe(BaseModel):
@@ -38,15 +45,16 @@ def _me(session: Session, user_id: UUID) -> Me:
     row = (
         session.execute(
             text(
-                "SELECT id, display_name, avatar_url, self_level, hide_on_shared_cards "
-                "FROM users WHERE id = :id"
+                "SELECT id, display_name, avatar_url, self_level, hide_on_shared_cards, "
+                "delete_requested_at FROM users WHERE id = :id"
             ),
             {"id": user_id},
         )
         .mappings()
         .one()
     )
-    return Me(**row)
+    requested = row["delete_requested_at"]
+    return Me(**row, delete_on=requested + DELETE_AFTER if requested else None)
 
 
 @router.get("/me")
@@ -85,3 +93,62 @@ def set_shared_cards(body: SharedCards, user: CurrentUserSession) -> Me:
         {"hide": body.hide_on_shared_cards, "id": user.user_id},
     )
     return _me(user.session, user.user_id)
+
+
+@router.post("/me/delete")
+def request_deletion(user: CurrentUserSession) -> Me:
+    """Ask to delete your account. It's deleted for good in 7 days unless you cancel.
+
+    A crew you lead that has other members needs a new lead first, as when leaving.
+    """
+    leading = (
+        user.session.execute(
+            text(
+                """
+                SELECT g.name FROM group_members me
+                JOIN groups g ON g.id = me.group_id AND g.deleted_at IS NULL
+                WHERE me.user_id = :me AND me.status = 'active' AND me.role = 'lead'
+                  AND EXISTS (
+                      SELECT 1 FROM group_members other
+                      WHERE other.group_id = me.group_id AND other.user_id <> :me
+                        AND other.status = 'active'
+                  )
+                ORDER BY lower(g.name)
+                """
+            ),
+            {"me": user.user_id},
+        )
+        .scalars()
+        .all()
+    )
+    if leading:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=(
+                f"First make someone else the lead of {_names(list(leading))}. "
+                "You can do that on the crew's members page."
+            ),
+        )
+    user.session.execute(
+        text(
+            "UPDATE users SET delete_requested_at = coalesce(delete_requested_at, now()) "
+            "WHERE id = :me"
+        ),
+        {"me": user.user_id},
+    )
+    return _me(user.session, user.user_id)
+
+
+@router.post("/me/delete/cancel")
+def cancel_deletion(user: CurrentUserSession) -> Me:
+    """Keep your account."""
+    user.session.execute(
+        text("UPDATE users SET delete_requested_at = NULL WHERE id = :me"), {"me": user.user_id}
+    )
+    return _me(user.session, user.user_id)
+
+
+def _names(names: list[str]) -> str:
+    if len(names) == 1:
+        return names[0]
+    return f"{', '.join(names[:-1])} and {names[-1]}"

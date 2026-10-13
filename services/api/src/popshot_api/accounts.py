@@ -107,3 +107,39 @@ class IdentityPlatformLookup:
 
     def by_email(self, email: str) -> Account | None:
         return self._lookup({"email": [email]})
+
+
+DELETE_URL = "https://identitytoolkit.googleapis.com/v1/projects/{project}/accounts:delete"
+
+
+class AccountDeleteError(Exception):
+    """The sign-in couldn't be deleted just now; try again on the next run."""
+
+
+class IdentityPlatformDeleter:
+    """Deletes a person's Firebase sign-in (and with it their email), for the scheduled job
+    when an account is deleted. Needs firebaseauth.users.delete, which only the job's
+    service account has (a custom role in Terraform)."""
+
+    def __init__(
+        self,
+        project_id: str,
+        token: Callable[[], str] | None = None,
+        post: Callable[[str, dict[str, Any], str], dict[str, Any]] | None = None,
+    ) -> None:
+        self._url = DELETE_URL.format(project=project_id)
+        self._token = token or MetadataAccessToken()
+        self._post = post or IdentityPlatformLookup._http_post
+
+    def delete(self, subject: str) -> None:
+        try:
+            self._post(self._url, {"localId": subject}, self._token())
+        except urllib.error.HTTPError as exc:
+            # Already gone (say, a run that crashed after deleting it) is done.
+            if exc.code == 400 and b"USER_NOT_FOUND" in exc.read():
+                return
+            log.warning("accounts.delete_failed", status=exc.code)
+            raise AccountDeleteError("delete failed") from exc
+        except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+            log.warning("accounts.delete_failed", error=type(exc).__name__)
+            raise AccountDeleteError("delete failed") from exc
