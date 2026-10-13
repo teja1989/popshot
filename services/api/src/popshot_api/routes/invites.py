@@ -83,6 +83,10 @@ class InvitePreview(BaseModel):
     group_id: UUID | None
     # Your membership, if you have one.
     my_status: JoinStatus | None
+    # The crew's profile, without its home courts (those are for members).
+    about: str | None = None
+    usual_days: list[str] = []
+    usual_times: list[str] = []
 
 
 class Joined(BaseModel):

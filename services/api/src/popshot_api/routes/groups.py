@@ -5,13 +5,21 @@ not the filter. A group you can't see is a 404, never a 403, so the API doesn't 
 a group exists to someone outside it.
 """
 
+import re
 import unicodedata
 from datetime import datetime, timedelta
 from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Response, status
-from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+)
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -48,6 +56,56 @@ PersonName = Annotated[
     StringConstraints(strip_whitespace=True, min_length=1, max_length=40),
     AfterValidator(_no_control_characters),
 ]
+
+
+Day = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+TimeOfDay = Literal["morning", "midday", "evening"]
+DAYS: tuple[Day, ...] = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+TIMES: tuple[TimeOfDay, ...] = ("morning", "midday", "evening")
+
+# Shown to people outside the crew, so no links, web or email addresses (as the database's
+# check in migration 0022).
+_LINK = re.compile(
+    r"https?://|www\.|[\w.%+-]+@[\w-]+\.[a-z]|"
+    r"\b[\w-]+\.(com|net|org|io|app|co|ly|me|gg|xyz|info|biz|link|site)\b",
+    re.IGNORECASE,
+)
+
+
+def _no_links(value: str) -> str:
+    if _LINK.search(value):
+        raise ValueError("Leave out links and web or email addresses.")
+    return value
+
+
+About = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
+    AfterValidator(_no_control_characters),
+    AfterValidator(_no_links),
+]
+CourtName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=80),
+    AfterValidator(_no_control_characters),
+    AfterValidator(_no_links),
+]
+
+
+class CrewProfile(BaseModel):
+    """The whole profile, replaced at once. An empty "about" clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    about: About | None = None
+    usual_days: list[Day] = Field(default_factory=list, max_length=7)
+    usual_times: list[TimeOfDay] = Field(default_factory=list, max_length=3)
+    home_courts: list[CourtName] = Field(default_factory=list, max_length=3)
+
+    @field_validator("about", mode="before")
+    @classmethod
+    def _blank_is_none(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
 
 
 class CreateGroup(BaseModel):
@@ -103,6 +161,11 @@ class GroupDetail(GroupSummary):
     default_points_to: int
     default_win_by_two: bool
     created_at: datetime
+    # The crew profile. Home courts are for members only (empty while you're waiting).
+    about: str | None = None
+    usual_days: list[Day] = []
+    usual_times: list[TimeOfDay] = []
+    home_courts: list[str] = []
     members: list[Member]
     # Leads and co-leads only: people removed or declined, who can be restored.
     former_members: list[FormerMember] = []
@@ -238,6 +301,9 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
                 """
                 SELECT g.id, g.name, g.default_format, g.default_points_to,
                        g.default_win_by_two, g.created_at,
+                       g.about, g.usual_days, g.usual_times,
+                       CASE WHEN m.status = 'active' THEN g.home_courts
+                            ELSE '{}'::text[] END AS home_courts,
                        m.role AS my_role, m.status AS my_status
                 FROM groups g
                 JOIN group_members m ON m.group_id = g.id AND m.user_id = :me
@@ -363,6 +429,39 @@ def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) 
             },
         )
         _log(session, group_id, me, "group.updated", group_id)
+    return _detail_or_404(session, me, group_id)
+
+
+def _in_order(values: list[str], order: tuple[str, ...]) -> list[str]:
+    return [v for v in order if v in values]
+
+
+@router.put("/{group_id}/profile")
+def set_profile(group_id: UUID, body: CrewProfile, user: CurrentUserSession) -> GroupDetail:
+    """The crew profile: about, usual days and times, home courts. Leads and co-leads."""
+    session, me = user.session, user.user_id
+    if _my_membership(session, me, group_id) not in ("lead", "co_lead"):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail="Only the group's lead or a co-lead can do that."
+        )
+    courts = list(dict.fromkeys(body.home_courts))  # Without repeats, in the order given.
+    session.execute(
+        text(
+            """
+            UPDATE groups SET about = :about, usual_days = :days, usual_times = :times,
+                              home_courts = :courts
+            WHERE id = :group_id
+            """
+        ),
+        {
+            "group_id": group_id,
+            "about": body.about,
+            "days": _in_order(list(body.usual_days), DAYS),
+            "times": _in_order(list(body.usual_times), TIMES),
+            "courts": courts,
+        },
+    )
+    _log(session, group_id, me, "group.profile_updated", group_id)
     return _detail_or_404(session, me, group_id)
 
 

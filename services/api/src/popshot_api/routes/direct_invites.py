@@ -133,6 +133,10 @@ class MyInvite(BaseModel):
     members: int
     created_at: datetime
     expires_at: datetime
+    # The crew's profile, without its home courts (those are for members).
+    about: str | None = None
+    usual_days: list[str] = []
+    usual_times: list[str] = []
 
 
 class Answer(BaseModel):
