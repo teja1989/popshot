@@ -59,7 +59,7 @@ test("log a doubles game with guests, see it, and delete it", async ({ page }) =
   await expect(page.getByText(`✓ ${casey.name} & Gary win 12–10.`)).toBeVisible();
 
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   // You played, so the optional reflection opens; close it without answering.
   await expect(page.getByRole("dialog", { name: "How did it go?" })).toBeVisible();
   await page.keyboard.press("Escape");
@@ -79,7 +79,7 @@ test("log a doubles game with guests, see it, and delete it", async ({ page }) =
   await page.getByLabel("Game 1, Jo & Robin").fill("11");
   await expect(page.getByText("✓ Jo & Robin win 11–6.")).toBeVisible();
   await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   await expect(card.getByRole("cell")).toHaveText(["6", "11"]);
 
   await card.getByRole("button", { name: "Delete" }).click();
@@ -122,7 +122,7 @@ test("best of three shows a third game only when it's one each", async ({ page }
   await page.getByText("Earlier", { exact: true }).click();
   await expect(page.getByLabel("Played at")).toBeVisible();
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
   const card = page.getByRole("listitem").filter({ hasText: "Alex" });
   await expect(card).toContainText("Singles · to 11");
@@ -160,7 +160,7 @@ test("a best of 5 adds game rows only while the match is still open", async ({ p
   await expect(page.getByText(`✓ ${kai.name} wins 11–7, 9–11, 11–9, 5–11, 12–10.`)).toBeVisible();
 
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
   const card = page.getByRole("listitem").filter({ hasText: "Lee" });
   await expect(card.getByRole("cell")).toHaveCount(10);
@@ -250,7 +250,7 @@ test("home counts the games you've played, and the logo goes home", async ({ pag
     .fill("11");
   await page.getByRole("textbox", { name: "Game 1, Pat" }).fill("6");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
 
   // The logo is a link home from anywhere in the app.
@@ -293,7 +293,7 @@ test("other players see a logged game straight away, but only the scorer can edi
   await page.getByLabel(`Game 1, ${casey.name}`).fill("11");
   await page.getByLabel(`Game 1, ${sam.name}`).fill("8");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   const sheet = page.getByRole("dialog", { name: "How did it go?" });
   await expect(sheet).toBeVisible();
   await page.keyboard.press("Escape");
@@ -301,7 +301,7 @@ test("other players see a logged game straight away, but only the scorer can edi
   const gameUrl = await page.getByRole("link", { name: "Edit game" }).getAttribute("href");
 
   // Sam sees it right away, with Casey as the scorer, and no Edit.
-  await other.goto("/games");
+  await other.goto("/play");
   const card = other.getByRole("listitem").filter({ hasText: casey.name });
   await expect(card).toContainText(`Logged by ${casey.name}`);
   await expect(card.getByRole("cell")).toHaveText(["11", "8"]);
@@ -334,7 +334,7 @@ test("the calendar shows games and meetups by day, and remembers week or month",
   await page.getByLabel(`Game 1, ${dee.name}`).fill("11");
   await page.getByLabel("Game 1, Pat").fill("7");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
 
   // The list is the default; the calendar opens on this week with today chosen.

@@ -10,7 +10,7 @@ import { useApiGet } from "./use-api";
 import { useCurrentGroup } from "./use-current-group";
 import { buttonClass } from "./ui/button";
 
-// A page about one group at a time (Games, Crew): title, group switcher, then content for
+// A page about one group at a time (Play, Crew): title, group switcher, then content for
 // the chosen group. Groups you're still waiting to join aren't offered.
 export function GroupScoped({
   title,

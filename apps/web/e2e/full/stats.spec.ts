@@ -27,7 +27,7 @@ async function logSingles(
   await page.getByLabel(`Game 1, ${me}`).fill(score[0]);
   await page.getByLabel(`Game 1, ${guest}`).fill(score[1]);
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\/play$/);
 }
 
 test("your stats and the crew's highlights fill in as games are logged", async ({ page }) => {

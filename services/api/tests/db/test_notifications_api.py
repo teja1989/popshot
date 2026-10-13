@@ -156,7 +156,7 @@ def test_logging_a_game_tells_the_members_who_played(crew: People, sender: Recor
     message = sender.sent[0][1]
     assert message.title == "Casey logged a game you played"
     assert "11" not in message.title + message.body  # no scores on lock screens
-    assert message.url == "/games"
+    assert message.url == "/play"
 
     # Jo mutes games; Sam's device has gone away and is forgotten.
     crew.client.put("/v1/me/notifications", json={"muted": ["games"]}, headers=jo)

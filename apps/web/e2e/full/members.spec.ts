@@ -32,7 +32,7 @@ test("the members page: who's in, guests renamed or removed", async ({ page }) =
   await page.getByLabel(`Game 1, ${nora.name}`).fill("11");
   await page.getByLabel("Game 1, Ivy").fill("6");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games/);
+  await expect(page).toHaveURL(/\/play/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
   await page.goto(`${groupUrl}/log`);
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Ivvy");

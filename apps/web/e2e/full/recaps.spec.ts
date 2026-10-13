@@ -36,7 +36,7 @@ test("after a game, the Crew tab links to a recap with friendly awards", async (
   await page.getByLabel(`Game 1, ${nora.name} & Ivy`).fill("11");
   await page.getByLabel("Game 1, Raj & Lena").fill("9");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games/);
+  await expect(page).toHaveURL(/\/play/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
 
   await page.goto("/crew");
@@ -93,7 +93,7 @@ test("a shared recap opens for anyone, hides people who opt out, and can be turn
   await page.getByLabel(`Game 1, ${nora.name} & Ivy`).fill("11");
   await page.getByLabel("Game 1, Raj & Lena").fill("9");
   await page.getByRole("button", { name: "Log game" }).click();
-  await expect(page).toHaveURL(/\/games/);
+  await expect(page).toHaveURL(/\/play/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
   await page.goto("/crew");
   await page

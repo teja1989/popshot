@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
   // Don't let `next dev` write an AGENTS.md into the repo.
   agentRules: false,
   // Browsers and other clients ask for /favicon.ico even when a page names its icon.
+  // The Games tab became Play. Old links and notifications still land in the right place,
+  // with their ?logged= and ?reflect= intact.
+  async redirects() {
+    return [{ source: "/games", destination: "/play", permanent: true }];
+  },
   async rewrites() {
     return [{ source: "/favicon.ico", destination: "/icons/192" }];
   },

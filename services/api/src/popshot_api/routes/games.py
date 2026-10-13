@@ -353,7 +353,7 @@ def _tell_players(session: Session, notifier: Notifier, game: Match, me: UUID) -
         Message(
             title=f"{logger} logged a game you played",
             body="Tap to see how it went.",
-            url="/games",
+            url="/play",
             tag=f"game-{game.id}",
         ),
     )
