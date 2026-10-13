@@ -16,6 +16,8 @@ describe("main menu", () => {
     expect(active("/groups/abc")).toEqual(["Home"]);
     expect(active("/groups/abc/recaps/def")).toEqual(["Crew"]);
     expect(active("/play")).toEqual(["Play"]);
+    expect(active("/groups/abc/events/new")).toEqual(["Play"]);
+    expect(active("/groups/abc/events/def")).toEqual(["Play"]);
     expect(active("/learn/drops")).toEqual(["Learn"]);
     expect(active("/you")).toEqual(["You"]);
   });

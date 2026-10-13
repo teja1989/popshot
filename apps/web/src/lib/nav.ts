@@ -12,17 +12,18 @@ export interface NavItem {
   matches: (pathname: string) => boolean;
 }
 
-// Recaps are opened from the Crew tab.
+// Recaps are opened from the Crew tab; events from Play.
 const RECAP = /^\/groups\/[^/]+\/recaps\//;
+const EVENT = /^\/groups\/[^/]+\/events(\/|$)/;
 
 export const NAV: readonly NavItem[] = [
   {
     href: "/",
     label: "Home",
     icon: "home",
-    matches: (p) => p === "/" || (p.startsWith("/groups/") && !RECAP.test(p)),
+    matches: (p) => p === "/" || (p.startsWith("/groups/") && !RECAP.test(p) && !EVENT.test(p)),
   },
-  { href: "/play", label: "Play", icon: "play", matches: (p) => p.startsWith("/play") },
+  { href: "/play", label: "Play", icon: "play", matches: (p) => p.startsWith("/play") || EVENT.test(p) },
   { href: "/crew", label: "Crew", icon: "crew", matches: (p) => p.startsWith("/crew") || RECAP.test(p) },
   // The shot library. Its page and switch arrive together; until then the switch doesn't exist.
   { href: "/learn", label: "Learn", icon: "learn", feature: "learn.tab", matches: (p) => p.startsWith("/learn") },

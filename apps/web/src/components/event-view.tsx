@@ -7,6 +7,7 @@ import { apiGet, apiPost, apiPut, ApiError } from "@/lib/api-client";
 import {
   formatInfo,
   MAX_PLAYERS,
+  myResultsLine,
   pointDifference,
   scoreText,
   teamLine,
@@ -17,6 +18,7 @@ import {
 import type { Player } from "@/lib/games";
 import { gamesToShow, validateMatch, type GameRules, type Team } from "@/lib/scoring";
 
+import { AddGuestInline } from "./add-guest-inline";
 import { useSignedIn } from "./auth";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
@@ -109,7 +111,9 @@ function Event({
           {event.name}
         </h1>
         <p className="text-body text-muted">
-          {info.name} · {info.standard} · {event.vibe === "social" ? "Social" : "Competitive"}
+          {/* The format's name only when the event has a name of its own. */}
+          {event.name === info.name ? "" : `${info.name} · `}
+          {info.standard} · {event.vibe === "social" ? "Social" : "Competitive"}
           {live ? "" : " · Finished"}
         </p>
       </header>
@@ -239,11 +243,7 @@ function Results({ event, names }: { event: CrewEvent; names: ReadonlyMap<string
     );
   }
   if (event.mine && event.mine.games > 0) {
-    return (
-      <p className="rounded-2xl bg-chip px-4 py-3 text-body">
-        You&apos;ve played {event.mine.games} {event.mine.games === 1 ? "game" : "games"} and won {event.mine.wins}.
-      </p>
-    );
+    return <p className="rounded-2xl bg-chip px-4 py-3 text-body">{myResultsLine(event.mine)}</p>;
   }
   return null;
 }
@@ -562,62 +562,75 @@ function People({
   }
 
   return (
-    <section aria-labelledby="people-heading" className="flex flex-col gap-2">
-      <h2 id="people-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
-        Playing ({here.length})
-      </h2>
-      <p className="text-small text-muted">Changes count from the next round.</p>
-      <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface">
-        {here.map((p) => (
-          <li key={p.player_id} className="flex items-center justify-between gap-3 px-4 py-2">
-            <span className="font-bold">{p.display_name}</span>
-            <button
-              type="button"
-              className="min-h-11 px-2 text-small font-bold text-muted"
-              aria-label={`${p.display_name} is leaving`}
-              onClick={() => void change(() => apiPost<undefined>(user, `${base}/players/${p.player_id}/leave`, {}))}
-            >
-              Leaving
-            </button>
-          </li>
-        ))}
-      </ul>
-      {addable.length > 0 && here.length < MAX_PLAYERS && (
-        <form
-          className="flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (adding) {
-              void change(async () => {
-                await apiPost<undefined>(user, `${base}/players`, { player_id: adding });
-                setAdding("");
-              });
-            }
-          }}
-        >
-          <select
-            aria-label="Someone arriving"
-            value={adding}
-            onChange={(e) => {
-              setAdding(e.target.value);
+    // Folded away: on a phone the courts come first; this is for arrivals and leavers.
+    <details className="rounded-2xl border border-line bg-surface p-4">
+      <summary className="min-h-11 cursor-pointer content-center text-body font-bold">
+        Who&apos;s playing ({here.length})
+      </summary>
+      <section aria-label="Playing" className="mt-2 flex flex-col gap-2">
+        <p className="text-small text-muted">Arrivals and leavers count from the next round.</p>
+        <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface">
+          {here.map((p) => (
+            <li key={p.player_id} className="flex items-center justify-between gap-3 px-4 py-2">
+              <span className="font-bold">{p.display_name}</span>
+              <button
+                type="button"
+                className="min-h-11 px-2 text-small font-bold text-muted"
+                aria-label={`${p.display_name} is leaving`}
+                onClick={() => void change(() => apiPost<undefined>(user, `${base}/players/${p.player_id}/leave`, {}))}
+              >
+                Leaving
+              </button>
+            </li>
+          ))}
+        </ul>
+        {addable.length > 0 && here.length < MAX_PLAYERS && (
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (adding) {
+                void change(async () => {
+                  await apiPost<undefined>(user, `${base}/players`, { player_id: adding });
+                  setAdding("");
+                });
+              }
             }}
-            className="min-h-11 grow rounded-xl border border-line bg-surface px-3 text-field"
           >
-            <option value="">Someone arriving…</option>
-            {addable.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.display_name}
-              </option>
-            ))}
-          </select>
-          <button type="submit" disabled={!adding} className={buttonClass("quiet", "min-h-11")}>
-            Add
-          </button>
-        </form>
-      )}
-      <p role="alert" className="text-small text-warn empty:hidden">
-        {problem}
-      </p>
-    </section>
+            <select
+              aria-label="Someone arriving"
+              value={adding}
+              onChange={(e) => {
+                setAdding(e.target.value);
+              }}
+              className="min-h-11 grow rounded-xl border border-line bg-surface px-3 text-field"
+            >
+              <option value="">Someone arriving…</option>
+              {addable.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name}
+                </option>
+              ))}
+            </select>
+            <button type="submit" disabled={!adding} className={buttonClass("quiet", "min-h-11")}>
+              Add
+            </button>
+          </form>
+        )}
+        {here.length < MAX_PLAYERS && (
+          <AddGuestInline
+            groupId={groupId}
+            label="Someone new? Add them as a guest"
+            onAdded={async (guest) => {
+              await change(() => apiPost<undefined>(user, `${base}/players`, { player_id: guest.id }));
+              players.reload();
+            }}
+          />
+        )}
+        <p role="alert" className="text-small text-warn empty:hidden">
+          {problem}
+        </p>
+      </section>
+    </details>
   );
 }

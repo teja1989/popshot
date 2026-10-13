@@ -198,6 +198,15 @@ export function teamLine(ids: readonly string[], names: ReadonlyMap<string, stri
   return ids.map((id) => names.get(id) ?? "Someone").join(" & ");
 }
 
+/** Your results in a social event. Wins are mentioned only when there are some. */
+export function myResultsLine(mine: { games: number; wins: number }): string {
+  const games = `${String(mine.games)} ${mine.games === 1 ? "game" : "games"}`;
+  if (mine.wins === 0) {
+    return `You've played ${games} so far. Enjoy the next one.`;
+  }
+  return `You've played ${games} and won ${String(mine.wins)}.`;
+}
+
 /** "+12", "−3", "0": points for minus against. */
 export function pointDifference(s: Pick<Standing, "points_for" | "points_against">): string {
   const diff = s.points_for - s.points_against;
