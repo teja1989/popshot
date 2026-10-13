@@ -16,6 +16,8 @@ test("a signed-in user lands on their home, with their profile from the API", as
   );
   await expect(page.getByRole("heading", { name: "Your stats" })).toBeVisible();
   await expect(page.getByText("No groups yet.")).toBeVisible();
+  // No crew, no week to look back on.
+  await expect(page.getByRole("region", { name: "Your week" })).toHaveCount(0);
   expect(problems).toEqual([]);
 });
 

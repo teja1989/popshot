@@ -47,6 +47,12 @@ test("your stats and the crew's highlights fill in as games are logged", async (
   await page.goto("/you");
   await expect(stats).toContainText("Your stats in Rio's Crew show up after your first game.");
 
+  // A crew but no games yet: Your week is gentle about it.
+  await page.goto("/");
+  const week = page.getByRole("region", { name: "Your week" });
+  await expect(week).toContainText("A quiet week on court.");
+  await expect(week).toContainText("Rest weeks count too.");
+
   // A skunk, a close win, then a loss.
   await logSingles(page, groupUrl, user.name, "Lou", ["11", "2"], true);
   await logSingles(page, groupUrl, user.name, "Lou", ["12", "10"], false);
@@ -81,6 +87,11 @@ test("your stats and the crew's highlights fill in as games are logged", async (
   await expect(home).toContainText("Last 3");
   await expect(home).toContainText("2–1");
   await expect(home).toContainText("Last 7 days3 games");
+  await expect(week).toContainText("3 games this week.");
+  await expect(week).toContainText("Games3Wins2Close games1");
+  await expect(week).toContainText("You won 2 of 3.");
+  await expect(week).toContainText("A 2-game win streak in there.");
+  await expect(week).toContainText("One game went down to the wire");
 
   await page.goto("/crew");
   const highlights = page.getByRole("region", { name: /^Lately/ });

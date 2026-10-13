@@ -16,6 +16,7 @@ import { useHomeRefresh } from "./home-refresh";
 import { InstallBanner } from "./install-banner";
 import { InviteInbox } from "./invite-inbox";
 import { DeletionNotice } from "./your-data-section";
+import { YourWeekCard } from "./your-week-card";
 import { NextNight } from "./next-night";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
@@ -221,7 +222,10 @@ export function HomeView() {
           <DeletedGroups />
         </section>
 
-        <StatsPanel top={top} loading={ratings.result.kind === "loading"} groups={ratingsCount} />
+        <div className="flex flex-col gap-6">
+          {result.kind === "ready" && result.data.some((g) => g.my_status === "active") && <YourWeekCard />}
+          <StatsPanel top={top} loading={ratings.result.kind === "loading"} groups={ratingsCount} />
+        </div>
       </div>
     </main>
   );
