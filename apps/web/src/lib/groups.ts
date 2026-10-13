@@ -29,6 +29,9 @@ export interface Member {
   avatar_url: string | null;
   role: Role;
   status: MemberStatus;
+  // When they first joined (or asked to), and their latest game here.
+  joined_at?: string;
+  last_played_at?: string | null;
 }
 
 export interface FormerMember {

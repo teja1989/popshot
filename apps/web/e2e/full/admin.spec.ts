@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { newUser, signIn, type TestUser } from "./auth";
+import { toMembers } from "./members";
 import { watchProblems } from "./problems";
 
 // dev/run.sh makes this address the admin.
@@ -111,6 +112,7 @@ test("the admin makes a member the lead, with a reason that's kept", async ({ pa
   await page.getByRole("button", { name: "Create group" }).click();
   await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
   const crewId = page.url().split("/").pop() ?? "";
+  await toMembers(page);
   await page.getByRole("button", { name: "Make an invite link" }).click();
   await page.getByRole("dialog", { name: "Make an invite link" }).getByRole("button", { name: "Make link" }).click();
   const made = page.getByRole("dialog", { name: "Your invite link" });

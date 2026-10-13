@@ -36,11 +36,14 @@ test("start a group from the empty state and land on its page", async ({ page })
   await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tuesday Dinkers");
   await expect(page.getByText("Singles · games to 15", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Members · 1/ })).toBeVisible();
+  await page.goto(`${page.url()}/members`);
   const members = page.getByRole("list").filter({ hasText: casey.name });
   await expect(members.getByRole("listitem")).toHaveCount(1);
   await expect(members).toContainText(`${casey.name} (you)`);
   await expect(members).toContainText("Lead");
 
+  await page.getByRole("link", { name: "Tuesday Dinkers" }).click();
   await page.getByRole("link", { name: "Your groups" }).click();
   const card = page.getByRole("link", { name: /Tuesday Dinkers/ });
   await expect(card).toContainText("Lead · 1 member");

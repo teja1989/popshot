@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { newUser, signIn } from "./auth";
+import { toMembers } from "./members";
 import { watchProblems } from "./problems";
 
 async function startGroup(page: Page, name: string): Promise<string> {
@@ -21,6 +22,7 @@ async function codeOf(page: Page): Promise<string> {
 }
 
 async function inviteByCode(page: Page, code: string, firstName: string): Promise<void> {
+  await toMembers(page);
   await page.getByRole("button", { name: "Invite someone" }).click();
   const sheet = page.getByRole("dialog", { name: "Invite someone" });
   await sheet.getByLabel("Their code").fill(code.toLowerCase());
@@ -59,7 +61,7 @@ test("a lead invites by code, and the person joins from Home", async ({ page, br
   await expect(invites).toContainText(`${casey.name} invited you · 1 member`);
   await invites.getByRole("button", { name: "Join Dawn Dinkers" }).click();
   await expect(other).toHaveURL(groupUrl);
-  await expect(other.getByRole("region", { name: /Members · 2/ })).toBeVisible();
+  await expect(other.getByRole("link", { name: /Members · 2/ })).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole("region", { name: /Members · 2/ })).toContainText(robin.name);
@@ -67,6 +69,7 @@ test("a lead invites by code, and the person joins from Home", async ({ page, br
 
   // In Casey's next crew, Robin is someone Casey knows: found by name, no code needed.
   await startGroup(page, "Sunset Smash");
+  await toMembers(page);
   await page.getByRole("button", { name: "Invite someone" }).click();
   const sheet = page.getByRole("dialog", { name: "Invite someone" });
   await sheet.getByLabel("Search by name").fill("rob");
@@ -112,6 +115,7 @@ test("saying no is quiet, and a crew can be stopped from inviting again", async 
   await expect(other.getByLabel("Your code")).not.toHaveText(code);
 
   // The old code finds nobody now.
+  await toMembers(page);
   await page.getByRole("button", { name: "Invite someone" }).click();
   const sheet = page.getByRole("dialog", { name: "Invite someone" });
   await sheet.getByLabel("Their code").fill(code);
