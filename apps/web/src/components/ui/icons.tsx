@@ -119,6 +119,19 @@ export function PaddleIcon() {
   );
 }
 
+/** An open book: the Learn tab. */
+export function BookIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <path
+        d="M11 6c-1.8-1.4-4.3-2-7.5-2v12.5c3.2 0 5.7.6 7.5 2 1.8-1.4 4.3-2 7.5-2V4c-3.2 0-5.7.6-7.5 2zM11 6v12.5"
+        strokeWidth="1.8"
+        {...stroke}
+      />
+    </svg>
+  );
+}
+
 export function CrewIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
