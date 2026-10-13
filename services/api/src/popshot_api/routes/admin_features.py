@@ -7,12 +7,12 @@ caches them.
 """
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy import text
 
 from popshot_api.db import CurrentUserSession
@@ -24,7 +24,10 @@ log = structlog.get_logger(__name__)
 Rollout = Literal["off", "crews", "everyone"]
 Plan = Literal["organizer"]
 PlanSource = Literal["beta", "comp", "subscription"]
-FeatureKey = Path(pattern=r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$", max_length=64)
+# Feature keys have dots, which the web's proxy refuses in a path (lib/bff.ts), so they go
+# in the body or the query string.
+KEY_PATTERN = r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$"
+FeatureKey = Annotated[str, StringConstraints(pattern=KEY_PATTERN, max_length=64)]
 
 router = APIRouter(prefix="/v1/admin", dependencies=[Depends(require_admin)])
 changes = APIRouter(
@@ -98,8 +101,10 @@ def list_features(user: CurrentUserSession) -> list[Feature]:
     ]
 
 
-@router.get("/features/{key}/crews")
-def feature_crews(user: CurrentUserSession, key: str = FeatureKey) -> list[FeatureCrew]:
+@router.get("/features/crews")
+def feature_crews(
+    user: CurrentUserSession, key: Annotated[str, Query(pattern=KEY_PATTERN, max_length=64)]
+) -> list[FeatureCrew]:
     rows = user.session.execute(
         text("SELECT * FROM app_admin_feature_crews(:key)"), {"key": key}
     ).all()
@@ -154,6 +159,7 @@ def crew_access(group_id: UUID, user: CurrentUserSession) -> CrewAccess:
 class SetRollout(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    key: FeatureKey
     rollout: Rollout
     reason: Reason
 
@@ -161,6 +167,7 @@ class SetRollout(BaseModel):
 class SetPlan(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    key: FeatureKey
     # None: free for everyone it's rolled out to.
     needs_plan: Plan | None
     reason: Reason
@@ -170,6 +177,10 @@ class WithReason(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     reason: Reason
+
+
+class FeatureChange(WithReason):
+    key: FeatureKey
 
 
 class GrantPlan(BaseModel):
@@ -200,44 +211,40 @@ def _done(outcome: Outcome, user: CurrentUserSession, action: str, **ids: str) -
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@changes.put("/features/{key}/rollout", status_code=status.HTTP_204_NO_CONTENT)
-def set_rollout(body: SetRollout, user: CurrentUserSession, key: str = FeatureKey) -> Response:
+@changes.put("/features/rollout", status_code=status.HTTP_204_NO_CONTENT)
+def set_rollout(body: SetRollout, user: CurrentUserSession) -> Response:
     outcome = user.session.execute(
         text("SELECT app_admin_set_feature_rollout(:key, :rollout, :why)"),
-        {"key": key, "rollout": body.rollout, "why": body.reason},
+        {"key": body.key, "rollout": body.rollout, "why": body.reason},
     ).scalar_one()
-    return _done(outcome, user, "feature.rollout", feature=key)
+    return _done(outcome, user, "feature.rollout", feature=body.key)
 
 
-@changes.put("/features/{key}/plan", status_code=status.HTTP_204_NO_CONTENT)
-def set_plan(body: SetPlan, user: CurrentUserSession, key: str = FeatureKey) -> Response:
+@changes.put("/features/plan", status_code=status.HTTP_204_NO_CONTENT)
+def set_plan(body: SetPlan, user: CurrentUserSession) -> Response:
     outcome = user.session.execute(
         text("SELECT app_admin_set_feature_plan(:key, :plan, :why)"),
-        {"key": key, "plan": body.needs_plan, "why": body.reason},
+        {"key": body.key, "plan": body.needs_plan, "why": body.reason},
     ).scalar_one()
-    return _done(outcome, user, "feature.plan", feature=key)
+    return _done(outcome, user, "feature.plan", feature=body.key)
 
 
-@changes.post("/features/{key}/crews/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
-def add_crew(
-    group_id: UUID, body: WithReason, user: CurrentUserSession, key: str = FeatureKey
-) -> Response:
+@changes.post("/features/crews/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+def add_crew(group_id: UUID, body: FeatureChange, user: CurrentUserSession) -> Response:
     outcome = user.session.execute(
         text("SELECT app_admin_add_feature_crew(:key, :g, :why)"),
-        {"key": key, "g": group_id, "why": body.reason},
+        {"key": body.key, "g": group_id, "why": body.reason},
     ).scalar_one()
-    return _done(outcome, user, "feature.crew_add", feature=key, group_id=str(group_id))
+    return _done(outcome, user, "feature.crew_add", feature=body.key, group_id=str(group_id))
 
 
-@changes.post("/features/{key}/crews/{group_id}/remove", status_code=status.HTTP_204_NO_CONTENT)
-def remove_crew(
-    group_id: UUID, body: WithReason, user: CurrentUserSession, key: str = FeatureKey
-) -> Response:
+@changes.post("/features/crews/{group_id}/remove", status_code=status.HTTP_204_NO_CONTENT)
+def remove_crew(group_id: UUID, body: FeatureChange, user: CurrentUserSession) -> Response:
     outcome = user.session.execute(
         text("SELECT app_admin_remove_feature_crew(:key, :g, :why)"),
-        {"key": key, "g": group_id, "why": body.reason},
+        {"key": body.key, "g": group_id, "why": body.reason},
     ).scalar_one()
-    return _done(outcome, user, "feature.crew_remove", feature=key, group_id=str(group_id))
+    return _done(outcome, user, "feature.crew_remove", feature=body.key, group_id=str(group_id))
 
 
 @changes.put("/groups/{group_id}/plans/{plan}", status_code=status.HTTP_204_NO_CONTENT)
