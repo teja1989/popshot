@@ -60,6 +60,7 @@ class Summary:
     announced_recaps: int
     notifications: int
     deleted_accounts: int = 0
+    purged_visit_days: int = 0
 
 
 def _about(starts_at: datetime, now: datetime) -> str:
@@ -200,6 +201,7 @@ def run(
     with engine.begin() as conn:
         purged = int(conn.execute(text("SELECT app_purge_deleted_groups()")).scalar_one())
         old_activity = int(conn.execute(text("SELECT app_jobs_purge_activity()")).scalar_one())
+        old_visits = int(conn.execute(text("SELECT app_jobs_purge_visits()")).scalar_one())
 
     reminded = 0
     sent = 0
@@ -252,6 +254,7 @@ def run(
         announced_recaps=announced,
         notifications=sent,
         deleted_accounts=deleted_accounts,
+        purged_visit_days=old_visits,
     )
     log.info(
         "tick.done",
@@ -261,6 +264,7 @@ def run(
         announced_recaps=summary.announced_recaps,
         notifications=summary.notifications,
         deleted_accounts=summary.deleted_accounts,
+        purged_visit_days=summary.purged_visit_days,
     )
     return summary
 

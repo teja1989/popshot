@@ -362,6 +362,9 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "direct_invites",
         "invite_blocks",
         "invite_code_lookups",
+        # Only migration 0024's functions touch these; test_funnel.py covers them.
+        "signup_sources",
+        "page_visits",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 

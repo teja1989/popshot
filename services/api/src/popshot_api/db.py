@@ -213,3 +213,14 @@ def public_session(engine: Annotated[Engine, Depends(get_engine)]) -> Iterator[S
 
 
 PublicSession = Annotated[Session, Depends(public_session, scope="function")]
+
+
+def counter_session(engine: Annotated[Engine, Depends(get_engine)]) -> Iterator[Session]:
+    """Like public_session, but able to write: for adding to the anonymous visit counts
+    (migration 0024). With no user set it can still see no rows; the one write it can make
+    goes through app_count_visit, which checks what it's given."""
+    with Session(engine) as session, session.begin():
+        yield session
+
+
+CounterSession = Annotated[Session, Depends(counter_session, scope="function")]

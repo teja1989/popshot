@@ -2,8 +2,9 @@
 
 It runs as you, so row-level security decides what's in it, the same as what the app shows
 you: your profile and settings, your crews, the games you played (with your crewmates' names
-as you see them), your meetup answers, focus, game notes, invites and blocks. Crews you've
-left aren't readable any more, so only your membership row of those is included.
+as you see them), your meetup answers, focus, game notes, invites and blocks, and where you
+first came from. Crews you've left aren't readable any more, so only your membership row of
+those is included.
 
 Your email isn't here: Google sign-in (Firebase) holds it, not Popshot's database.
 """
@@ -99,6 +100,8 @@ def export_my_data(user: CurrentUserSession) -> JSONResponse:
         "notifications": _rows(session, _NOTIFICATIONS, params)[0],
         "invites": _rows(session, "SELECT * FROM app_my_direct_invites()", params),
         "blocked_crews": _rows(session, "SELECT * FROM app_my_invite_blocks()", params),
+        # Where you first came from, if Popshot knows (migration 0024).
+        "signup_source": session.execute(text("SELECT app_my_signup_source()")).scalar_one(),
     }
     filename = f"popshot-data-{now:%Y-%m-%d}.json"
     return JSONResponse(

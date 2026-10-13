@@ -22,6 +22,7 @@ from popshot_api.routes import (
     direct_invites,
     export,
     focus,
+    funnel,
     games,
     groups,
     guests,
@@ -134,6 +135,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(calendar.router)
     app.include_router(recaps.router)
     app.include_router(shares.router)
+    app.include_router(funnel.router)
     return app
 
 
