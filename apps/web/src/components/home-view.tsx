@@ -15,6 +15,7 @@ import { DeletedGroups } from "./deleted-groups";
 import { useHomeRefresh } from "./home-refresh";
 import { InstallBanner } from "./install-banner";
 import { InviteInbox } from "./invite-inbox";
+import { DeletionNotice } from "./your-data-section";
 import { NextNight } from "./next-night";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
@@ -120,6 +121,8 @@ export function HomeView() {
           />
         </dl>
       </section>
+
+      <DeletionNotice />
 
       <InviteInbox onJoined={reload} />
 

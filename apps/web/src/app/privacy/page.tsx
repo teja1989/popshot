@@ -121,10 +121,12 @@ export default async function PrivacyPage() {
       <H2>Your choices and rights</H2>
       <p>
         You can change your name and level in the app, turn notifications off, keep your name off shared recaps, change
-        your Popshot code, stop a crew from inviting you, and leave any group. To get a copy of
-        your data, correct it, or delete your account, email {email}. We&apos;ll confirm it&apos;s you and reply within
-        30 days. Deleting your account removes your name and photo from your groups&apos; games; the scores stay, so
-        your crew&apos;s history still adds up.
+        your Popshot code, stop a crew from inviting you, and leave any group. On your You page you can download a
+        copy of your data and delete your account. Deleting has a 7-day window to change your mind; after that your
+        sign-in, name, photo, notes, settings and devices are deleted for good. Your name and photo are removed from
+        your groups&apos; games and you show as &ldquo;Former player&rdquo;; the scores stay, so your crew&apos;s
+        history still adds up. If you lead a group with other members, make someone else the lead first. For anything
+        else, such as correcting your data, email {email}. We&apos;ll confirm it&apos;s you and reply within 30 days.
       </p>
       <p>
         Depending on where you live (for example California or the EU), you may have further rights, such as to know
