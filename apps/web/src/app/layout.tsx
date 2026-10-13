@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
 import { ErrorReporter } from "@/components/error-reporter";
+import { RememberArrival } from "@/components/funnel-tracking";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 import "./globals.css";
@@ -42,6 +43,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body>
         <ErrorReporter />
+        <RememberArrival />
         {children}
       </body>
     </html>

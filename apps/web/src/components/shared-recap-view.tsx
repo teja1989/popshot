@@ -3,6 +3,7 @@ import Link from "next/link";
 import { describeAward, outingSize } from "@/lib/recaps";
 import { gamesText, namesText, teamAWon, type SharedRecap } from "@/lib/shares";
 
+import { CountVisit, TryPopshotLink } from "./funnel-tracking";
 import { LocalDate } from "./local-date";
 import { Avatar } from "./ui/avatar";
 import { Brand } from "./ui/brand";
@@ -13,6 +14,7 @@ import { CourtPattern } from "./ui/court-pattern";
 export function SharedRecapView({ recap }: { recap: SharedRecap }) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
+      <CountVisit page="recap" />
       <Link
         href="/"
         aria-label="Popshot home"
@@ -111,9 +113,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
         <p className="text-body text-muted">
           Popshot logs your games, plans meetups and writes a recap like this after you play.
         </p>
-        <Link href="/" className={buttonClass("primary")}>
-          Try Popshot
-        </Link>
+        <TryPopshotLink className={buttonClass("primary")}>Try Popshot</TryPopshotLink>
       </section>
       <p className="text-meta text-muted">
         Shared by someone in {recap.crew}. First names only. This link stops working on{" "}

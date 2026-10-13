@@ -46,6 +46,17 @@ export default async function PrivacyPage() {
           notifications to that device.
         </li>
         <li>
+          <strong>Where you came from:</strong> if you arrive through an invite link or a tagged link (for example
+          from a shared recap or a poster), your browser remembers that one word, such as &ldquo;recap&rdquo; or
+          &ldquo;invite&rdquo;, and sends it once when you first sign up. It&apos;s kept with your account, only our
+          staff see it (as totals, to learn which ways of finding Popshot work), it&apos;s in your data download, and
+          it&apos;s deleted with your account.
+        </li>
+        <li>
+          <strong>Visit counts:</strong> we count visits to the home page, invite pages and shared recaps, per day and
+          per tag. Only the totals are kept: nothing about who visited, no IP address, no cookie.
+        </li>
+        <li>
           <strong>Usage:</strong> which days you opened Popshot (to count active players), and server logs of requests
           (the page or action, the result and how long it took). Our hosting provider&apos;s logs can include your IP
           address and browser type.

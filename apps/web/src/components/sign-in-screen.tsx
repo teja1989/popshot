@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef } from "react";
 
 import { useAuth } from "./auth";
+import { CountVisit } from "./funnel-tracking";
 import { GameDayStory } from "./landing/game-day-story";
 import { CrewInsights, YourStats } from "./landing/insights";
 import { HeroPhoto, PhotoBand } from "./landing/photos";
@@ -86,6 +87,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
 
   return (
     <MotionConfig reducedMotion="user">
+      <CountVisit page={invited ? "invite" : "home"} />
       <div className="bg-bg">
         <section ref={hero} className="relative isolate overflow-hidden bg-hero text-on-hero">
           <HeroPhoto />
