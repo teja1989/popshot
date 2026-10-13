@@ -34,6 +34,7 @@ from popshot_api.routes import (
     recaps,
     shares,
     stats,
+    week,
 )
 from popshot_api.settings import Settings
 
@@ -136,6 +137,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(recaps.router)
     app.include_router(shares.router)
     app.include_router(funnel.router)
+    app.include_router(week.router)
     return app
 
 
