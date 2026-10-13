@@ -32,6 +32,9 @@ export function AdminView() {
           <p className="text-body text-muted">
             Across all of Popshot. Find a person or open a crew to help with an issue.
           </p>
+          <Link href="/admin/funnel" className="self-start text-body font-bold text-primary">
+            See the funnel →
+          </Link>
         </header>
         {overview.result.kind === "loading" && <p className="text-muted">Loading the numbers…</p>}
         {overview.result.kind === "error" && (

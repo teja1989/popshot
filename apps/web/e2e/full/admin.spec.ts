@@ -159,3 +159,37 @@ test("the admin makes a member the lead, with a reason that's kept", async ({ pa
   await expect(people.getByRole("button", { name: "Make lead" })).toHaveCount(1); // now Casey
   expect(problems).toEqual([]);
 });
+
+test("the admin's funnel shows how new crews are getting on, and nobody else can open it", async ({ page }) => {
+  await signIn(page, newUser("Sky"));
+  await page.goto("/admin/funnel");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("That page is out of bounds.");
+
+  const crew = `Funnel check ${String(Date.now())}`;
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start a group" }).first().click();
+  await page.getByLabel("Group name").fill(crew);
+  await page.getByRole("button", { name: "Create group" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(crew);
+
+  await signIn(page, ADMIN);
+  const problems = await watchProblems(page);
+  await page.goto("/admin");
+  await page.getByRole("link", { name: "See the funnel →" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Funnel");
+  await expect(page.getByRole("list", { name: "New crews, step by step" }).getByRole("listitem")).toHaveCount(6);
+  await expect(page.getByRole("list", { name: "New people, step by step" }).getByRole("listitem")).toHaveCount(4);
+  await expect(page.getByRole("table", { name: "New people by where they came from" })).toBeVisible();
+  const row = page
+    .getByRole("list", { name: "Newer crews, newest first" })
+    .getByRole("listitem")
+    .filter({ hasText: crew });
+  await expect(row).toContainText("Needs a second member");
+  await expect(page.getByText("Sky Test")).toHaveCount(0);
+
+  await page.getByText("12 weeks").click();
+  await expect(page.getByRole("table", { name: "Active crews each week, newest first" }).getByRole("row")).toHaveCount(
+    13,
+  );
+  expect(problems).toEqual([]);
+});
