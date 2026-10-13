@@ -4,7 +4,9 @@
 locals {
   state_bucket = "${var.project_id}-tfstate"
 
-  # The deploy identity manages every resource in infra/terraform/prod, including IAM.
+  # The deploy identity manages every resource in infra/terraform/prod, including IAM and
+  # the project's custom roles (roleAdmin: the narrow "delete sign-ins" role for the tick
+  # job, migration 0023).
   # It gets serviceAccountUser only on the runtime service accounts it deploys (granted in
   # the prod stack), not project-wide.
   # That makes it close to project owner, which is why only an approved job on main can
@@ -15,6 +17,7 @@ locals {
     "roles/cloudsql.admin",
     "roles/compute.networkAdmin",
     "roles/firebase.admin",
+    "roles/iam.roleAdmin",
     "roles/iam.serviceAccountAdmin",
     "roles/identitytoolkit.admin",
     "roles/resourcemanager.projectIamAdmin",

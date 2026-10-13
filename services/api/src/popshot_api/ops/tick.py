@@ -1,7 +1,8 @@
 """The scheduled job, run every 15 minutes by Cloud Scheduler: play-night reminders,
 "your recap is ready" for the people who played (an hour or more after an outing's last
-game), deleting groups whose 30 days to be restored have passed, and deleting usage activity
-older than 13 months.
+game), deleting groups whose 30 days to be restored have passed, deleting usage activity
+older than 13 months, and deleting accounts whose 7 days to change their mind have passed
+(their Firebase sign-in first, then their data: migration 0023).
 
 It logs in as its own database user (a member of popshot_jobs), which can only call the
 functions migration 0008 grants it. Reminders are marked sent before they go out, so a
@@ -13,7 +14,7 @@ Usage: python -m popshot_api.ops.tick
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 from uuid import UUID
 
 import structlog
@@ -21,6 +22,7 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import Engine, Row, text
 
+from popshot_api.accounts import AccountDeleteError, IdentityPlatformDeleter
 from popshot_api.db import make_engine
 from popshot_api.log_config import configure_logging
 from popshot_api.push import Message, PushSender, Subscription
@@ -45,6 +47,9 @@ class JobSettings(BaseSettings):
     database_iam_auth: bool = False
     push_vapid_private_key: SecretStr | None = None
     push_subject: str = Field(default="https://localhost", pattern=r"^https://[^\s]+$")
+    # Where deleted accounts' Firebase sign-ins are deleted. Unset (local development): their
+    # data is still deleted, and the log says the sign-in wasn't.
+    firebase_project_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +59,7 @@ class Summary:
     reminded_nights: int
     announced_recaps: int
     notifications: int
+    deleted_accounts: int = 0
 
 
 def _about(starts_at: datetime, now: datetime) -> str:
@@ -154,8 +160,43 @@ def announce_recaps(
     return announced, sent, gone
 
 
-def run(engine: Engine, sender: PushSender | None, now: datetime | None = None) -> Summary:
+class AccountDeleter(Protocol):
+    def delete(self, subject: str) -> None: ...
+
+
+def delete_accounts(engine: Engine, deleter: AccountDeleter | None) -> int:
+    """Accounts whose time to change their mind is up: the sign-in, then the data.
+
+    The sign-in goes first: if that fails, the account waits for the next run with nothing
+    lost. Deleting the data then replaces the stored sign-in, so it must come second.
+    """
+    with engine.begin() as conn:
+        due = conn.execute(text("SELECT * FROM app_jobs_due_deletions()")).all()
+    deleted = 0
+    for account in due:
+        if deleter is None:
+            log.warning("tick.sign_in_not_deleted", reason="not configured")
+        else:
+            try:
+                deleter.delete(account.auth_subject)
+            except AccountDeleteError:
+                continue
+        with engine.begin() as conn:
+            if conn.execute(
+                text("SELECT app_jobs_purge_user(:u)"), {"u": account.user_id}
+            ).scalar_one():
+                deleted += 1
+    return deleted
+
+
+def run(
+    engine: Engine,
+    sender: PushSender | None,
+    now: datetime | None = None,
+    deleter: AccountDeleter | None = None,
+) -> Summary:
     now = now or datetime.now(UTC)
+    deleted_accounts = delete_accounts(engine, deleter)
     with engine.begin() as conn:
         purged = int(conn.execute(text("SELECT app_purge_deleted_groups()")).scalar_one())
         old_activity = int(conn.execute(text("SELECT app_jobs_purge_activity()")).scalar_one())
@@ -210,6 +251,7 @@ def run(engine: Engine, sender: PushSender | None, now: datetime | None = None) 
         reminded_nights=reminded,
         announced_recaps=announced,
         notifications=sent,
+        deleted_accounts=deleted_accounts,
     )
     log.info(
         "tick.done",
@@ -218,6 +260,7 @@ def run(engine: Engine, sender: PushSender | None, now: datetime | None = None) 
         reminded_nights=summary.reminded_nights,
         announced_recaps=summary.announced_recaps,
         notifications=summary.notifications,
+        deleted_accounts=summary.deleted_accounts,
     )
     return summary
 
@@ -233,8 +276,13 @@ def main() -> int:
         if settings.push_vapid_private_key
         else None
     )
+    deleter = (
+        IdentityPlatformDeleter(settings.firebase_project_id)
+        if settings.firebase_project_id
+        else None
+    )
     try:
-        run(engine, sender)
+        run(engine, sender, deleter=deleter)
     finally:
         engine.dispose()
     return 0

@@ -20,6 +20,7 @@ from popshot_api.routes import (
     board,
     calendar,
     direct_invites,
+    export,
     focus,
     games,
     groups,
@@ -119,6 +120,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
         recap_writer if recap_writer is not None else _recap_writer_for(settings)
     )
     app.include_router(me.router)
+    app.include_router(export.router)
     app.include_router(groups.router)
     app.include_router(guests.router)
     app.include_router(invites.router)

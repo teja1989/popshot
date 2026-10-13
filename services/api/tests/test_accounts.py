@@ -1,5 +1,6 @@
 """popshot_api.accounts against a fake HTTP call: what's asked, and what comes back."""
 
+import io
 import urllib.error
 from datetime import UTC, datetime
 from typing import Any
@@ -7,6 +8,8 @@ from typing import Any
 import pytest
 
 from popshot_api.accounts import (
+    AccountDeleteError,
+    IdentityPlatformDeleter,
     IdentityPlatformLookup,
     LookupUnavailableError,
     NoAccountLookup,
@@ -83,3 +86,36 @@ def test_failures_say_unavailable(failure: Exception) -> None:
 def test_lookup_off() -> None:
     with pytest.raises(LookupUnavailableError):
         NoAccountLookup().by_email("casey@example.com")
+
+
+def http_error(code: int, body: bytes) -> urllib.error.HTTPError:
+    return urllib.error.HTTPError("https://x", code, "error", {}, io.BytesIO(body))  # type: ignore[arg-type]
+
+
+def test_deleting_a_sign_in() -> None:
+    post = FakePost({})
+    IdentityPlatformDeleter("ps-prod-1234", token=lambda: "sa-token", post=post).delete("uid-1")
+    [(url, body, token)] = post.calls
+    assert url == "https://identitytoolkit.googleapis.com/v1/projects/ps-prod-1234/accounts:delete"
+    assert body == {"localId": "uid-1"}
+    assert token == "sa-token"
+
+
+def test_a_sign_in_already_gone_counts_as_deleted() -> None:
+    post = FakePost(http_error(400, b'{"error": {"message": "USER_NOT_FOUND"}}'))
+    IdentityPlatformDeleter("p", token=lambda: "t", post=post).delete("uid-1")
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        http_error(403, b'{"error": {"message": "PERMISSION_DENIED"}}'),
+        http_error(400, b'{"error": {"message": "INVALID_ID_TOKEN"}}'),
+        urllib.error.URLError("no network"),
+        TimeoutError(),
+    ],
+)
+def test_other_failures_wait_for_the_next_run(failure: Exception) -> None:
+    deleter = IdentityPlatformDeleter("p", token=lambda: "t", post=FakePost(failure))
+    with pytest.raises(AccountDeleteError):
+        deleter.delete("uid-1")

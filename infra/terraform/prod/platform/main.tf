@@ -170,6 +170,23 @@ resource "google_project_iam_member" "admin_account_lookup" {
   member  = google_service_account.admin.member
 }
 
+# When an account is deleted (migration 0023), the tick job deletes its Firebase sign-in,
+# where the email lives. A custom role with that one permission: the job can't read,
+# create or change sign-ins.
+resource "google_project_iam_custom_role" "delete_sign_ins" {
+  project     = var.project_id
+  role_id     = "popshotDeleteSignIns"
+  title       = "Popshot: delete sign-ins"
+  description = "Deletes Firebase Authentication users, nothing else. For the tick job."
+  permissions = ["firebaseauth.users.delete"]
+}
+
+resource "google_project_iam_member" "tick_delete_sign_ins" {
+  project = var.project_id
+  role    = google_project_iam_custom_role.delete_sign_ins.id
+  member  = google_service_account.tick.member
+}
+
 # Recaps can be written by Gemini on Vertex AI (popshot_api.ai_recap), as the API's own
 # service account. It only runs when the services stack turns POPSHOT_RECAP_AI on.
 resource "google_project_iam_member" "api_vertex_ai" {
@@ -588,6 +605,10 @@ resource "google_cloud_run_v2_job" "tick" {
           name  = "POPSHOT_PUSH_SUBJECT"
           value = local.web_url
         }
+        env {
+          name  = "POPSHOT_FIREBASE_PROJECT_ID"
+          value = var.project_id
+        }
 
         volume_mounts {
           name       = "sql-ca"
@@ -614,6 +635,7 @@ resource "google_cloud_run_v2_job" "tick" {
     google_secret_manager_secret_version.push_vapid,
     google_project_iam_member.sql_instance_user,
     google_sql_user.tick,
+    google_project_iam_member.tick_delete_sign_ins,
   ]
 }
 
