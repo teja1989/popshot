@@ -27,6 +27,7 @@ import type { GroupDetail } from "@/lib/groups";
 import { nightWhen, type Night } from "@/lib/nights";
 import type { BestOf, PointsTo } from "@/lib/scoring";
 
+import { AddGuestInline } from "./add-guest-inline";
 import { useSignedIn } from "./auth";
 import { useFeature, useFeaturesLoaded } from "./features";
 import { useApiGet } from "./use-api";
@@ -66,6 +67,7 @@ export function EventSetupView({ groupId }: { groupId: string }) {
         <Setup
           group={group.result.data}
           players={players.result.data}
+          onGuestAdded={players.reload}
           nights={nights.result.kind === "ready" ? nights.result.data : []}
           available={available}
         />
@@ -77,11 +79,13 @@ export function EventSetupView({ groupId }: { groupId: string }) {
 function Setup({
   group,
   players,
+  onGuestAdded,
   nights,
   available,
 }: {
   group: GroupDetail;
   players: Player[];
+  onGuestAdded: () => void;
   nights: Night[];
   available: EventKind[];
 }) {
@@ -261,8 +265,16 @@ function Setup({
         </ul>
         <p className="text-small text-muted">
           {count} picked
-          {count > MAX_PLAYERS ? ` · up to ${String(MAX_PLAYERS)}` : ""}. Guests are added from Log a game.
+          {count > MAX_PLAYERS ? ` · up to ${String(MAX_PLAYERS)}` : ""}.
         </p>
+        <AddGuestInline
+          groupId={group.id}
+          label="Someone not on Popshot? Add them as a guest"
+          onAdded={(guest) => {
+            setPicked((now) => new Set(now).add(guest.id));
+            onGuestAdded();
+          }}
+        />
       </fieldset>
 
       <fieldset className={SECTION}>

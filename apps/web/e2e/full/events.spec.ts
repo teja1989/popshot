@@ -58,6 +58,11 @@ test("a lead runs a Dink Shuffle from Play: rounds, scores, finish", async ({ pa
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Saturday Shuffle");
   await expect(page.getByRole("region", { name: "Round 1" })).toBeVisible();
+  // An event is part of Play.
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Play" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await expect(page.getByText(/^Sitting out: /)).toBeVisible();
   await expect(page.getByRole("button", { name: "Start round 2" })).toBeDisabled();
 
@@ -74,6 +79,13 @@ test("a lead runs a Dink Shuffle from Play: rounds, scores, finish", async ({ pa
   // Round 1 is folded away with its scores.
   await page.getByText("Round 1", { exact: true }).click();
   await expect(page.getByText("11–7")).toBeVisible();
+
+  // Someone new turns up mid-event: added as a guest, they play from the next round.
+  await page.getByText("Who's playing (9)").click();
+  await page.getByLabel("Someone new? Add them as a guest").fill("Kim");
+  await page.getByRole("button", { name: "Add", exact: true }).last().click();
+  await expect(page.getByRole("region", { name: "Playing" })).toContainText("Kim");
+  await expect(page.getByText("Who's playing (10)")).toBeVisible();
 
   await page.getByRole("button", { name: "Finish event" }).click();
   await page.getByRole("button", { name: "Yes, finish" }).click();
@@ -96,9 +108,13 @@ test("Ride the River moves the winners up, and Competitive shows standings", asy
   await page.goto(`/groups/${crewId}/events/new`);
   // The options are hidden radios inside their labels: tap the label, as a person would.
   await page.getByText("Ride the River", { exact: true }).click();
-  for (const name of [lead.name, ...guests]) {
+  for (const name of [lead.name, ...guests.slice(0, 6)]) {
     await page.getByRole("checkbox", { name }).check();
   }
+  // The eighth player isn't in the crew yet: added as a guest here, and ticked straight away.
+  await page.getByLabel("Someone not on Popshot? Add them as a guest").fill("Zed");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByRole("checkbox", { name: "Zed" })).toBeChecked();
   await page.getByText("By crew points", { exact: true }).click();
   await page.getByText("Competitive", { exact: true }).click();
   await page.getByRole("button", { name: "Start round 1" }).click();

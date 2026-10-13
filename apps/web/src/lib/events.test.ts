@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatInfo,
+  myResultsLine,
   openCourts,
   pointDifference,
   roundShape,
@@ -54,6 +55,11 @@ describe("crew events", () => {
       ],
     };
     expect(openCourts(round).map((c) => c.court)).toEqual([3]);
+  });
+
+  it("never dwells on no wins", () => {
+    expect(myResultsLine({ games: 1, wins: 0 })).toBe("You've played 1 game so far. Enjoy the next one.");
+    expect(myResultsLine({ games: 3, wins: 2 })).toBe("You've played 3 games and won 2.");
   });
 
   it("writes scores, teams and point differences", () => {
