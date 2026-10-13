@@ -55,6 +55,8 @@ describe("upstreamPath", () => {
     [["v1", ""]],
     [["v1", "a".repeat(65)]],
     [["v1", "a", "b", "c", "d", "e", "f", "g", "h"]],
+    [["v1", "public", "visits"]],
+    [["v1", "public", "recap"]],
   ])("rejects %j", (segments) => {
     expect(upstreamPath(segments)).toBeNull();
   });

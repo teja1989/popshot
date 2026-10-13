@@ -46,6 +46,11 @@ export function upstreamPath(segments: readonly string[]): string | null {
   if (segments.length < 2 || segments.length > MAX_SEGMENTS || segments[0] !== "v1") {
     return null;
   }
+  // /v1/public/... is for the web server only (shared recap cards, visit counts), never
+  // forwarded from a browser: it takes no sign-in, so the proxy's bearer check means nothing.
+  if (segments[1] === "public") {
+    return null;
+  }
   // Next.js has already decoded each segment, so "%2F" or ".." would show up here.
   if (!segments.every((s) => SEGMENT.test(s))) {
     return null;

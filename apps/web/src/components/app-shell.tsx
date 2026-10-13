@@ -9,6 +9,7 @@ import "@/lib/install";
 
 import { AppFrame } from "./app-frame";
 import { AuthProvider, useAuth } from "./auth";
+import { SendSignupSource } from "./funnel-tracking";
 import { LoadingScreen } from "./loading-screen";
 import { SignInScreen } from "./sign-in-screen";
 
@@ -47,5 +48,10 @@ function Gate({ invited, children }: { invited: boolean; children: ReactNode }) 
   if (state.kind === "signed-out") {
     return <SignInScreen invited={invited} />;
   }
-  return <AppFrame>{children}</AppFrame>;
+  return (
+    <AppFrame>
+      <SendSignupSource />
+      {children}
+    </AppFrame>
+  );
 }
