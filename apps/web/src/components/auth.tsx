@@ -15,6 +15,9 @@ export interface Me {
   self_level?: string | null;
   // Shown as "Crew member" on recaps shared outside the app.
   hide_on_shared_cards?: boolean;
+  // Set while the account waits to be deleted (on delete_on, unless you keep it).
+  delete_requested_at?: string | null;
+  delete_on?: string | null;
 }
 
 export type AuthState =

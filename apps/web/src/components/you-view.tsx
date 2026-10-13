@@ -14,6 +14,7 @@ import { NotificationsSection } from "./notifications-section";
 import { LegalLinks } from "./legal-page";
 import { SharedCardsSection } from "./shared-cards-section";
 import { SignOutButton } from "./sign-out-button";
+import { YourDataSection } from "./your-data-section";
 import { Avatar } from "./ui/avatar";
 
 const THEMES: { value: ThemeChoice; label: string }[] = [
@@ -80,6 +81,8 @@ export function YouView() {
           ))}
         </div>
       </fieldset>
+
+      <YourDataSection />
 
       <SignOutButton className="self-start" />
       <LegalLinks className="text-[15px]" />
