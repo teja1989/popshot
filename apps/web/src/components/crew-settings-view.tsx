@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { useId, useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
-import { apiPatch, ApiError } from "@/lib/api-client";
+import { apiPatch, apiPut, ApiError } from "@/lib/api-client";
+import {
+  ABOUT_MAX,
+  COURT_MAX,
+  COURTS_MAX,
+  DAY_LABEL,
+  DAYS,
+  TIME_LABEL,
+  TIMES,
+  hasLink,
+  type Day,
+  type TimeOfDay,
+} from "@/lib/crew-profile";
 import { sectionsFor, type SectionId } from "@/lib/crew-settings";
 import { describeRules, GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
 
@@ -22,6 +34,7 @@ interface SectionProps {
 // One component per section in lib/crew-settings.ts. A new section is a new entry in both.
 const SECTION_VIEWS: Record<SectionId, (props: SectionProps) => ReactNode> = {
   crew: CrewSection,
+  profile: ProfileSection,
   rules: RulesSection,
   leave: LeaveSection,
 };
@@ -154,6 +167,160 @@ function CrewSection({ group, onSaved }: SectionProps) {
             {saving ? "Saving…" : "Save name"}
           </button>
           {status}
+        </div>
+      </form>
+    </SettingsSection>
+  );
+}
+
+function ProfileSection({ group, onSaved }: SectionProps) {
+  const { user } = useSignedIn();
+  const [about, setAbout] = useState(group.about ?? "");
+  const [days, setDays] = useState<Day[]>(group.usual_days ?? []);
+  const [times, setTimes] = useState<TimeOfDay[]>(group.usual_times ?? []);
+  const [courts, setCourts] = useState<string[]>(() => {
+    const given = group.home_courts ?? [];
+    return [...given, ...Array<string>(COURTS_MAX - given.length).fill("")];
+  });
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  function toggle<T>(list: T[], value: T, on: boolean): T[] {
+    return on ? [...list, value] : list.filter((v) => v !== value);
+  }
+
+  function changed() {
+    setSaved(false);
+    setProblem(null);
+  }
+
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    changed();
+    if ([about, ...courts].some(hasLink)) {
+      setProblem("Leave out links and web or email addresses.");
+      return;
+    }
+    setSaving(true);
+    try {
+      onSaved(
+        await apiPut<GroupDetail>(user, `/v1/groups/${group.id}/profile`, {
+          about: about.trim() || null,
+          usual_days: days,
+          usual_times: times,
+          home_courts: courts.map((c) => c.trim()).filter(Boolean),
+        }),
+      );
+      setSaved(true);
+    } catch (error) {
+      setProblem(
+        error instanceof ApiError && error.status === 422
+          ? "Check it again: no links, web or email addresses, and keep it short."
+          : error instanceof ApiError && error.detail
+            ? error.detail
+            : "We couldn't save that just now.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const chip =
+    "flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-line px-4 text-[15px] font-bold text-muted " +
+    "has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-on-primary " +
+    "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
+
+  return (
+    <SettingsSection
+      title="Crew profile"
+      description="Helps people decide to join. About and times show on invites; courts only to members."
+    >
+      <form className="flex flex-col gap-5" onSubmit={(event) => void submit(event)} noValidate>
+        <label className="flex flex-col gap-2">
+          <span className="text-[15px] font-bold">About</span>
+          <textarea
+            value={about}
+            onChange={(event) => {
+              setAbout(event.target.value);
+              changed();
+            }}
+            maxLength={ABOUT_MAX}
+            rows={3}
+            placeholder="Friendly games, all levels. We rotate partners."
+            className="rounded-xl border border-line bg-bg px-4 py-3 text-[17px] text-ink"
+          />
+          <span className="text-[13px] text-muted">
+            {String(about.length)}/{String(ABOUT_MAX)} · No links or contact details.
+          </span>
+        </label>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-[15px] font-bold">Usual days</legend>
+          <div className="flex flex-wrap gap-2">
+            {DAYS.map((day) => (
+              <label key={day} className={chip}>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={days.includes(day)}
+                  onChange={(event) => {
+                    setDays(toggle(days, day, event.target.checked));
+                    changed();
+                  }}
+                />
+                {DAY_LABEL[day]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-[15px] font-bold">Usual times</legend>
+          <div className="flex flex-wrap gap-2">
+            {TIMES.map((time) => (
+              <label key={time} className={chip}>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={times.includes(time)}
+                  onChange={(event) => {
+                    setTimes(toggle(times, time, event.target.checked));
+                    changed();
+                  }}
+                />
+                {TIME_LABEL[time].one}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-[15px] font-bold">Home courts</legend>
+          <p className="text-[13px] text-muted">A court or park name, not a home address. Only members see these.</p>
+          {courts.map((court, index) => (
+            <input
+              key={index}
+              aria-label={`Home court ${String(index + 1)}`}
+              value={court}
+              onChange={(event) => {
+                setCourts(courts.map((c, i) => (i === index ? event.target.value : c)));
+                changed();
+              }}
+              maxLength={COURT_MAX}
+              autoComplete="off"
+              className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink"
+            />
+          ))}
+        </fieldset>
+
+        <div className="flex items-center gap-3">
+          <button type="submit" className={buttonClass("primary")} disabled={saving}>
+            {saving ? "Saving…" : "Save profile"}
+          </button>
+          <p role="status" className={`text-[15px] ${problem ? "text-warn" : "text-muted"} empty:hidden`}>
+            {problem ?? (saved ? "Saved." : "")}
+          </p>
         </div>
       </form>
     </SettingsSection>

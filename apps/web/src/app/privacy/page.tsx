@@ -27,7 +27,8 @@ export default async function PrivacyPage() {
           it.
         </li>
         <li>
-          <strong>What you add:</strong> the groups you start or join, invites, games (players, scores, rules and when
+          <strong>What you add:</strong> the groups you start or join (and a group&apos;s profile: its about,
+          usual times and home courts), invites, games (players, scores, rules and when
           they were played), meetups (time, venue, note, who&apos;s going), your playing level, the focus areas and
           game notes you pick, and your notification choices.
         </li>
@@ -72,6 +73,10 @@ export default async function PrivacyPage() {
         </li>
         <li>
           <strong>Only you:</strong> your focus areas and game notes.
+        </li>
+        <li>
+          <strong>People invited to a group:</strong> see its name, its about and usual play times, and who invited
+          them. Its home courts and members stay hidden until they join.
         </li>
         <li>
           <strong>Invites:</strong> there&apos;s no search for people on Popshot. A crew&apos;s lead or co-lead can

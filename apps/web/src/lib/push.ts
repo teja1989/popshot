@@ -16,16 +16,23 @@ export interface NotificationSettings {
   devices: number;
 }
 
-export type Category = "games" | "play_nights" | "recaps" | "invites" | "tab" | "milestones";
+export type Category = "games" | "play_nights" | "recaps" | "invites" | "requests" | "tab" | "milestones";
 
 export const CATEGORY_LABEL: Record<Category, { title: string; body: string }> = {
   games: { title: "Games you played", body: "When someone logs a game you were in." },
   play_nights: { title: "Meetups", body: "New meetups, reminders and open spots." },
   recaps: { title: "Recaps", body: "When the recap of a game day you played in is ready." },
   invites: { title: "Invites", body: "When a crew invites you to join." },
+  requests: { title: "Join requests", body: "When someone asks to join a crew you lead." },
   tab: { title: "Crew tab", body: "Expenses and settle-ups that involve you." },
   milestones: { title: "Milestones", body: "When you reach one." },
 };
+
+/** The categories this app knows how to show, in the API's order. The API may offer a
+ *  newer one before the app has a label for it; that one is left out, never a crash. */
+export function knownCategories(categories: readonly string[]): Category[] {
+  return categories.filter((c): c is Category => Object.hasOwn(CATEGORY_LABEL, c));
+}
 
 const WORKER = "/sw.js";
 

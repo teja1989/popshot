@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { apiPost, apiPut, ApiError } from "@/lib/api-client";
 import {
   CATEGORY_LABEL,
+  knownCategories,
   currentSubscription,
   pushSupport,
   turnOff,
@@ -139,7 +140,7 @@ function Notifications({ publicKey }: { publicKey: string }) {
         {settings.result.kind === "ready" && settings.result.data.devices > 0 && (
           <fieldset className="flex flex-col gap-2 border-t border-line pt-4">
             <legend className="mb-1 text-[16px] font-extrabold">What you hear about</legend>
-            {settings.result.data.categories.map((category) => {
+            {knownCategories(settings.result.data.categories).map((category) => {
               const on = settings.result.kind === "ready" && !settings.result.data.muted.includes(category);
               return (
                 <label

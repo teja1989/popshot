@@ -8,6 +8,7 @@ import { apiPost, ApiError } from "@/lib/api-client";
 import { tokenFromHash, type InvitePreview, type Joined } from "@/lib/invites";
 
 import { useSignedIn } from "./auth";
+import { CrewProfileSummary } from "./crew-profile-summary";
 import { buttonClass } from "./ui/button";
 import { CourtPattern } from "./ui/court-pattern";
 
@@ -137,6 +138,7 @@ export function JoinView() {
           <h1 className="text-[34px] leading-[1.05] font-extrabold tracking-[-0.02em] break-words [font-stretch:110%]">
             {state.preview.group_name}
           </h1>
+          <CrewProfileSummary profile={state.preview} onHero />
           <Outcome
             preview={state.preview}
             joining={joining}

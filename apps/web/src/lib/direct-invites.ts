@@ -1,6 +1,8 @@
 // Direct invites: a lead or co-lead invites a person, who accepts or declines. Shapes match
 // the API's routes/direct_invites.py.
 
+import type { Day, TimeOfDay } from "./crew-profile";
+
 export type Standing = "member" | "requested" | "invited";
 
 export interface Person {
@@ -28,6 +30,10 @@ export interface MyInvite {
   members: number;
   created_at: string;
   expires_at: string;
+  // The crew's profile, without its home courts.
+  about?: string | null;
+  usual_days?: Day[];
+  usual_times?: TimeOfDay[];
 }
 
 export interface InviteBlock {
