@@ -19,7 +19,7 @@ export function GroupExit({ group }: { group: GroupDetail }) {
     <div className="flex flex-col items-start gap-3">
       {isLead ? (
         <>
-          <p className="text-[15px] text-muted">
+          <p className="text-body text-muted">
             To leave, make someone else the lead first (Manage, next to their name).
           </p>
           <DeleteGroup group={group} />
@@ -54,7 +54,7 @@ function LeaveGroup({ group }: { group: GroupDetail }) {
   return (
     <Sheet
       trigger={
-        <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}>
+        <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")}>
           {pending ? "Cancel your request" : "Leave group"}
         </button>
       }
@@ -68,7 +68,7 @@ function LeaveGroup({ group }: { group: GroupDetail }) {
       }
     >
       <div className="flex flex-col gap-3">
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -114,7 +114,7 @@ function DeleteGroup({ group }: { group: GroupDetail }) {
   return (
     <Sheet
       trigger={
-        <button type="button" className={buttonClass("danger", "min-h-11 px-4 text-[15px]")}>
+        <button type="button" className={buttonClass("danger", "min-h-11 px-4 text-body")}>
           Delete group
         </button>
       }
@@ -129,7 +129,7 @@ function DeleteGroup({ group }: { group: GroupDetail }) {
     >
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Type the group&apos;s name to confirm</span>
+          <span className="text-body font-bold">Type the group&apos;s name to confirm</span>
           <input
             value={typed}
             onChange={(event) => {
@@ -137,10 +137,10 @@ function DeleteGroup({ group }: { group: GroupDetail }) {
             }}
             autoComplete="off"
             placeholder={group.name}
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink placeholder:text-muted"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted"
           />
         </label>
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
         <button

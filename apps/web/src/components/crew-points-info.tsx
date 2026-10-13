@@ -31,9 +31,9 @@ export function CrewPointsInfo({ tone = "default" }: { tone?: "default" | "hero"
       description={`A rating from ${points(CREW_POINTS.min)} to ${points(CREW_POINTS.max)} for how you play in this crew.`}
       fullOnPhone
     >
-      <div className="flex flex-col gap-5 text-[16px] leading-relaxed">
+      <div className="flex flex-col gap-5 text-lead leading-relaxed">
         <section className="flex flex-col gap-2">
-          <h3 className="text-[17px] font-extrabold">After every game</h3>
+          <h3 className="text-lead font-extrabold">After every game</h3>
           <ol className="flex list-decimal flex-col gap-1.5 pl-5">
             <li>
               Before it&apos;s scored, we work out what share of the points each side should win. A side&apos;s
@@ -49,7 +49,7 @@ export function CrewPointsInfo({ tone = "default" }: { tone?: "default" | "hero"
         </section>
 
         <section className="flex flex-col gap-2 rounded-2xl bg-chip p-4">
-          <h3 className="text-[15px] font-extrabold">An example</h3>
+          <h3 className="text-body font-extrabold">An example</h3>
           <p>
             You and your partner ({points(ex.team)} each) beat a team on {points(ex.opponents)} {won}–{lost}. You were
             expected to win about {Math.round(ex.expectedShare * 100)}% of the points and won{" "}
@@ -60,13 +60,13 @@ export function CrewPointsInfo({ tone = "default" }: { tone?: "default" | "hero"
         </section>
 
         <section className="flex flex-col gap-2">
-          <h3 className="text-[17px] font-extrabold">Your level vs. your crew points</h3>
+          <h3 className="text-lead font-extrabold">Your level vs. your crew points</h3>
           <p>
             The level you pick on the You page is only where your crew points <strong>start</strong>. Within about{" "}
             {CREW_POINTS.rankedAfter} games your results take over, and changing it later doesn&apos;t move your
             points.
           </p>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-[15px] text-muted">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-body text-muted">
             <li>Not set · {points(DEFAULT_START)}</li>
             {LEVELS.map((level) => (
               <li key={level.value}>
@@ -77,7 +77,7 @@ export function CrewPointsInfo({ tone = "default" }: { tone?: "default" | "hero"
         </section>
 
         <section className="flex flex-col gap-2">
-          <h3 className="text-[17px] font-extrabold">What they&apos;re for</h3>
+          <h3 className="text-lead font-extrabold">What they&apos;re for</h3>
           <p>
             Crew points help keep games even and show how you&apos;re playing. Popshot doesn&apos;t rank your crew:
             the Crew tab lists everyone A to Z.
@@ -91,7 +91,7 @@ export function CrewPointsInfo({ tone = "default" }: { tone?: "default" | "hero"
               <strong>Taking a break</strong>: no games in {CREW_POINTS.restingAfterDays} days. Your points are kept.
             </li>
           </ul>
-          <p className="text-[15px] text-muted">
+          <p className="text-body text-muted">
             Crew points compare you with this crew only, not with other groups or official ratings.
           </p>
         </section>

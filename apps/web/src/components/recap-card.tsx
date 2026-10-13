@@ -22,19 +22,19 @@ export function RecapCard({ groupId }: { groupId: string }) {
 
   return (
     <section aria-labelledby="recap-heading" className="flex animate-rise flex-col gap-2">
-      <h2 id="recap-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="recap-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Latest outing
       </h2>
       <Link
         href={href(latest.key)}
         className="relative isolate flex flex-col gap-2 overflow-hidden rounded-2xl bg-hero p-5 text-on-hero no-underline"
       >
-        <span className="text-[14px] font-bold text-on-hero-muted">
+        <span className="text-small font-bold text-on-hero-muted">
           {playedWhen(latest.start)}
           {latest.venue ? ` · ${latest.venue}` : ""}
         </span>
-        <span className="text-[22px] leading-tight font-extrabold [font-stretch:105%]">{latest.headline}</span>
-        <span className="flex items-center justify-between text-[15px] font-bold">
+        <span className="text-title leading-tight font-extrabold font-display">{latest.headline}</span>
+        <span className="flex items-center justify-between text-body font-bold">
           <span className="text-on-hero-muted">{outingSize(latest)}</span>
           <span className="flex items-center gap-1 text-ball">
             See the recap
@@ -48,7 +48,7 @@ export function RecapCard({ groupId }: { groupId: string }) {
             <li key={r.key} className="border-b border-line last:border-b-0">
               <Link
                 href={href(r.key)}
-                className="flex min-h-12 items-center justify-between gap-3 px-4 py-2 text-[15px] text-ink no-underline"
+                className="flex min-h-12 items-center justify-between gap-3 px-4 py-2 text-body text-ink no-underline"
               >
                 <span className="truncate font-bold">{playedWhen(r.start)}</span>
                 <span className="shrink-0 text-muted">{outingSize(r)}</span>

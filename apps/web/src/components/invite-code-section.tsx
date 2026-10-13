@@ -64,17 +64,17 @@ export function InviteCodeSection() {
 
   return (
     <section aria-labelledby="code-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="code-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="code-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Your Popshot code
       </h2>
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-        <p className="text-[15px] text-muted">
+        <p className="text-body text-muted">
           Give it to a crew&apos;s lead so they can invite you. You choose whether to join. Nobody can find you without
           it, unless you&apos;ve been in a crew together.
         </p>
         {code.result.kind === "ready" && (
           <>
-            <p className="font-mono text-[30px] font-bold tracking-[0.12em]" aria-label="Your code">
+            <p className="font-mono text-display-sm font-bold tracking-[0.12em]" aria-label="Your code">
               {code.result.data.code}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -108,18 +108,18 @@ export function InviteCodeSection() {
             </div>
           </>
         )}
-        {code.result.kind === "error" && <p className="text-[15px] text-warn">We couldn&apos;t load your code.</p>}
+        {code.result.kind === "error" && <p className="text-body text-warn">We couldn&apos;t load your code.</p>}
 
         {blocks.result.kind === "ready" && blocks.result.data.length > 0 && (
           <div className="flex flex-col gap-2 border-t border-line pt-4">
-            <h3 className="text-[16px] font-extrabold">Crews that can&apos;t invite you</h3>
+            <h3 className="text-lead font-extrabold">Crews that can&apos;t invite you</h3>
             <ul className="flex flex-col divide-y divide-line">
               {blocks.result.data.map((block) => (
                 <li key={block.group_id} className="flex min-h-12 items-center justify-between gap-3 py-2">
                   <span className="min-w-0 truncate font-bold">{block.group_name}</span>
                   <button
                     type="button"
-                    className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-[15px]")}
+                    className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-body")}
                     disabled={busy}
                     onClick={() => void allow(block)}
                   >
@@ -130,7 +130,7 @@ export function InviteCodeSection() {
             </ul>
           </div>
         )}
-        <p role="status" className="text-[15px] text-muted empty:hidden">
+        <p role="status" className="text-body text-muted empty:hidden">
           {note}
         </p>
       </div>

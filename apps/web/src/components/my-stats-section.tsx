@@ -37,7 +37,7 @@ export function MyStatsSection() {
 
   return (
     <section aria-labelledby="stats-heading" className="flex animate-rise flex-col gap-3 [animation-delay:45ms]">
-      <h2 id="stats-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="stats-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Your stats
       </h2>
       {groups.length > 1 && <GroupSwitcher groups={groups} current={current} onChange={choose} />}
@@ -106,7 +106,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
     <>
       <RatingCard stats={s} />
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
-        <p className="text-[16px]">
+        <p className="text-lead">
           <span className="font-bold">{group.name}</span>
           <span className="text-muted">
             {" "}
@@ -138,7 +138,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
         </div>
 
         {s.biggest_upset && (
-          <p className="rounded-xl bg-chip px-3 py-2 text-[15px]">
+          <p className="rounded-xl bg-chip px-3 py-2 text-body">
             Your biggest upset: you beat {teamNames(s.biggest_upset.losers.map((p) => p.display_name))} from{" "}
             {points(s.biggest_upset.gap)} points behind ({playedWhen(s.biggest_upset.played_at)}).
           </p>
@@ -146,7 +146,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
 
         {opponents.length > 0 && (
           <div className="flex flex-col gap-2">
-            <h3 className="text-[16px] font-extrabold">Head to head</h3>
+            <h3 className="text-lead font-extrabold">Head to head</h3>
             <ul aria-label="Head to head" className="flex flex-col">
               {opponents.map((r) => (
                 <li
@@ -155,9 +155,9 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
                 >
                   <span className="min-w-0 truncate font-bold">
                     {r.player.display_name}
-                    {r.player.is_guest && <span className="text-[12px] font-semibold text-muted"> · guest</span>}
+                    {r.player.is_guest && <span className="text-meta font-semibold text-muted"> · guest</span>}
                   </span>
-                  <span className="text-[15px] text-muted tabular-nums">
+                  <span className="text-body text-muted tabular-nums">
                     <span className="font-bold text-ink">{record(r.won, r.played - r.won)}</span> won–lost
                   </span>
                 </li>
@@ -174,9 +174,9 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
 function Tile({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="flex flex-col gap-0.5 rounded-xl bg-bg px-3 py-2">
-      <dt className="text-[13px] font-bold text-muted">{label}</dt>
-      <dd className="text-[24px] leading-none font-extrabold tabular-nums [font-stretch:75%]">{value}</dd>
-      <dd className="text-[12px] text-muted">{hint}</dd>
+      <dt className="text-meta font-bold text-muted">{label}</dt>
+      <dd className="text-title leading-none font-extrabold tabular-nums font-numeral">{value}</dd>
+      <dd className="text-meta text-muted">{hint}</dd>
     </div>
   );
 }
@@ -194,14 +194,14 @@ function Pairing({
 }) {
   return (
     <div className="flex flex-col gap-0.5 rounded-xl border border-line px-3 py-2">
-      <span className="text-[13px] font-bold text-muted">{label}</span>
+      <span className="text-meta font-bold text-muted">{label}</span>
       {found ? (
         <>
-          <span className="truncate text-[17px] font-extrabold">{found.player.display_name}</span>
-          <span className="text-[14px] text-muted">{describe(found)}</span>
+          <span className="truncate text-lead font-extrabold">{found.player.display_name}</span>
+          <span className="text-small text-muted">{describe(found)}</span>
         </>
       ) : (
-        <span className="text-[14px] text-muted">{empty}</span>
+        <span className="text-small text-muted">{empty}</span>
       )}
     </div>
   );
@@ -224,11 +224,11 @@ function RatingCard({ stats }: { stats: MyStats }) {
     <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
       <div className="flex items-end justify-between gap-3">
         <span className="flex flex-col">
-          <span className="text-[13px] font-bold text-muted">Crew points</span>
-          <span className="text-[36px] leading-none font-extrabold tabular-nums [font-stretch:75%]">{points(now)}</span>
+          <span className="text-meta font-bold text-muted">Crew points</span>
+          <span className="text-display-sm leading-none font-extrabold tabular-nums font-numeral">{points(now)}</span>
         </span>
         {moved && (
-          <span className={`text-[15px] font-bold ${moved.up ? "text-win" : "text-loss"}`}>
+          <span className={`text-body font-bold ${moved.up ? "text-win" : "text-loss"}`}>
             {moved.text}
             <span className="font-normal text-muted">
               {stats.days ? ` in ${String(stats.days)} days` : " all time"}
@@ -254,14 +254,14 @@ function RatingCard({ stats }: { stats: MyStats }) {
             />
             {last && <circle cx={last.x} cy={last.y} r="4.5" className="fill-ball stroke-primary" strokeWidth="2" />}
           </svg>
-          <figcaption className="flex justify-between text-[12px] text-muted tabular-nums">
+          <figcaption className="flex justify-between text-meta text-muted tabular-nums">
             <span>Low {points(low)}</span>
             <span>High {points(high)}</span>
           </figcaption>
         </figure>
       )}
       {form.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted">
+        <div className="flex flex-wrap items-center gap-2 text-meta text-muted">
           <span>Form</span>
           <span
             className="flex gap-1"
@@ -273,8 +273,8 @@ function RatingCard({ stats }: { stats: MyStats }) {
                 aria-hidden="true"
                 className={
                   p.won
-                    ? "flex size-5 items-center justify-center rounded bg-win text-[10px] font-extrabold text-on-win"
-                    : "flex size-5 items-center justify-center rounded border border-dashed border-loss text-[10px] font-extrabold text-muted"
+                    ? "flex size-5 items-center justify-center rounded bg-win text-micro font-extrabold text-on-win"
+                    : "flex size-5 items-center justify-center rounded border border-dashed border-loss text-micro font-extrabold text-muted"
                 }
               >
                 {p.won ? "W" : "L"}
@@ -303,7 +303,7 @@ function ActivityCard({ stats }: { stats: MyStats }) {
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-      <h3 className="text-[16px] font-extrabold">Activity</h3>
+      <h3 className="text-lead font-extrabold">Activity</h3>
       <figure className="flex flex-col gap-1">
         <svg
           viewBox={`0 0 ${String(BAR_W)} ${String(BAR_H)}`}
@@ -326,21 +326,21 @@ function ActivityCard({ stats }: { stats: MyStats }) {
             );
           })}
         </svg>
-        <figcaption className="flex justify-between text-[12px] text-muted">
+        <figcaption className="flex justify-between text-meta text-muted">
           <span>Games per week</span>
           <span>This week: {weeks[weeks.length - 1]?.count ?? 0}</span>
         </figcaption>
       </figure>
       <dl className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-0.5 rounded-xl bg-bg px-3 py-2">
-          <dt className="text-[13px] font-bold text-muted">Doubles · singles</dt>
-          <dd className="text-[24px] leading-none font-extrabold tabular-nums [font-stretch:75%]">
+          <dt className="text-meta font-bold text-muted">Doubles · singles</dt>
+          <dd className="text-title leading-none font-extrabold tabular-nums font-numeral">
             {doubles} · {singles}
           </dd>
         </div>
         <div className="flex flex-col gap-0.5 rounded-xl bg-bg px-3 py-2">
-          <dt className="text-[13px] font-bold text-muted">Busiest day</dt>
-          <dd className="text-[20px] leading-tight font-extrabold">{day ?? "–"}</dd>
+          <dt className="text-meta font-bold text-muted">Busiest day</dt>
+          <dd className="text-title-sm leading-tight font-extrabold">{day ?? "–"}</dd>
         </div>
       </dl>
     </div>

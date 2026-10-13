@@ -132,10 +132,10 @@ export function JoinView() {
       {state.kind === "ready" && (
         <section className="relative isolate flex animate-rise flex-col gap-5 overflow-hidden rounded-[28px] bg-hero p-6 text-on-hero lg:p-8">
           <CourtPattern />
-          <p className="text-[13px] font-bold tracking-[0.14em] text-ball uppercase">
+          <p className="text-meta font-bold tracking-[0.14em] text-ball uppercase">
             {state.preview.invited_by} invited you
           </p>
-          <h1 className="text-[34px] leading-[1.05] font-extrabold tracking-[-0.02em] break-words [font-stretch:110%]">
+          <h1 className="text-display-sm leading-[1.05] font-extrabold tracking-[-0.02em] break-words font-display">
             {state.preview.group_name}
           </h1>
           <CrewProfileSummary profile={state.preview} onHero />
@@ -144,7 +144,7 @@ export function JoinView() {
             joining={joining}
             onJoin={() => void join(state.token)}
           />
-          <p role="alert" className="text-[15px] font-bold text-ball empty:hidden">
+          <p role="alert" className="text-body font-bold text-ball empty:hidden">
             {problem}
           </p>
         </section>
@@ -166,7 +166,7 @@ function Outcome({
   if (preview.my_status === "active" && groupLink) {
     return (
       <>
-        <p className="text-[17px] text-on-hero-muted">You&apos;re already in this group.</p>
+        <p className="text-lead text-on-hero-muted">You&apos;re already in this group.</p>
         <Link href={groupLink} className={buttonClass("action", "h-14")}>
           Open the group
         </Link>
@@ -176,7 +176,7 @@ function Outcome({
   if (preview.my_status === "pending" && groupLink) {
     return (
       <>
-        <p className="text-[17px] text-on-hero-muted">
+        <p className="text-lead text-on-hero-muted">
           You&apos;ve asked to join. The lead or a co-lead will let you in.
         </p>
         <Link href={groupLink} className={buttonClass("action", "h-14")}>
@@ -187,14 +187,14 @@ function Outcome({
   }
   if (preview.my_status === "removed") {
     return (
-      <p className="text-[17px] text-on-hero-muted">
+      <p className="text-lead text-on-hero-muted">
         You can&apos;t join this group with this link. Ask its lead if you think that&apos;s a mistake.
       </p>
     );
   }
   return (
     <>
-      <p className="text-[17px] text-on-hero-muted">
+      <p className="text-lead text-on-hero-muted">
         Ask to join and the group&apos;s lead will approve you. Until then, only your name and
         photo are shared with them.
       </p>
@@ -208,7 +208,7 @@ function Outcome({
 function Message({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-      <h1 className="text-[26px] font-extrabold [font-stretch:108%]">{title}</h1>
+      <h1 className="text-title-lg font-extrabold font-display">{title}</h1>
       <p className="text-muted">{children}</p>
     </section>
   );

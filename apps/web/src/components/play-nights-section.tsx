@@ -19,7 +19,7 @@ export function PlayNightsSection({ groupId }: { groupId: string }) {
   return (
     <section aria-labelledby="nights-heading" className="flex animate-rise flex-col gap-2 [animation-delay:30ms]">
       <div className="flex min-h-11 items-center justify-between">
-        <h2 id="nights-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="nights-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           Meetups
         </h2>
         <PlanNightSheet
@@ -27,7 +27,7 @@ export function PlayNightsSection({ groupId }: { groupId: string }) {
           lastVenue={lastVenue}
           onSaved={reload}
           trigger={
-            <button type="button" className={buttonClass("quiet", "min-h-11 gap-1.5 px-3 text-[15px]")}>
+            <button type="button" className={buttonClass("quiet", "min-h-11 gap-1.5 px-3 text-body")}>
               <PlusIcon />
               Plan one
             </button>
@@ -35,7 +35,7 @@ export function PlayNightsSection({ groupId }: { groupId: string }) {
         />
       </div>
       {result.kind === "ready" && nights.length === 0 && (
-        <p className="rounded-2xl border border-dashed border-line p-4 text-[15px] text-muted">
+        <p className="rounded-2xl border border-dashed border-line p-4 text-body text-muted">
           Nothing planned yet. Plan the next one and your crew can say if they&apos;re in.
         </p>
       )}
@@ -43,7 +43,7 @@ export function PlayNightsSection({ groupId }: { groupId: string }) {
         <NightCard key={night.id} night={night} onChange={reload} />
       ))}
       {nights.length > SHOWN && (
-        <p className="text-[14px] text-muted">
+        <p className="text-small text-muted">
           And {nights.length - SHOWN} more planned. They show up here as the dates get closer.
         </p>
       )}

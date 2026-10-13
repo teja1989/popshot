@@ -28,8 +28,8 @@ export function AdminView() {
     >
       <AdminMain>
         <header className="flex animate-rise flex-col gap-1">
-          <h1 className="text-[28px] leading-tight font-extrabold [font-stretch:110%]">Admin</h1>
-          <p className="text-[15px] text-muted">
+          <h1 className="text-title-lg leading-tight font-extrabold font-display">Admin</h1>
+          <p className="text-body text-muted">
             Across all of Popshot. Find a person or open a crew to help with an issue.
           </p>
         </header>
@@ -80,7 +80,7 @@ function OverviewSections({ overview }: { overview: Overview }) {
         />
       </Section>
       <Section title="Coming back">
-        <p className="-mt-1 text-[14px] text-muted">
+        <p className="-mt-1 text-small text-muted">
           Of the people who signed up each week, how many used Popshot 1 to 4 weeks later.
         </p>
         <Table
@@ -114,7 +114,7 @@ function GroupsSection({ groups }: { groups: AdminGroup[] }) {
               <Link href={`/admin/crews/${g.id}`} className="truncate font-bold text-ink">
                 {g.name}
               </Link>
-              <span className="text-[14px] text-muted tabular-nums">{crewLine(g)}</span>
+              <span className="text-small text-muted tabular-nums">{crewLine(g)}</span>
             </li>
           ))}
         </ul>
@@ -164,7 +164,7 @@ function PeopleSearch() {
           minLength={2}
           maxLength={100}
           autoComplete="off"
-          className="min-h-12 min-w-0 grow rounded-xl border border-line bg-surface px-4 text-[17px]"
+          className="min-h-12 min-w-0 grow rounded-xl border border-line bg-surface px-4 text-field"
         />
         <button type="submit" className="min-h-12 shrink-0 rounded-xl bg-primary px-5 font-bold text-on-primary">
           Find
@@ -203,7 +203,7 @@ function PeopleResultsList({ query }: { query: string }) {
             <Avatar name={p.display_name} photoUrl={p.avatar_url} size="sm" />
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-bold">{p.display_name}</span>
-              <span className="text-[14px] text-muted">
+              <span className="text-small text-muted">
                 {plural(p.groups, "crew")} · joined {shortDate(p.created_at)} · last active{" "}
                 {p.last_active ? shortDate(p.last_active) : "never"}
               </span>

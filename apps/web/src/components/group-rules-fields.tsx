@@ -15,7 +15,7 @@ export function GroupRulesFields({ rules, onChange }: { rules: Rules; onChange: 
   return (
     <>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-[15px] font-bold">Usual format</legend>
+        <legend className="mb-2 text-body font-bold">Usual format</legend>
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-chip p-1">
           {(["doubles", "singles"] as const).map((value) => (
             <label key={value} className={segmentOption}>
@@ -37,7 +37,7 @@ export function GroupRulesFields({ rules, onChange }: { rules: Rules; onChange: 
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <fieldset>
-          <legend className="mb-2 text-[15px] font-bold">Games to</legend>
+          <legend className="mb-2 text-body font-bold">Games to</legend>
           <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
             {([11, 15, 21] as const).map((value) => (
               <label key={value} className={`${segmentOption} w-12`}>
@@ -56,7 +56,7 @@ export function GroupRulesFields({ rules, onChange }: { rules: Rules; onChange: 
             ))}
           </div>
         </fieldset>
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] font-bold">
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-body font-bold">
           <input
             type="checkbox"
             role="switch"
@@ -69,7 +69,7 @@ export function GroupRulesFields({ rules, onChange }: { rules: Rules; onChange: 
           Win by 2
         </label>
       </div>
-      <p className="-mt-2 text-[14px] text-muted">
+      <p className="-mt-2 text-small text-muted">
         These are the starting choices when someone logs a game. They can change them each time.
       </p>
     </>

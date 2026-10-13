@@ -8,9 +8,9 @@ import { initials, usablePhoto } from "@/lib/people";
 
 const TONES = { chip: "bg-chip text-ink", ball: "bg-ball text-on-ball" };
 const SIZES = {
-  sm: "size-8 text-[11px]",
-  md: "size-10 text-[13px]",
-  lg: "size-14 text-[17px]",
+  sm: "size-8 text-label",
+  md: "size-10 text-meta",
+  lg: "size-14 text-lead",
 };
 
 export function Avatar({
@@ -75,7 +75,7 @@ export function AvatarStack({
         />
       ))}
       {extra > 0 && (
-        <span className="-ml-1 flex size-8 items-center justify-center rounded-full bg-chip text-[11px] font-extrabold text-muted ring-2 ring-surface">
+        <span className="-ml-1 flex size-8 items-center justify-center rounded-full bg-chip text-label font-extrabold text-muted ring-2 ring-surface">
           +{extra}
         </span>
       )}

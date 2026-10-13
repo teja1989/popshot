@@ -57,7 +57,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
                           onHomeLinkClick(pathname, event);
                         }
                       }}
-                      className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-[16px] font-bold no-underline transition-colors duration-150 ${active ? "bg-chip text-primary" : "text-muted hover:bg-bg hover:text-ink"}`}
+                      className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-lead font-bold no-underline transition-colors duration-150 ${active ? "bg-chip text-primary" : "text-muted hover:bg-bg hover:text-ink"}`}
                     >
                       {item.icon}
                       {item.label}
@@ -105,7 +105,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
                       onHomeLinkClick(pathname, event);
                     }
                   }}
-                  className={`flex min-h-16 flex-col items-center justify-center gap-1 pb-1 text-[12px] font-bold no-underline ${active ? "text-primary" : "text-muted"}`}
+                  className={`flex min-h-16 flex-col items-center justify-center gap-1 pb-1 text-meta font-bold no-underline ${active ? "text-primary" : "text-muted"}`}
                 >
                   {item.icon}
                   {item.label}

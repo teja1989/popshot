@@ -90,10 +90,10 @@ export function ShareRecap({ groupId, recapKey, headline }: { groupId: string; r
       aria-labelledby="share-heading"
       className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5"
     >
-      <h2 id="share-heading" className="text-[17px] font-extrabold">
+      <h2 id="share-heading" className="text-lead font-extrabold">
         Share this recap
       </h2>
-      <p className="text-[15px] text-muted">
+      <p className="text-body text-muted">
         Anyone with the link can see it for 30 days, no sign-in needed. It shows first names and scores, not where you
         played. Anyone who&apos;d rather not be named shows as &ldquo;Crew member&rdquo;.
       </p>
@@ -105,7 +105,7 @@ export function ShareRecap({ groupId, recapKey, headline }: { groupId: string; r
           onFocus={(event) => {
             event.target.select();
           }}
-          className="min-h-12 w-full rounded-xl border border-line bg-bg px-4 text-[15px] text-ink"
+          className="min-h-12 w-full rounded-xl border border-line bg-bg px-4 text-body text-ink"
         />
       )}
       <div className="flex flex-wrap gap-2">
@@ -123,7 +123,7 @@ export function ShareRecap({ groupId, recapKey, headline }: { groupId: string; r
           </button>
         )}
       </div>
-      <p role="status" className="text-[15px] text-muted empty:hidden">
+      <p role="status" className="text-body text-muted empty:hidden">
         {note}
       </p>
     </section>

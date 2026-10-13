@@ -28,10 +28,10 @@ export function ErrorScreen({
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-7 pt-14 pb-9">
       <Brand />
-      <h1 className="mt-16 text-[34px] leading-[1.1] font-extrabold tracking-[-0.02em] [font-stretch:108%]">
+      <h1 className="mt-16 text-display-sm leading-[1.1] font-extrabold tracking-[-0.02em] font-display">
         That one went out.
       </h1>
-      <p className="mt-3 text-[17px] text-muted">
+      <p className="mt-3 text-lead text-muted">
         Something broke on our side. Games you&apos;ve saved are safe. Try again, and if it keeps happening, let us know.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
@@ -43,7 +43,7 @@ export function ErrorScreen({
           Go home
         </a>
       </div>
-      <p className="mt-10 text-[15px] text-muted">
+      <p className="mt-10 text-body text-muted">
         Reference <span className="font-mono font-bold tracking-wider text-ink">{ref}</span>. Quote it on the{" "}
         <Link href="/contact" className="font-bold text-primary underline underline-offset-2">
           contact page

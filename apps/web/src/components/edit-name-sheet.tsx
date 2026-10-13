@@ -46,7 +46,7 @@ export function EditNameSheet() {
   return (
     <Sheet
       trigger={
-        <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}>
+        <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")}>
           Edit name
         </button>
       }
@@ -67,7 +67,7 @@ export function EditNameSheet() {
     >
       <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)} noValidate>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Name</span>
+          <span className="text-body font-bold">Name</span>
           <input
             ref={inputRef}
             value={name}
@@ -77,10 +77,10 @@ export function EditNameSheet() {
             maxLength={NAME_MAX}
             autoComplete="nickname"
             aria-invalid={problem ? true : undefined}
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink"
           />
         </label>
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
         <button type="submit" className={buttonClass("primary", "h-14 w-full")} disabled={saving}>

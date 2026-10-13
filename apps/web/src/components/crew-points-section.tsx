@@ -51,7 +51,7 @@ export function CrewPointsSection() {
   return (
     <section aria-labelledby="points-heading" className="flex animate-rise flex-col gap-3 [animation-delay:30ms]">
       <div className="-my-2 flex items-center gap-0.5">
-        <h2 id="points-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="points-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           Crew points
         </h2>
         <CrewPointsInfo />
@@ -63,7 +63,7 @@ export function CrewPointsSection() {
         {ratings.result.kind === "ready" && ratings.result.data.length > 0 && (
           <>
             {trendSummary(ratings.result.data) && (
-              <p className="rounded-xl bg-chip px-3 py-2 text-[15px] font-bold">{trendSummary(ratings.result.data)}</p>
+              <p className="rounded-xl bg-chip px-3 py-2 text-body font-bold">{trendSummary(ratings.result.data)}</p>
             )}
             <ul className="flex flex-col gap-4">
               {ratings.result.data.map((r) => (
@@ -73,13 +73,13 @@ export function CrewPointsSection() {
                       <Link href={`/groups/${r.group_id}`} className="truncate font-bold text-ink no-underline">
                         {r.group_name}
                       </Link>
-                      <span className="text-[14px] text-muted">
+                      <span className="text-small text-muted">
                         {r.to_go > 0
                           ? `${String(r.matches)} games · settling, ${String(r.to_go)} to go`
                           : `${String(r.matches)} games`}
                       </span>
                     </span>
-                    <span className="text-[28px] leading-none font-extrabold tabular-nums [font-stretch:75%]">
+                    <span className="text-title-lg leading-none font-extrabold tabular-nums font-numeral">
                       {points(r.rating)}
                     </span>
                   </span>
@@ -90,14 +90,14 @@ export function CrewPointsSection() {
           </>
         )}
         {level && ratings.result.kind === "ready" && ratings.result.data[0] && (
-          <p className="rounded-xl bg-chip px-3 py-2 text-[15px]">
+          <p className="rounded-xl bg-chip px-3 py-2 text-body">
             You said {levelLabel(level)} ({points(start)}); your games say {points(ratings.result.data[0].rating)}.
           </p>
         )}
 
         <fieldset className="flex flex-col gap-2 border-t border-line pt-4">
-          <legend className="mb-1 text-[16px] font-extrabold">Your level</legend>
-          <p className="-mt-1 mb-1 text-[14px] text-muted">
+          <legend className="mb-1 text-lead font-extrabold">Your level</legend>
+          <p className="-mt-1 mb-1 text-small text-muted">
             Optional. It&apos;s where your crew points start; your games take over within about 10.
           </p>
           {[{ value: null, label: "Not set", start: DEFAULT_START, hint: "Start at the middle" }, ...LEVELS].map(
@@ -115,14 +115,14 @@ export function CrewPointsSection() {
                 />
                 <span className="flex grow flex-col">
                   <span className="font-bold">{option.label}</span>
-                  <span className="text-[13px] text-muted">{option.hint}</span>
+                  <span className="text-meta text-muted">{option.hint}</span>
                 </span>
-                <span className="text-[14px] font-bold text-muted tabular-nums">{points(option.start)}</span>
+                <span className="text-small font-bold text-muted tabular-nums">{points(option.start)}</span>
               </label>
             ),
           )}
         </fieldset>
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
       </div>
@@ -133,15 +133,15 @@ export function CrewPointsSection() {
 /** How the last 30 days have gone in one crew. */
 function MonthLine({ rating: r }: { rating: MyRating }) {
   if (r.month_games === 0) {
-    return <p className="text-[14px] text-muted">No games in the last 30 days.</p>;
+    return <p className="text-small text-muted">No games in the last 30 days.</p>;
   }
   const moved = change(r.month_change);
   const games = `${String(r.month_games)} game${r.month_games === 1 ? "" : "s"}`;
   return (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-muted">
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-muted">
       {r.trend && (
         <span
-          className={`rounded-full px-2 py-0.5 text-[12px] font-bold ${
+          className={`rounded-full px-2 py-0.5 text-meta font-bold ${
             r.trend === "climbing"
               ? "bg-win text-on-win"
               : r.trend === "slipping"

@@ -84,7 +84,7 @@ function GroupGames({
       </Link>
 
       {justLogged && (
-        <p role="status" className="animate-rise rounded-xl bg-chip px-4 py-3 text-[15px] font-bold">
+        <p role="status" className="animate-rise rounded-xl bg-chip px-4 py-3 text-body font-bold">
           Game logged. It&apos;s on your crew&apos;s record now, and you can edit it any time.
         </p>
       )}
@@ -143,8 +143,8 @@ function GroupGames({
       {view === "list" && result.kind === "ready" && result.data.length === 0 && (
         <section className="flex animate-rise flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
           <CourtArt className="w-40" />
-          <h2 className="text-[20px] font-extrabold">No games in {group.name} yet</h2>
-          <p className="text-[16px] leading-relaxed text-muted">
+          <h2 className="text-title-sm font-extrabold">No games in {group.name} yet</h2>
+          <p className="text-lead leading-relaxed text-muted">
             Log your first one: pick who played and tap in the score. It counts right away, and you can fix it later if
             needed.
           </p>
@@ -153,7 +153,7 @@ function GroupGames({
 
       {view === "list" && result.kind === "ready" && result.data.length > 0 && (
         <section aria-labelledby="recent-heading" className="flex animate-rise flex-col gap-2">
-          <h2 id="recent-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="recent-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
             Recent games
           </h2>
           <ul className="flex flex-col gap-3">
@@ -170,7 +170,7 @@ function GroupGames({
               />
             ))}
           </ul>
-          {result.data.length >= 50 && <p className="text-[14px] text-muted">Showing the latest 50 games.</p>}
+          {result.data.length >= 50 && <p className="text-small text-muted">Showing the latest 50 games.</p>}
         </section>
       )}
 
@@ -245,8 +245,8 @@ function GameCard({
   return (
     <li className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[14px] text-muted">{playedWhen(match.played_at)}</span>
-        <span className="text-[13px] text-muted">
+        <span className="text-small text-muted">{playedWhen(match.played_at)}</span>
+        <span className="text-meta text-muted">
           {match.format === "doubles" ? "Doubles" : "Singles"} · to {match.points_to}
         </span>
       </div>
@@ -261,7 +261,7 @@ function GameCard({
               <tr key={team}>
                 <th
                   scope="row"
-                  className={`w-full truncate pr-3 text-left text-[16px] ${won ? "font-extrabold" : "font-normal text-muted"}`}
+                  className={`w-full truncate pr-3 text-left text-lead ${won ? "font-extrabold" : "font-normal text-muted"}`}
                 >
                   <span className="flex items-center gap-2">
                     <span
@@ -277,7 +277,7 @@ function GameCard({
                   return (
                     <td
                       key={index}
-                      className={`min-w-8 pl-3 text-right text-[22px] leading-none tabular-nums [font-stretch:75%] ${mine > theirs ? "font-extrabold" : "text-muted"}`}
+                      className={`min-w-8 pl-3 text-right text-title leading-none tabular-nums font-numeral ${mine > theirs ? "font-extrabold" : "text-muted"}`}
                     >
                       {mine}
                     </td>
@@ -288,7 +288,7 @@ function GameCard({
           })}
         </tbody>
       </table>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-meta text-muted">
         <span>{match.entered_by_name ? `Logged by ${match.entered_by_me ? "you" : match.entered_by_name}` : ""}</span>
         {canChange && !confirming && (
           <span className="flex">
@@ -315,20 +315,20 @@ function GameCard({
         <button
           type="button"
           onClick={onReflect}
-          className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl bg-chip px-4 text-left text-[15px] font-bold"
+          className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl bg-chip px-4 text-left text-body font-bold"
         >
           <span>How did it go for you?</span>
-          <span className="text-[13px] font-semibold text-muted">Optional · 2 taps</span>
+          <span className="text-meta font-semibold text-muted">Optional · 2 taps</span>
         </button>
       )}
       {match.my_reflection && <MyNotes reflection={match.my_reflection} labels={labels} onEdit={onReflect} />}
       {confirming && (
         <div className="flex flex-col gap-3 rounded-xl border border-warn p-3">
-          <p className="text-[15px] font-bold">Delete this game? It comes off everyone&apos;s record.</p>
+          <p className="text-body font-bold">Delete this game? It comes off everyone&apos;s record.</p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              className={buttonClass("quiet", "min-h-11 text-[15px]")}
+              className={buttonClass("quiet", "min-h-11 text-body")}
               onClick={() => {
                 setConfirming(false);
               }}
@@ -337,7 +337,7 @@ function GameCard({
             </button>
             <button
               type="button"
-              className={buttonClass("danger", "min-h-11 text-[15px]")}
+              className={buttonClass("danger", "min-h-11 text-body")}
               disabled={busy}
               onClick={() => void remove()}
             >
@@ -346,7 +346,7 @@ function GameCard({
           </div>
         </div>
       )}
-      <p role="alert" className="text-[14px] text-warn empty:hidden">
+      <p role="alert" className="text-small text-warn empty:hidden">
         {problem}
       </p>
     </li>
@@ -366,7 +366,7 @@ function MyNotes({
   const skipped = reflection.went_well.length === 0 && reflection.to_improve.length === 0;
   const names = (ids: string[]) => ids.map((id) => labelFor(labels, id)).join(", ");
   return (
-    <div className="flex items-start justify-between gap-3 text-[13px] text-muted">
+    <div className="flex items-start justify-between gap-3 text-meta text-muted">
       <p className="flex items-start gap-1.5">
         <span className="mt-0.5 shrink-0">
           <LockIcon />

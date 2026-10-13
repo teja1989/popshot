@@ -110,14 +110,14 @@ export function PlayerPicker({
           {selected ? (
             <>
               <Avatar name={selected.display_name} photoUrl={selected.avatar_url} size="sm" />
-              <span className="min-w-0 grow truncate text-[17px] font-bold">
+              <span className="min-w-0 grow truncate text-lead font-bold">
                 {selected.display_name}
                 {selected.is_me && <span className="font-normal text-muted"> (you)</span>}
               </span>
-              {selected.is_guest && <span className="text-[13px] font-bold text-muted">Guest</span>}
+              {selected.is_guest && <span className="text-meta font-bold text-muted">Guest</span>}
             </>
           ) : (
-            <span className="flex grow items-center gap-2 text-[16px] font-bold text-primary">
+            <span className="flex grow items-center gap-2 text-lead font-bold text-primary">
               <PlusIcon />
               Pick a player
             </span>
@@ -141,7 +141,7 @@ export function PlayerPicker({
       {step === "guest" ? (
         <form className="flex flex-col gap-3" onSubmit={(event) => void addGuest(event)} noValidate>
           <label className="flex flex-col gap-2">
-            <span className="text-[15px] font-bold">Guest&apos;s name</span>
+            <span className="text-body font-bold">Guest&apos;s name</span>
             <input
               ref={guestRef}
               value={guestName}
@@ -154,10 +154,10 @@ export function PlayerPicker({
               enterKeyHint="done"
               placeholder="Their name"
               aria-invalid={problem ? true : undefined}
-              className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink placeholder:text-muted"
+              className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted"
             />
           </label>
-          <p role="alert" className="text-[15px] text-warn empty:hidden">
+          <p role="alert" className="text-body text-warn empty:hidden">
             {problem}
           </p>
           <button type="submit" className={buttonClass("primary", "h-14")} disabled={saving}>
@@ -198,7 +198,7 @@ export function PlayerPicker({
             placeholder="Find a player"
             autoComplete="off"
             enterKeyHint="search"
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink placeholder:text-muted"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted"
           />
           <ul className="flex flex-col rounded-2xl border border-line" aria-label="Players">
             {shown.map((player) => {
@@ -214,11 +214,11 @@ export function PlayerPicker({
                     className="flex min-h-14 w-full cursor-pointer items-center gap-3 px-3 text-left disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Avatar name={player.display_name} photoUrl={player.avatar_url} size="sm" />
-                    <span className="min-w-0 grow truncate text-[16px] font-bold">
+                    <span className="min-w-0 grow truncate text-lead font-bold">
                       {player.display_name}
                       {player.is_me && <span className="font-normal text-muted"> (you)</span>}
                     </span>
-                    <span className="text-[13px] text-muted">{busy ? "In this game" : player.is_guest ? "Guest" : ""}</span>
+                    <span className="text-meta text-muted">{busy ? "In this game" : player.is_guest ? "Guest" : ""}</span>
                   </button>
                 </li>
               );

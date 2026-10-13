@@ -42,7 +42,7 @@ export function InvitePanel({ groupId, groupName }: { groupId: string; groupName
 
   return (
     <section aria-labelledby="invite-heading" className="flex animate-rise flex-col gap-3 [animation-delay:180ms]">
-      <h2 id="invite-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="invite-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Invite links
       </h2>
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
@@ -58,16 +58,16 @@ export function InvitePanel({ groupId, groupName }: { groupId: string; groupName
               <li key={invite.id} className="flex items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="font-bold">{describeUses(invite)}</p>
-                  <p className="text-[14px] text-muted">
+                  <p className="text-small text-muted">
                     {describeJoined(invite)} · {describeExpiry(invite.expires_at)}
                   </p>
                   {invite.created_by_name && (
-                    <p className="text-[14px] text-muted">Made by {invite.created_by_name}</p>
+                    <p className="text-small text-muted">Made by {invite.created_by_name}</p>
                   )}
                 </div>
                 <button
                   type="button"
-                  className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-[15px]")}
+                  className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-body")}
                   onClick={() => void cancel(invite)}
                 >
                   Cancel link
@@ -176,17 +176,17 @@ function InviteSheet({
       {link ? (
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-2">
-            <span className="text-[15px] font-bold">Link</span>
+            <span className="text-body font-bold">Link</span>
             <input
               readOnly
               value={link}
               onFocus={(event) => {
                 event.target.select();
               }}
-              className="min-h-12 rounded-xl border border-line bg-bg px-4 font-mono text-[14px] text-ink"
+              className="min-h-12 rounded-xl border border-line bg-bg px-4 font-mono text-small text-ink"
             />
           </label>
-          <p className="text-[14px] text-muted">
+          <p className="text-small text-muted">
             Anyone with this link can ask to join, so share it only with your crew. You won&apos;t
             see it again after closing this; make a new one if you need it.
           </p>
@@ -200,14 +200,14 @@ function InviteSheet({
               </button>
             )}
           </div>
-          <p role="status" className="min-h-6 text-[15px] text-warn">
+          <p role="status" className="min-h-6 text-body text-warn">
             {problem}
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-5">
           <fieldset>
-            <legend className="mb-2 text-[15px] font-bold">How many people can use it?</legend>
+            <legend className="mb-2 text-body font-bold">How many people can use it?</legend>
             <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
               {INVITE_USE_CHOICES.map((value) => (
                 <label key={value} className={segmentOption}>
@@ -226,7 +226,7 @@ function InviteSheet({
               ))}
             </div>
           </fieldset>
-          <p role="alert" className="min-h-6 text-[15px] text-warn">
+          <p role="alert" className="min-h-6 text-body text-warn">
             {problem}
           </p>
           <button

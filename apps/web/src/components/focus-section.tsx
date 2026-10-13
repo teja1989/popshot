@@ -20,10 +20,10 @@ export function FocusSection() {
   return (
     <section aria-labelledby="focus-heading" className="flex animate-rise flex-col gap-3 [animation-delay:40ms]">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="focus-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="focus-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           Your game
         </h2>
-        <span className="flex items-center gap-1.5 text-[13px] text-muted">
+        <span className="flex items-center gap-1.5 text-meta text-muted">
           <LockIcon />
           Only you can see this
         </span>
@@ -53,12 +53,12 @@ export function FocusSection() {
 
 function Chips({ ids, options, empty }: { ids: string[]; options: FocusOption[]; empty: string }) {
   if (ids.length === 0) {
-    return <p className="text-[15px] text-muted">{empty}</p>;
+    return <p className="text-body text-muted">{empty}</p>;
   }
   return (
     <ul className="flex flex-wrap gap-2">
       {ids.map((id) => (
-        <li key={id} className="rounded-full bg-chip px-3 py-1.5 text-[14px] font-bold">
+        <li key={id} className="rounded-full bg-chip px-3 py-1.5 text-small font-bold">
           {labelFor(options, id)}
         </li>
       ))}
@@ -95,27 +95,27 @@ function FocusCard({ options, focus, onSaved }: { options: FocusOption[]; focus:
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
       <div className="flex flex-col gap-2">
-        <h3 className="text-[16px] font-extrabold">Strengths</h3>
+        <h3 className="text-lead font-extrabold">Strengths</h3>
         <Chips ids={focus.strengths} options={options} empty="Nothing picked yet." />
       </div>
       <div className="flex flex-col gap-2">
-        <h3 className="text-[16px] font-extrabold">Areas to improve</h3>
+        <h3 className="text-lead font-extrabold">Areas to improve</h3>
         <Chips ids={focus.improve} options={options} empty="Nothing picked yet." />
       </div>
       <EditFocusSheet options={options} focus={focus} onSaved={onSaved} />
 
       {focus.suggestions.length > 0 && (
         <div className="flex flex-col gap-3 border-t border-line pt-4">
-          <h3 className="text-[16px] font-extrabold">From your post-game notes</h3>
+          <h3 className="text-lead font-extrabold">From your post-game notes</h3>
           <ul className="flex flex-col gap-3">
             {focus.suggestions.map((s) => {
               const label = labelFor(options, s.option_id);
               return (
                 <li key={`${s.kind}-${s.option_id}`} className="flex flex-col gap-2 rounded-xl bg-chip p-3">
-                  <p className="text-[15px]">{describeSuggestion(s, label)}</p>
+                  <p className="text-body">{describeSuggestion(s, label)}</p>
                   <button
                     type="button"
-                    className={buttonClass("quiet", "min-h-11 self-start bg-surface px-4 text-[15px]")}
+                    className={buttonClass("quiet", "min-h-11 self-start bg-surface px-4 text-body")}
                     disabled={busy}
                     onClick={() => void accept(s)}
                   >
@@ -127,7 +127,7 @@ function FocusCard({ options, focus, onSaved }: { options: FocusOption[]; focus:
           </ul>
         </div>
       )}
-      <p role="alert" className="text-[15px] text-warn empty:hidden">
+      <p role="alert" className="text-body text-warn empty:hidden">
         {problem}
       </p>
     </div>
@@ -158,7 +158,7 @@ function EditFocusSheet({ options, focus, onSaved }: { options: FocusOption[]; f
   return (
     <Sheet
       trigger={
-        <button type="button" className={buttonClass("quiet", "min-h-11 self-start px-4 text-[15px]")}>
+        <button type="button" className={buttonClass("quiet", "min-h-11 self-start px-4 text-body")}>
           Edit your game
         </button>
       }
@@ -195,7 +195,7 @@ function EditFocusSheet({ options, focus, onSaved }: { options: FocusOption[]; f
           blocked={new Set(strengths)}
           blockedReason="in Strengths"
         />
-        <p role="alert" className="text-[15px] text-warn empty:hidden">
+        <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
         <button type="button" className={buttonClass("primary", "h-14 w-full")} disabled={saving} onClick={() => void save()}>

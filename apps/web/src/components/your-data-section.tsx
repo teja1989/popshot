@@ -54,11 +54,11 @@ export function YourDataSection() {
 
   return (
     <section aria-labelledby="data-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="data-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="data-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Your data
       </h2>
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
-        <p className="text-[15px] text-muted">
+        <p className="text-body text-muted">
           A copy of everything Popshot keeps about you: your profile, crews, games, meetup answers, focus and notes.
         </p>
         <button
@@ -81,7 +81,7 @@ export function YourDataSection() {
             <DeleteAccountSheet onRequested={updateMe} />
           )}
         </div>
-        <p role="status" className="text-[15px] text-muted empty:hidden">
+        <p role="status" className="text-body text-muted empty:hidden">
           {note}
         </p>
       </div>
@@ -126,7 +126,7 @@ function DeleteAccountSheet({ onRequested }: { onRequested: (me: Me) => void }) 
       description="You'll have 7 days to change your mind."
     >
       <div className="flex flex-col gap-4">
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-[15px]">
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-body">
           <li>After 7 days, your sign-in, name, photo, notes, settings and devices are deleted for good.</li>
           <li>
             In your crews&apos; past games you&apos;ll show as &ldquo;Former player&rdquo;. The scores stay, so their
@@ -154,7 +154,7 @@ function DeleteAccountSheet({ onRequested }: { onRequested: (me: Me) => void }) 
         >
           Delete my account in 7 days
         </button>
-        <p role="alert" className="min-h-6 text-[15px] text-warn">
+        <p role="alert" className="min-h-6 text-body text-warn">
           {problem}
         </p>
       </div>
@@ -169,7 +169,7 @@ export function DeletionNotice() {
     return null;
   }
   return (
-    <p role="status" className="rounded-2xl border border-warn bg-surface p-4 text-[15px]">
+    <p role="status" className="rounded-2xl border border-warn bg-surface p-4 text-body">
       Your account will be deleted on <strong>{deletionDate(me.delete_on)}</strong>. Changed your mind?{" "}
       <a href="/you" className="font-bold text-primary">
         Keep my account

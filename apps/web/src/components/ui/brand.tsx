@@ -22,7 +22,7 @@ export function Brand({ onHero = false }: { onHero?: boolean }) {
     <div className="flex items-center gap-2.5">
       <BrandMark onHero={onHero} />
       <span
-        className={`text-[22px] font-extrabold tracking-[-0.01em] [font-stretch:112%] ${onHero ? "text-on-hero" : ""}`}
+        className={`text-title font-extrabold tracking-[-0.01em] font-display ${onHero ? "text-on-hero" : ""}`}
       >
         Popshot
       </span>

@@ -25,7 +25,7 @@ export function MembersView({ groupId }: { groupId: string }) {
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
       <Link
         href={`/groups/${groupId}`}
-        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-[15px] font-bold text-primary no-underline"
+        className="-ml-1 flex min-h-11 items-center gap-1.5 self-start text-body font-bold text-primary no-underline"
       >
         <BackIcon />
         {result.kind === "ready" ? result.data.name : "Back to the group"}
@@ -33,7 +33,7 @@ export function MembersView({ groupId }: { groupId: string }) {
 
       {result.kind === "loading" && <p className="text-muted">Loading the members…</p>}
       {result.kind === "error" && result.status === 404 && (
-        <h1 className="text-[26px] font-extrabold [font-stretch:108%]">We couldn&apos;t find that group.</h1>
+        <h1 className="text-title-lg font-extrabold font-display">We couldn&apos;t find that group.</h1>
       )}
       {result.kind === "error" && result.status !== 404 && (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
@@ -120,8 +120,8 @@ function Members({
   return (
     <>
       <section className="flex animate-rise flex-col gap-1">
-        <h1 className="text-[32px] leading-[1.08] font-extrabold tracking-[-0.02em] [font-stretch:110%]">Members</h1>
-        <p className="text-[15px] text-muted">
+        <h1 className="text-display-sm leading-[1.08] font-extrabold tracking-[-0.02em] font-display">Members</h1>
+        <p className="text-body text-muted">
           {active.length === 1 ? "1 member" : `${String(active.length)} members`} of {group.name}
         </p>
       </section>
@@ -135,7 +135,7 @@ function Members({
 
       {isAdmin && waiting.length > 0 && (
         <section aria-labelledby="waiting-heading" className="flex animate-rise flex-col gap-2">
-          <h2 id="waiting-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="waiting-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
             Asking to join · {waiting.length}
           </h2>
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -145,7 +145,7 @@ function Members({
                   <button
                     type="button"
                     aria-label={`Let ${member.display_name} in`}
-                    className={buttonClass("primary", "min-h-11 px-4 text-[15px]")}
+                    className={buttonClass("primary", "min-h-11 px-4 text-body")}
                     disabled={busy === member.user_id}
                     onClick={() => void act(member, "approve")}
                   >
@@ -154,7 +154,7 @@ function Members({
                   <button
                     type="button"
                     aria-label={`Decline ${member.display_name}`}
-                    className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}
+                    className={buttonClass("quiet", "min-h-11 px-4 text-body")}
                     disabled={busy === member.user_id}
                     onClick={() => void act(member, "decline")}
                   >
@@ -168,7 +168,7 @@ function Members({
       )}
 
       <section aria-labelledby="members-heading" className="flex animate-rise flex-col gap-2 [animation-delay:60ms]">
-        <h2 id="members-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="members-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           Members · {active.length}
         </h2>
         <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -194,14 +194,14 @@ function Members({
         </>
       )}
       {!isAdmin && (
-        <p className="animate-rise text-[15px] text-muted [animation-delay:120ms]">
+        <p className="animate-rise text-body text-muted [animation-delay:120ms]">
           Want someone else in? Ask the lead or a co-lead to invite them.
         </p>
       )}
 
       {isAdmin && group.former_members.length > 0 && (
         <section aria-labelledby="former-heading" className="flex animate-rise flex-col gap-2 [animation-delay:90ms]">
-          <h2 id="former-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="former-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
             Removed or declined · {group.former_members.length}
           </h2>
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -211,12 +211,12 @@ function Members({
                 className="flex min-h-16 flex-wrap items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:flex-nowrap"
               >
                 <Avatar name={person.display_name} photoUrl={person.avatar_url} />
-                <span className="min-w-0 grow truncate text-[17px] font-bold text-muted">{person.display_name}</span>
+                <span className="min-w-0 grow truncate text-lead font-bold text-muted">{person.display_name}</span>
                 <div className="grid basis-full grid-cols-2 gap-2 sm:basis-auto sm:shrink-0">
                   <button
                     type="button"
                     aria-label={`Restore ${person.display_name}`}
-                    className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}
+                    className={buttonClass("quiet", "min-h-11 px-4 text-body")}
                     disabled={busy === person.user_id}
                     onClick={() => void act(person, "restore")}
                   >
@@ -225,7 +225,7 @@ function Members({
                   <button
                     type="button"
                     aria-label={`Invite ${person.display_name} back`}
-                    className={buttonClass("quiet", "min-h-11 px-4 text-[15px]")}
+                    className={buttonClass("quiet", "min-h-11 px-4 text-body")}
                     disabled={busy === person.user_id}
                     onClick={() => void inviteBack(person)}
                   >
@@ -235,7 +235,7 @@ function Members({
               </li>
             ))}
           </ul>
-          <p className="text-[14px] text-muted">
+          <p className="text-small text-muted">
             Restoring puts them straight back in. Inviting back lets them choose.
           </p>
         </section>
@@ -249,14 +249,14 @@ function MemberRow({ member, isMe, children }: { member: Member; isMe: boolean; 
     <li className="flex min-h-16 flex-wrap items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:flex-nowrap">
       <Avatar name={member.display_name} photoUrl={member.avatar_url} tone={member.role === "lead" ? "ball" : "chip"} />
       <span className="flex min-w-0 grow flex-col">
-        <span className="truncate text-[17px] font-bold">
+        <span className="truncate text-lead font-bold">
           {member.display_name}
           {isMe && <span className="font-normal text-muted"> (you)</span>}
         </span>
-        {member.status === "active" && <span className="text-[14px] text-muted">{memberLine(member)}</span>}
+        {member.status === "active" && <span className="text-small text-muted">{memberLine(member)}</span>}
       </span>
       {member.status === "active" && member.role !== "member" && (
-        <span className="shrink-0 rounded-full bg-chip px-2.5 py-1 text-[13px] font-bold">
+        <span className="shrink-0 rounded-full bg-chip px-2.5 py-1 text-meta font-bold">
           {ROLE_LABEL[member.role]}
         </span>
       )}
@@ -273,7 +273,7 @@ function GuestsSection({ groupId, isAdmin }: { groupId: string; isAdmin: boolean
   }
   return (
     <section aria-labelledby="guests-heading" className="flex animate-rise flex-col gap-2 [animation-delay:90ms]">
-      <h2 id="guests-heading" className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="guests-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
         Guests · {result.data.length}
       </h2>
       <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -284,14 +284,14 @@ function GuestsSection({ groupId, isAdmin }: { groupId: string; isAdmin: boolean
           >
             <Avatar name={guest.display_name} />
             <span className="flex min-w-0 grow flex-col">
-              <span className="truncate text-[17px] font-bold">{guest.display_name}</span>
-              <span className="text-[14px] text-muted">Guest · {gamesCount(guest.games)}</span>
+              <span className="truncate text-lead font-bold">{guest.display_name}</span>
+              <span className="text-small text-muted">Guest · {gamesCount(guest.games)}</span>
             </span>
             {isAdmin && <GuestSheet groupId={groupId} guest={guest} onChanged={reload} />}
           </li>
         ))}
       </ul>
-      <p className="text-[14px] text-muted">Guests are people added to games by name who haven&apos;t signed up.</p>
+      <p className="text-small text-muted">Guests are people added to games by name who haven&apos;t signed up.</p>
     </section>
   );
 }
@@ -323,7 +323,7 @@ function GuestSheet({ groupId, guest, onChanged }: { groupId: string; guest: Gue
         <button
           type="button"
           aria-label={`Edit ${guest.display_name}`}
-          className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-[15px]")}
+          className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-body")}
         >
           Edit
         </button>
@@ -346,7 +346,7 @@ function GuestSheet({ groupId, guest, onChanged }: { groupId: string; guest: Gue
         }}
       >
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Name</span>
+          <span className="text-body font-bold">Name</span>
           <input
             value={name}
             onChange={(event) => {
@@ -354,7 +354,7 @@ function GuestSheet({ groupId, guest, onChanged }: { groupId: string; guest: Gue
             }}
             maxLength={80}
             autoComplete="off"
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink"
           />
         </label>
         <button type="submit" className={buttonClass("primary", "h-14 w-full")} disabled={busy || !name.trim()}>
@@ -372,12 +372,12 @@ function GuestSheet({ groupId, guest, onChanged }: { groupId: string; guest: Gue
             Remove guest
           </button>
         ) : (
-          <p className="text-[14px] text-muted">
+          <p className="text-small text-muted">
             {guest.display_name} is in games, so they stay on the record. You can still change the name.
           </p>
         )}
       </div>
-      <p role="alert" className="mt-3 min-h-6 text-[15px] text-warn">
+      <p role="alert" className="mt-3 min-h-6 text-body text-warn">
         {problem}
       </p>
     </Sheet>
@@ -413,7 +413,7 @@ function ManageSheet({
         <button
           type="button"
           aria-label={`Manage ${member.display_name}`}
-          className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-[15px]")}
+          className={buttonClass("quiet", "min-h-11 shrink-0 px-4 text-body")}
         >
           Manage
         </button>
@@ -448,7 +448,7 @@ function ManageSheet({
           (confirmLead ? (
             <div className="flex flex-col gap-3 rounded-2xl border border-line p-4">
               <p className="font-bold">Make {member.display_name} the lead?</p>
-              <p className="text-[15px] text-muted">
+              <p className="text-body text-muted">
                 You become a co-lead. Only the new lead can change that, delete the group or hand it on again.
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -484,7 +484,7 @@ function ManageSheet({
         {confirmRemove ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-warn p-4">
             <p className="font-bold">Remove {member.display_name} from the group?</p>
-            <p className="text-[15px] text-muted">
+            <p className="text-body text-muted">
               Their past games stay on the record. They lose access and can&apos;t rejoin with an invite link, but a
               lead or co-lead can restore them later.
             </p>
@@ -541,8 +541,8 @@ function ActionButton({
       disabled={disabled}
       onClick={onClick}
     >
-      <span className="text-[17px] font-bold">{title}</span>
-      <span className="text-[14px] text-muted">{body}</span>
+      <span className="text-lead font-bold">{title}</span>
+      <span className="text-small text-muted">{body}</span>
     </button>
   );
 }

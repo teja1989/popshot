@@ -8,7 +8,7 @@ export function SignOutButton({ className = "" }: { className?: string }) {
   return (
     <button
       type="button"
-      className={buttonClass("quiet", `min-h-11 px-4 text-[15px] ${className}`)}
+      className={buttonClass("quiet", `min-h-11 px-4 text-body ${className}`)}
       onClick={() => void signOut()}
       disabled={busy}
     >

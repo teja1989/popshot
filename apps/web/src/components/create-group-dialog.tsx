@@ -84,7 +84,7 @@ export function CreateGroupDialog({
     >
       <form className="flex flex-col gap-5" onSubmit={(event) => void submit(event)} noValidate>
         <label className="flex flex-col gap-2">
-          <span className="text-[15px] font-bold">Group name</span>
+          <span className="text-body font-bold">Group name</span>
           <input
             ref={nameRef}
             name="name"
@@ -97,13 +97,13 @@ export function CreateGroupDialog({
             placeholder="Tuesday Dinkers"
             aria-invalid={problem ? true : undefined}
             aria-describedby={problem ? "create-group-problem" : undefined}
-            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-[17px] text-ink placeholder:text-muted"
+            className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted"
           />
         </label>
 
         <GroupRulesFields rules={rules} onChange={setRules} />
 
-        <p id="create-group-problem" role="alert" className="min-h-6 text-[15px] text-warn">
+        <p id="create-group-problem" role="alert" className="min-h-6 text-body text-warn">
           {problem}
         </p>
         <button type="submit" className={buttonClass("primary", "h-14 w-full")} disabled={saving}>

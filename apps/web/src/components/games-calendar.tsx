@@ -72,7 +72,7 @@ export function GamesCalendar({
           >
             ‹
           </button>
-          <h2 aria-live="polite" className="min-w-36 text-center text-[17px] font-extrabold">
+          <h2 aria-live="polite" className="min-w-36 text-center text-lead font-extrabold">
             {titleOf(span, anchor)}
           </h2>
           <button
@@ -89,7 +89,7 @@ export function GamesCalendar({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="min-h-11 cursor-pointer rounded-xl px-3 text-[15px] font-bold text-primary"
+            className="min-h-11 cursor-pointer rounded-xl px-3 text-body font-bold text-primary"
             onClick={() => {
               setSelected(today);
               moveTo(span, new Date());
@@ -119,7 +119,7 @@ export function GamesCalendar({
       </div>
 
       <div className="rounded-2xl border border-line bg-surface p-2">
-        <div aria-hidden="true" className="grid grid-cols-7 pb-1 text-center text-[12px] font-bold text-muted">
+        <div aria-hidden="true" className="grid grid-cols-7 pb-1 text-center text-meta font-bold text-muted">
           {WEEKDAYS.map((d, i) => (
             <span key={i}>{d}</span>
           ))}
@@ -152,7 +152,7 @@ export function GamesCalendar({
                 } ${span === "week" ? "min-h-16" : "min-h-12"}`}
               >
                 <span
-                  className={`text-[15px] tabular-nums ${key === today ? "font-extrabold underline" : "font-bold"}`}
+                  className={`text-body tabular-nums ${key === today ? "font-extrabold underline" : "font-bold"}`}
                 >
                   {day.getDate()}
                 </span>
@@ -165,7 +165,7 @@ export function GamesCalendar({
           })}
         </div>
       </div>
-      <p className="-mt-2 flex gap-4 text-[13px] text-muted">
+      <p className="-mt-2 flex gap-4 text-meta text-muted">
         <span className="flex items-center gap-1.5">
           <span aria-hidden="true" className="size-2 rounded-full bg-ball" /> Games
         </span>
@@ -175,14 +175,14 @@ export function GamesCalendar({
       </p>
 
       <section aria-label="Selected day" className="flex flex-col gap-3">
-        <h3 className="text-xs font-bold tracking-[0.1em] text-muted uppercase">
+        <h3 className="text-label font-bold tracking-[0.1em] text-muted uppercase">
           {selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
         </h3>
         {result.kind === "loading" && <p className="text-muted">Loading…</p>}
         {result.kind === "error" && (
           <div role="alert" className="flex items-center gap-3">
             <p>We couldn&apos;t load the calendar just now.</p>
-            <button type="button" className={buttonClass("quiet", "min-h-10 px-3 text-[15px]")} onClick={reload}>
+            <button type="button" className={buttonClass("quiet", "min-h-10 px-3 text-body")} onClick={reload}>
               Try again
             </button>
           </div>
