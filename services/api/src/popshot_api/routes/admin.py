@@ -42,7 +42,7 @@ def require_admin(identity: CurrentIdentity, request: Request) -> None:
 router = APIRouter(prefix="/v1/admin", dependencies=[Depends(require_admin)])
 
 
-Page = Literal["overview", "groups", "people", "person", "group"]
+Page = Literal["overview", "groups", "people", "person", "group", "funnel"]
 
 
 def record_view(user: UserSession, page: Page, target: UUID | None = None) -> None:
