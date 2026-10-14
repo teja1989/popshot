@@ -15,6 +15,7 @@ import { DeletedGroups } from "./deleted-groups";
 import { useHomeRefresh } from "./home-refresh";
 import { InstallBanner } from "./install-banner";
 import { InviteInbox } from "./invite-inbox";
+import { StoryPrompt } from "./story-prompt";
 import { DeletionNotice } from "./your-data-section";
 import { YourWeekCard } from "./your-week-card";
 import { NextNight } from "./next-night";
@@ -126,6 +127,8 @@ export function HomeView() {
       <DeletionNotice />
 
       <InviteInbox onJoined={reload} />
+
+      <StoryPrompt />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <section aria-labelledby="groups-heading" className="flex flex-col gap-3">

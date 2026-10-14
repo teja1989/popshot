@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { apiGet } from "@/lib/api-client";
-import { featureOn, NO_FEATURES, REFRESH_MS, type MyFeatures } from "@/lib/features";
+import { featureOn, NO_FEATURES, REFRESH_MS, youOn, type MyFeatures } from "@/lib/features";
 
 import { useSignedIn } from "./auth";
 
@@ -74,4 +74,9 @@ export function useMyFeatures(): MyFeatures {
 /** Is `key` (or, with "area.*", anything in that area) on for this crew? */
 export function useFeature(key: string, crewId: string | null): boolean {
   return featureOn(useContext(FeaturesContext).features, key, crewId);
+}
+
+/** Is this 'you' switch (per person, not per crew) on for you? */
+export function useYouFeature(key: string): boolean {
+  return youOn(useContext(FeaturesContext).features, key);
 }

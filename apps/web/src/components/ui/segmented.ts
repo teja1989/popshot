@@ -10,3 +10,10 @@ export const segmentOption =
   // already says it's selected.
   "has-[:checked]:before:mr-1.5 has-[:checked]:before:content-['✓'_/_''] " +
   "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
+
+// The same look for links that switch between pages (tabs): the current one carries
+// aria-current="page".
+export const segmentLink =
+  "flex min-h-11 items-center justify-center rounded-full px-3 text-body font-bold text-muted no-underline " +
+  "transition-colors duration-150 ease-standard hover:text-ink " +
+  "aria-[current=page]:bg-secondary-container aria-[current=page]:text-on-secondary-container";
