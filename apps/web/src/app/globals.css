@@ -1,79 +1,98 @@
 @import "tailwindcss";
-/* Fonts, self-hosted (no request to Google Fonts): Inter for reading, Bricolage Grotesque for
-   headings and, at its narrowest width, scoreboard numbers. */
-@import "@fontsource-variable/inter/index.css";
-@import "@fontsource-variable/bricolage-grotesque/wdth.css";
+/* Font, self-hosted (no request to Google Fonts): Figtree for everything, with headings and
+   scoreboard numbers set heavier. */
+@import "@fontsource-variable/figtree/index.css";
 
 /*
- * Court theme. Colors live here as CSS variables so light and dark switch in one place:
- * dark follows the device unless data-theme="light" is set on <html>, and
- * data-theme="dark" forces it (for a settings switch later).
+ * Court theme, Material 3 style: tonal surfaces from one seed colour (court green #1f6b5a)
+ * with ball yellow as the highlight. Colors live here as CSS variables so light and dark
+ * switch in one place: dark follows the device unless data-theme="light" is set on <html>,
+ * and data-theme="dark" forces it. lib/theme-contrast.test.ts checks every text-on-colour
+ * pair below, in both themes.
  */
 :root {
-  --c-bg: #f3f6f5;
+  --c-bg: #f4faf6;
   --c-surface: #ffffff;
-  --c-chip: #e4ecf5;
-  --c-ink: #0f1b26;
-  --c-muted: #4b5b69;
-  --c-line: #d5dee2;
-  --c-primary: #1d4e89;
+  --c-surface-low: #eef5f1;
+  --c-surface-high: #e3ece7;
+  --c-chip: #dbe7e1;
+  --c-ink: #161d1a;
+  --c-muted: #3f4945;
+  --c-line: #c3ccc7;
+  --c-primary: #1f6b5a;
   --c-on-primary: #ffffff;
-  --c-win: #2c6a4d;
+  --c-primary-container: #a6f2db;
+  --c-on-primary-container: #002019;
+  --c-secondary-container: #cde8df;
+  --c-on-secondary-container: #0b3a30;
+  --c-win: #23683f;
   --c-on-win: #ffffff;
-  --c-loss: #9aa7b1;
+  --c-loss: #5b6661;
   --c-ball: #d7ea4c;
-  --c-on-ball: #14210a;
-  --c-warn: #8a4b0f;
-  /* The big court-blue blocks (landing hero, home header). White text on it in both themes. */
-  --c-hero: #1d4e89;
+  --c-on-ball: #1d2600;
+  --c-warn: #9a4a00;
+  /* The big green blocks (landing hero, home header). White text on it in both themes. */
+  --c-hero: #1f6b5a;
   --c-on-hero: #ffffff;
-  --c-on-hero-muted: #c8d8ec;
-  --c-hero-line: rgb(255 255 255 / 0.14);
+  --c-on-hero-muted: #d2efe5;
+  --c-hero-line: rgb(255 255 255 / 0.16);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --c-bg: #0a1520;
-    --c-surface: #122130;
-    --c-chip: #1c3248;
-    --c-ink: #eaf1f6;
-    --c-muted: #9eb1c1;
-    --c-line: #25384a;
-    --c-primary: #7db3f0;
-    --c-on-primary: #06121f;
-    --c-win: #63c08f;
-    --c-on-win: #06121f;
-    --c-loss: #4d6274;
+    --c-bg: #0f1513;
+    --c-surface: #171e1b;
+    --c-surface-low: #131a17;
+    --c-surface-high: #222b27;
+    --c-chip: #2a3430;
+    --c-ink: #dee4e0;
+    --c-muted: #bfc9c4;
+    --c-line: #3f4945;
+    --c-primary: #8bd6bf;
+    --c-on-primary: #00382d;
+    --c-primary-container: #005143;
+    --c-on-primary-container: #a6f2db;
+    --c-secondary-container: #344b44;
+    --c-on-secondary-container: #cde8df;
+    --c-win: #7fd9a0;
+    --c-on-win: #00391c;
+    --c-loss: #9aa59f;
     --c-ball: #dcec5c;
-    --c-on-ball: #14210a;
-    --c-warn: #f0b36a;
-    --c-hero: #123a68;
+    --c-on-ball: #1d2600;
+    --c-warn: #ffb77a;
+    --c-hero: #0d4a3d;
     --c-on-hero: #ffffff;
-    --c-on-hero-muted: #b7c9df;
+    --c-on-hero-muted: #b4ded0;
     --c-hero-line: rgb(255 255 255 / 0.12);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --c-bg: #0a1520;
-  --c-surface: #122130;
-  --c-chip: #1c3248;
-  --c-ink: #eaf1f6;
-  --c-muted: #9eb1c1;
-  --c-line: #25384a;
-  --c-primary: #7db3f0;
-  --c-on-primary: #06121f;
-  --c-win: #63c08f;
-  --c-on-win: #06121f;
-  --c-loss: #4d6274;
+  --c-bg: #0f1513;
+  --c-surface: #171e1b;
+  --c-surface-low: #131a17;
+  --c-surface-high: #222b27;
+  --c-chip: #2a3430;
+  --c-ink: #dee4e0;
+  --c-muted: #bfc9c4;
+  --c-line: #3f4945;
+  --c-primary: #8bd6bf;
+  --c-on-primary: #00382d;
+  --c-primary-container: #005143;
+  --c-on-primary-container: #a6f2db;
+  --c-secondary-container: #344b44;
+  --c-on-secondary-container: #cde8df;
+  --c-win: #7fd9a0;
+  --c-on-win: #00391c;
+  --c-loss: #9aa59f;
   --c-ball: #dcec5c;
-  --c-on-ball: #14210a;
-  --c-warn: #f0b36a;
-  --c-hero: #123a68;
+  --c-on-ball: #1d2600;
+  --c-warn: #ffb77a;
+  --c-hero: #0d4a3d;
   --c-on-hero: #ffffff;
-  --c-on-hero-muted: #b7c9df;
+  --c-on-hero-muted: #b4ded0;
   --c-hero-line: rgb(255 255 255 / 0.12);
   color-scheme: dark;
 }
@@ -114,12 +133,18 @@
 @theme inline {
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
+  --color-surface-low: var(--c-surface-low);
+  --color-surface-high: var(--c-surface-high);
   --color-chip: var(--c-chip);
   --color-ink: var(--c-ink);
   --color-muted: var(--c-muted);
   --color-line: var(--c-line);
   --color-primary: var(--c-primary);
   --color-on-primary: var(--c-on-primary);
+  --color-primary-container: var(--c-primary-container);
+  --color-on-primary-container: var(--c-on-primary-container);
+  --color-secondary-container: var(--c-secondary-container);
+  --color-on-secondary-container: var(--c-on-secondary-container);
   --color-win: var(--c-win);
   --color-on-win: var(--c-on-win);
   --color-loss: var(--c-loss);
@@ -131,8 +156,8 @@
   --color-on-hero-muted: var(--c-on-hero-muted);
   --color-hero-line: var(--c-hero-line);
 
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
 
   --ease-court: cubic-bezier(0.3, 0.7, 0.2, 1);
   --animate-rise: rise 0.5s var(--ease-court) both;
@@ -274,10 +299,10 @@
   }
 }
 
-/* Scoreboard numbers: the display face at its narrowest, with even-width digits. */
+/* Scoreboard numbers: heavy, with even-width digits. */
 @utility font-numeral {
   font-family: var(--font-display);
-  font-stretch: 75%;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 

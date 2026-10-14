@@ -37,7 +37,7 @@ export async function GET(
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#1d4e89",
+          background: "#1f6b5a",
         }}
       >
         <div
