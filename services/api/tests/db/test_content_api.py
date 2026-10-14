@@ -207,8 +207,12 @@ def test_new_sites_need_adding_first(
     )
     assert added.status_code == 204
     assert logged(owner_engine, "content.host_add")[0]["details"]["host"] == "coach.example.org"
-    assert "coach.example.org" in [
-        h["host"] for h in admins.admin.get("/v1/admin/content/hosts", headers=boss).json()
+    hosts = admins.admin.get("/v1/admin/content/hosts", headers=boss).json()
+    assert sorted(h["host"] for h in hosts) == [
+        "coach.example.org",
+        "www.youtube.com",
+        "youtu.be",
+        "youtube.com",
     ]
     made = add(admins, boss, **article)
     assert made.status_code == 201
