@@ -1,8 +1,8 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 
 import { closesOnRelease } from "@/lib/sheet-drag";
 
@@ -21,7 +21,12 @@ const PANEL = {
   full: `fixed inset-0 z-50 h-dvh overflow-y-auto border-line bg-surface px-5 pt-5 pb-8 text-ink ${DESKTOP}`,
 };
 
-const SPRING = { type: "spring", stiffness: 420, damping: 38 } as const;
+// Material 3 motion: arriving with a long, soft "emphasized decelerate" ease; leaving
+// faster, accelerating away.
+const EMPHASIZED = [0.05, 0.7, 0.1, 1] as const;
+const ARRIVE = { duration: 0.4, ease: EMPHASIZED };
+const SETTLE = { duration: 0.3, ease: EMPHASIZED };
+const LEAVE = { duration: 0.22, ease: [0.3, 0, 0.8, 0.15] as const };
 // Let go after holding still this long (ms) and it's not a flick.
 const FLICK_PAUSE_MS = 100;
 
@@ -69,19 +74,21 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       {trigger !== undefined && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
-      {open && (
-        <Panel
-          title={title}
-          description={description}
-          onOpenAutoFocus={onOpenAutoFocus}
-          fullOnPhone={fullOnPhone}
-          onClose={() => {
-            onOpenChange(false);
-          }}
-        >
-          {children}
-        </Panel>
-      )}
+      <AnimatePresence>
+        {open && (
+          <Panel
+            title={title}
+            description={description}
+            onOpenAutoFocus={onOpenAutoFocus}
+            fullOnPhone={fullOnPhone}
+            onClose={() => {
+              onOpenChange(false);
+            }}
+          >
+            {children}
+          </Panel>
+        )}
+      </AnimatePresence>
     </Dialog.Root>
   );
 }
@@ -104,22 +111,33 @@ function Panel({
   const wide = useWide();
   const reduced = useReducedMotion() ?? false;
   const draggable = !fullOnPhone && !wide;
+  // A bottom sheet on a phone slides up from the bottom edge and back down when it closes;
+  // the others (full-screen sheets, the centred card) fade with a small lift.
+  const slides = !fullOnPhone && !wide && !reduced;
+  const panel = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
   // How far down the panel is: it rises into place when it opens, and follows the pointer
   // while dragged.
-  const y = useMotionValue(reduced ? 0 : wide ? 16 : 48);
+  const y = useMotionValue(reduced ? 0 : 16);
   const shown = useMotionValue(0);
   // The backdrop fades in as the sheet opens, and out again as it's dragged down.
   const backdrop = useTransform(() => shown.get() * (1 - Math.min(Math.max(y.get(), 0), 320) / 320));
   const drag = useRef<{ pointer: number; startY: number; lastY: number; lastTime: number; speed: number } | null>(null);
 
-  useEffect(() => {
-    const fade = animate(shown, 1, { duration: 0.2, ease: "easeOut" });
-    const rise = animate(y, 0, reduced ? { duration: 0 } : SPRING);
+  // Start from just below the screen's edge, before the first paint, then rise.
+  useLayoutEffect(() => {
+    const full = panel.current?.offsetHeight ?? 0;
+    setHeight(full);
+    if (slides) {
+      y.set(full);
+    }
+    const fade = animate(shown, 1, { duration: reduced ? 0.15 : 0.3, ease: "easeOut" });
+    const rise = animate(y, 0, reduced ? { duration: 0 } : ARRIVE);
     return () => {
       fade.stop();
       rise.stop();
     };
-  }, [shown, y, reduced]);
+  }, [shown, y, reduced, slides]);
 
   // Dragging, by the grip or the title row (never the content, so scrolling it stays
   // scrolling). Plain pointer events: the panel follows the pointer down only, and on
@@ -164,7 +182,7 @@ function Panel({
     if (event.type === "pointerup" && closesOnRelease(y.get(), speed)) {
       onClose();
     } else {
-      void animate(y, 0, reduced ? { duration: 0 } : SPRING);
+      void animate(y, 0, reduced ? { duration: 0 } : SETTLE);
     }
   }
 
@@ -173,17 +191,22 @@ function Panel({
     : {};
 
   return (
-    <Dialog.Portal>
-      <Dialog.Overlay asChild>
-        <motion.div className="fixed inset-0 z-40 bg-ink/45" style={{ opacity: backdrop }} />
-      </Dialog.Overlay>
-      <Dialog.Content asChild onOpenAutoFocus={onOpenAutoFocus}>
+    // forceMount: Motion, not Radix, decides when they leave, so they can animate out.
+    <Dialog.Portal forceMount>
+      <motion.div exit={{ opacity: 0 }} transition={LEAVE}>
+        <Dialog.Overlay asChild forceMount>
+          <motion.div className="fixed inset-0 z-40 bg-ink/45" style={{ opacity: backdrop }} />
+        </Dialog.Overlay>
+      </motion.div>
+      <Dialog.Content asChild forceMount onOpenAutoFocus={onOpenAutoFocus}>
         <motion.div
+          ref={panel}
           className={fullOnPhone ? PANEL.full : PANEL.bottom}
           style={{ y }}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: slides ? 1 : 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: reduced ? 0.15 : 0.2 }}
+          exit={slides ? { y: height || 600 } : { opacity: 0, y: reduced ? 0 : 16 }}
+          transition={slides ? LEAVE : { duration: reduced ? 0.15 : 0.2 }}
         >
           {draggable && (
             // The grip: a visual handle for dragging. Keyboard and screen reader users close

@@ -5,9 +5,9 @@ export type ButtonVariant = "primary" | "action" | "quiet" | "danger";
 
 const base =
   "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full px-6 " +
-  "text-lead font-bold no-underline transition-transform duration-150 ease-court " +
-  "hover:-translate-y-px active:translate-y-px " +
-  "disabled:cursor-progress disabled:opacity-60 disabled:hover:translate-y-0";
+  "text-lead font-bold no-underline transition-[scale,filter] duration-150 ease-standard " +
+  "hover:brightness-95 active:scale-[0.97] " +
+  "disabled:cursor-progress disabled:opacity-60 disabled:hover:brightness-100 disabled:active:scale-100";
 
 const variants: Record<ButtonVariant, string> = {
   // The main way forward on a screen.

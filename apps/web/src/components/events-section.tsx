@@ -55,7 +55,7 @@ export function EventsSection({ group }: { group: GroupSummary }) {
         <Link
           key={e.id}
           href={`/groups/${group.id}/events/${e.id}`}
-          className="flex items-center justify-between gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4 text-ink no-underline transition-colors duration-150 hover:border-primary"
+          className="flex items-center justify-between gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4 text-ink no-underline pressable"
         >
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="truncate text-title-sm font-extrabold font-display">{e.name}</span>

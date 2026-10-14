@@ -91,7 +91,7 @@ function Group({ group }: { group: GroupDetail }) {
           <Link
             href={`/groups/${group.id}/members`}
             aria-label={`Members · ${String(active.length)}${waiting > 0 ? `, ${String(waiting)} asking to join` : ""}`}
-            className="flex min-h-16 animate-rise items-center gap-3 rounded-3xl border border-transparent bg-surface shadow-card px-4 py-3 text-ink no-underline [animation-delay:60ms]"
+            className="flex min-h-16 animate-rise items-center gap-3 rounded-3xl border border-transparent bg-surface shadow-card px-4 py-3 text-ink no-underline pressable [animation-delay:60ms]"
           >
             <AvatarStack people={active.slice(0, 4)} total={active.length} />
             <span className="flex min-w-0 grow flex-col">

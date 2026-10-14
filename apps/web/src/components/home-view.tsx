@@ -31,11 +31,11 @@ import { ChevronIcon, PlusIcon } from "./ui/icons";
 // Written out in full so Tailwind can see them (it doesn't evaluate code).
 const STAGGER = [
   "",
-  "[animation-delay:50ms]",
-  "[animation-delay:100ms]",
-  "[animation-delay:150ms]",
-  "[animation-delay:200ms]",
-  "[animation-delay:250ms]",
+  "[animation-delay:60ms]",
+  "[animation-delay:120ms]",
+  "[animation-delay:180ms]",
+  "[animation-delay:240ms]",
+  "[animation-delay:300ms]",
 ];
 
 export function HomeView() {
@@ -240,7 +240,7 @@ function GroupCard({ group }: { group: GroupSummary }) {
   return (
     <Link
       href={`/groups/${group.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card text-ink no-underline transition-[translate,box-shadow] duration-200 ease-court hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgb(15_27_38/0.45)]"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card text-ink no-underline pressable"
     >
       <span className="relative isolate block h-20 overflow-hidden bg-hero">
         <CourtPattern />
