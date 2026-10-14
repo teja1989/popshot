@@ -1,7 +1,8 @@
-// The main menu: Home, Play, Crew and You always; other tabs only while their feature switch
-// is on (migration 0027) in at least one of your crews, so there's never an empty tab.
+// The main menu: Home, Play, Crew, You and More always; other tabs only while their feature
+// switch is on (migration 0027) in at least one of your crews, so there's never an empty tab.
+// More lists everything else Popshot does (lib/more.ts).
 
-export type NavIcon = "home" | "play" | "crew" | "learn" | "you";
+export type NavIcon = "home" | "play" | "crew" | "learn" | "you" | "more";
 
 export interface NavItem {
   href: string;
@@ -28,6 +29,7 @@ export const NAV: readonly NavItem[] = [
   // The shot library. Its page and switch arrive together; until then the switch doesn't exist.
   { href: "/learn", label: "Learn", icon: "learn", feature: "learn.tab", matches: (p) => p.startsWith("/learn") },
   { href: "/you", label: "You", icon: "you", matches: (p) => p.startsWith("/you") },
+  { href: "/more", label: "More", icon: "more", matches: (p) => p.startsWith("/more") },
 ];
 
 /** The tabs to show, given what's on for you anywhere (empty while it's still loading). */

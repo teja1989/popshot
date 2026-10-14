@@ -7,10 +7,11 @@ import type { ReactNode } from "react";
 import { NAV, tabColumns, visibleNav, type NavIcon } from "@/lib/nav";
 
 import { useEverywhere } from "./features";
+import { HashScroll } from "./hash-scroll";
 import { onHomeLinkClick } from "./home-refresh";
 import { SignOutButton } from "./sign-out-button";
 import { Brand } from "./ui/brand";
-import { BookIcon, CrewIcon, HomeIcon, PaddleIcon, YouIcon } from "./ui/icons";
+import { BookIcon, CrewIcon, HomeIcon, MoreIcon, PaddleIcon, YouIcon } from "./ui/icons";
 
 // The signed-in frame: a sidebar on wide screens, a bottom tab bar on phones.
 
@@ -20,6 +21,7 @@ const ICONS: Record<NavIcon, ReactNode> = {
   crew: <CrewIcon />,
   learn: <BookIcon />,
   you: <YouIcon />,
+  more: <MoreIcon />,
 };
 
 export function AppFrame({ children }: { children: ReactNode }) {
@@ -83,6 +85,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
           </Link>
         </header>
         {children}
+        <HashScroll />
       </div>
 
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface lg:hidden">
