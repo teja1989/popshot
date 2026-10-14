@@ -377,6 +377,9 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "event_players",
         "event_rounds",
         "event_courts",
+        # Learn shots (0029) belong to no crew or person; only its functions touch them, and
+        # test_learn_api.py covers that.
+        "shots",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 
