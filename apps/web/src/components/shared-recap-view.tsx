@@ -36,7 +36,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
         </ul>
         <p className="text-meta font-bold text-on-hero-muted">
           <LocalDate iso={recap.start} />
-          {recap.written_by === "ai" ? " · Written by AI (Google Gemini) from the games." : ""}
+          {recap.written_by === "ai" ? " · Written with Google Gemini from the games." : ""}
         </p>
       </section>
 

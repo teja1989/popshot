@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BANNED } from "./copy-rules";
 import {
   COPY,
   emptyDraft,
@@ -39,10 +40,6 @@ const SKILLS = [
   "shot_selection",
   "staying_calm",
 ];
-
-// Words that shame, rank or guess someone's gender have no place on the Journey tab.
-const BANNED =
-  /\b(perfect|perfection|fail|failed|failing|bad|worst|worse|behind|should have|weak|weakness|rank|ranked|ranking|he|she|him|her|his|hers)\b/i;
 
 function allCopy(): string[] {
   const words: string[] = [];

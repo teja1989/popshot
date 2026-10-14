@@ -57,7 +57,7 @@ test("after a game, the Crew tab links to a recap with friendly awards", async (
   await expect(game.locator("span").first()).toHaveText(/^(Ivy & Nora Test|Nora Test & Ivy)$/);
   await expect(game).toContainText(/11–9 · vs (Raj & Lena|Lena & Raj)/);
   // Popshot's own words here (the AI is off in tests), so no AI label.
-  await expect(page.getByText("Written by AI", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("Written with Google Gemini", { exact: false })).toHaveCount(0);
   // Nothing about losing.
   await expect(page.getByRole("main")).not.toContainText(/\b(lost|beat|worst)\b/i);
 

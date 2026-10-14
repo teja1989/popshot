@@ -153,7 +153,7 @@ export function RecapSample({ children }: { children?: ReactNode }) {
           <li>Pat played a first night with the crew and won twice.</li>
         </ul>
         <p className="mt-3 text-meta font-bold text-on-hero-muted">
-          Example · Written by AI (Google Gemini) from the games.
+          Example · Written with Google Gemini from the games.
         </p>
       </div>
       <ul className="grid gap-2 sm:grid-cols-3">

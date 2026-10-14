@@ -72,7 +72,7 @@ function RecapBody({ groupId, recap }: { groupId: string; recap: Recap }) {
           ))}
         </ul>
         {recap.written_by === "ai" && (
-          <p className="text-meta font-bold text-on-hero-muted">Written by AI (Google Gemini) from your games.</p>
+          <p className="text-meta font-bold text-on-hero-muted">Written with Google Gemini from your games.</p>
         )}
       </section>
 
