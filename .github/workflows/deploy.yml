@@ -217,6 +217,17 @@ jobs:
           set -euo pipefail
           terraform init -lockfile=readonly -backend-config="bucket=${STATE_BUCKET}"
           terraform apply platform.tfplan
+          # What Firebase Hosting still needs at Cloudflare for our domain (empty once connected).
+          records="$(terraform output -json dns_records)"
+          if [ "$(echo "$records" | jq 'length')" -gt 0 ]; then
+            {
+              echo "## DNS records to add at Cloudflare (DNS only, grey cloud)"
+              echo "| Name | Type | Value |"
+              echo "|---|---|---|"
+              echo "$records" | jq -r '.[] | "| \(.name) | \(.type) | `\(.value)` |"'
+              echo "See infra/terraform/prod/README.md, \"Our domain\"."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Database bootstrap and migrations (new image, before new code serves)
         run: |
           set -euo pipefail
