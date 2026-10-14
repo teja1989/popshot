@@ -165,7 +165,12 @@
   --shadow-fab: 0 4px 8px rgb(22 29 26 / 0.12), 0 8px 20px rgb(31 107 90 / 0.25);
 
   --ease-court: cubic-bezier(0.3, 0.7, 0.2, 1);
-  --animate-rise: rise 0.5s var(--ease-court) both;
+  /* Material 3 motion: "standard" for small state changes, "emphasized decelerate" for
+     things arriving on screen (a long, soft landing rather than a snap). */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --shadow-card-hover: 0 2px 4px rgb(22 29 26 / 0.08), 0 8px 20px rgb(22 29 26 / 0.1);
+  --animate-rise: rise 0.45s var(--ease-emphasized) both;
   --animate-court-draw: court-draw 0.9s var(--ease-court) forwards;
   --animate-court-ball: court-ball 0.7s 0.7s var(--ease-court) both;
   --animate-rally-x: rally-x 1.1s linear 1.1s 4 alternate both;
@@ -240,14 +245,16 @@
     }
   }
 
+  /* Animates translate, not transform, so a card that rises can still be pressed (the
+     press shrinks it with scale, a separate property). */
   @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      translate: 0 6px;
     }
     to {
       opacity: 1;
-      transform: none;
+      translate: none;
     }
   }
   @keyframes court-draw {
@@ -301,6 +308,24 @@
   :focus-visible {
     outline: 3px solid var(--color-primary);
     outline-offset: 2px;
+  }
+}
+
+/* Something you can tap that isn't a button: a card or a row. It shrinks a touch while
+   pressed and, with a mouse, lifts its shadow on hover (Material 3's state layer, without
+   jumping around). */
+@utility pressable {
+  transition:
+    scale 160ms var(--ease-standard),
+    box-shadow 200ms var(--ease-standard),
+    background-color 160ms var(--ease-standard);
+  &:active {
+    scale: 0.985;
+  }
+  @media (hover: hover) {
+    &:hover {
+      box-shadow: var(--shadow-card-hover);
+    }
   }
 }
 

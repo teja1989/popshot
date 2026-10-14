@@ -19,7 +19,7 @@ import { useCurrentGroup } from "./use-current-group";
 
 const ROW =
   "flex w-full min-h-16 cursor-pointer items-center gap-3 px-4 py-3 text-left text-ink no-underline " +
-  "transition-colors duration-150 hover:bg-bg";
+  "transition-colors duration-150 ease-standard hover:bg-surface-low active:bg-surface-high";
 
 function today(): string {
   const now = new Date();

@@ -71,5 +71,7 @@ test("Escape and the Close button still close a sheet", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const sheet = await openStartAGroup(page);
   await sheet.getByRole("button", { name: "Close" }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // It slides away rather than vanishing, then is gone, with focus back on its button.
+  await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 1000 });
+  await expect(page.getByRole("button", { name: "Start a group" }).first()).toBeFocused();
 });

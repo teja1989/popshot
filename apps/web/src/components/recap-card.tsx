@@ -27,7 +27,7 @@ export function RecapCard({ groupId }: { groupId: string }) {
       </h2>
       <Link
         href={href(latest.key)}
-        className="relative isolate flex flex-col gap-2 overflow-hidden rounded-2xl bg-hero p-5 text-on-hero no-underline"
+        className="relative isolate flex flex-col gap-2 overflow-hidden rounded-2xl bg-hero p-5 text-on-hero no-underline pressable"
       >
         <span className="text-small font-bold text-on-hero-muted">
           {playedWhen(latest.start)}
