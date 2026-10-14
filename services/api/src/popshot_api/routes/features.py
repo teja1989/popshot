@@ -29,6 +29,8 @@ class MyFeatures(BaseModel):
     crews: dict[UUID, list[str]]
     # What's on in at least one of them: for things that aren't about one crew (a menu tab).
     everywhere: list[str]
+    # Switches in the 'you' area, which are per person, not per crew (migration 0032).
+    you: list[str]
 
 
 @router.get("/me/features")
@@ -37,4 +39,7 @@ def my_features(user: CurrentUserSession) -> MyFeatures:
     crews: dict[UUID, list[str]] = {}
     for row in rows:
         crews.setdefault(row.group_id, []).append(row.feature)
-    return MyFeatures(crews=crews, everywhere=sorted({row.feature for row in rows}))
+    you = list(
+        user.session.execute(text("SELECT feature FROM app_my_personal_features()")).scalars()
+    )
+    return MyFeatures(crews=crews, everywhere=sorted({row.feature for row in rows}), you=you)

@@ -187,6 +187,7 @@ def test_my_features(people: People, switches: Switches) -> None:
     assert people.client.get("/v1/me/features", headers=people.new("Robin")).json() == {
         "crews": {},
         "everywhere": [],
+        "you": [],
     }
     assert people.client.get("/v1/me/features").status_code == 401
 

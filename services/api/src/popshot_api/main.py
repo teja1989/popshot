@@ -30,6 +30,7 @@ from popshot_api.routes import (
     guests,
     health,
     invites,
+    journey,
     me,
     nights,
     notifications,
@@ -131,6 +132,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(direct_invites.router)
     app.include_router(games.router)
     app.include_router(focus.router)
+    app.include_router(journey.router)
     app.include_router(board.router)
     app.include_router(stats.router)
     app.include_router(notifications.router)
