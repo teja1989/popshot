@@ -39,6 +39,9 @@ export function AdminView() {
             <Link href="/admin/features" className="text-body font-bold text-primary">
               Features and plans →
             </Link>
+            <Link href="/admin/learn" className="text-body font-bold text-primary">
+              Learn shots →
+            </Link>
           </div>
         </header>
         {overview.result.kind === "loading" && <p className="text-muted">Loading the numbers…</p>}
