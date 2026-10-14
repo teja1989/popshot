@@ -3,17 +3,24 @@
 import Link from "next/link";
 import { useId, useState, type SubmitEvent } from "react";
 
-import { apiDelete, apiPost, ApiError } from "@/lib/api-client";
+import { apiDelete, apiPost, apiPut, ApiError } from "@/lib/api-client";
 import { labelFor, type Focus, type FocusOption } from "@/lib/focus";
 import {
   COPY,
   FEATURE,
   localDate,
   NOTE_MAX,
+  PERSONAL_FEATURE,
+  periodLabel,
+  personalLaterSaid,
   QUESTIONS,
+  sayPersonalLater,
+  shouldAskPersonal,
   tipFor,
   workingOn,
+  type CheckinSummary,
   type Journey,
+  type JourneySettings,
   type LearningNote,
   type Story,
 } from "@/lib/journey";
@@ -131,6 +138,8 @@ function JourneyBody({
         <span className="text-small">{COPY.learningDaysHint}</span>
       </p>
 
+      <PersonalCard journey={journey} onChange={onChange} />
+
       <section aria-labelledby="today-heading" className={`${CARD} animate-rise [animation-delay:120ms]`}>
         <h2 id="today-heading" className="text-title-sm font-bold">
           {COPY.todayHeading}
@@ -148,13 +157,162 @@ function JourneyBody({
 
       <StorySection journey={journey} options={options} onChange={onChange} />
 
-      <section aria-labelledby="checkins-heading" className="flex animate-rise flex-col gap-2 [animation-delay:300ms]">
-        <h2 id="checkins-heading" className="text-title-sm font-bold">
-          {COPY.checkinsHeading}
-        </h2>
-        <p className="rounded-2xl border border-dashed border-line p-4 text-body text-muted">{COPY.checkinsSoon}</p>
-      </section>
+      <CheckinsSection />
+
+      <PersonalSwitch journey={journey} onChange={onChange} />
     </>
+  );
+}
+
+/** Your check-ins, newest first; one not opened yet is marked. */
+function CheckinsSection() {
+  const checkins = useApiGet<CheckinSummary[]>("/v1/me/journey/checkins");
+  const list = checkins.result.kind === "ready" ? checkins.result.data : [];
+  return (
+    <section aria-labelledby="checkins-heading" className="flex animate-rise flex-col gap-2 [animation-delay:300ms]">
+      <h2 id="checkins-heading" className="text-title-sm font-bold">
+        {COPY.checkinsHeading}
+      </h2>
+      {checkins.result.kind === "ready" && list.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-line p-4 text-body text-muted">{COPY.checkinsSoon}</p>
+      )}
+      {list.length > 0 && (
+        <ul className="flex flex-col gap-2" aria-label="Your check-ins">
+          {list.map((checkin) => (
+            <li key={checkin.id}>
+              <Link
+                href={`/you/journey/checkins/${checkin.id}`}
+                className="pressable flex items-center gap-3 rounded-2xl bg-surface p-4 text-ink no-underline shadow-card"
+              >
+                <span className="flex min-w-0 grow flex-col gap-0.5">
+                  <span className="text-meta font-bold text-muted">
+                    {periodLabel(checkin.period_start, checkin.period_end)}
+                    {checkin.chapter ? ` · ${checkin.chapter}` : ""}
+                  </span>
+                  <span className="text-body font-bold break-words">{checkin.headline ?? COPY.checkinUnopened}</span>
+                </span>
+                {!checkin.opened && (
+                  <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 text-meta font-bold text-on-primary">
+                    {COPY.checkinNew}
+                  </span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+async function saveConsent(
+  user: Parameters<typeof apiPut>[0],
+  journey: Journey,
+  consent: boolean,
+  onChange: (journey: Journey) => void,
+): Promise<void> {
+  const settings = await apiPut<JourneySettings>(user, "/v1/me/journey/settings", { ai_consent: consent });
+  onChange({ ...journey, settings });
+}
+
+/** Asked once on the Journey tab: personal check-ins, written with Google Gemini. */
+function PersonalCard({ journey, onChange }: { journey: Journey; onChange: (journey: Journey) => void }) {
+  const { user } = useSignedIn();
+  const personalOn = useYouFeature(PERSONAL_FEATURE);
+  const [later, setLater] = useState(personalLaterSaid);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  if (!shouldAskPersonal(personalOn, journey.settings.ai_consent, later)) {
+    return null;
+  }
+  async function yes() {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await saveConsent(user, journey, true, onChange);
+    } catch {
+      setProblem("We couldn't save that just now.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section aria-labelledby="personal-heading" className={`${CARD} animate-rise [animation-delay:90ms]`}>
+      <h2 id="personal-heading" className="text-title-sm font-bold">
+        {COPY.personalTitle}
+      </h2>
+      <p className="text-body">{COPY.personalBody}</p>
+      <p className="text-meta text-muted">{COPY.personalNote}</p>
+      <p role="alert" className="text-body text-warn empty:hidden">
+        {problem}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void yes()}
+          className={buttonClass("primary", "min-h-11 px-5 text-body")}
+        >
+          {COPY.personalYes}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            sayPersonalLater();
+            setLater(true);
+          }}
+          className={buttonClass("quiet", "min-h-11 px-5 text-body")}
+        >
+          {COPY.personalLater}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** Change your mind any time: the same yes or no, at the bottom of the tab. */
+function PersonalSwitch({ journey, onChange }: { journey: Journey; onChange: (journey: Journey) => void }) {
+  const { user } = useSignedIn();
+  const personalOn = useYouFeature(PERSONAL_FEATURE);
+  const id = useId();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  if (!personalOn) {
+    return null;
+  }
+  async function toggle(consent: boolean) {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await saveConsent(user, journey, consent, onChange);
+    } catch {
+      setProblem("That didn't work just now. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section aria-label={COPY.personalSwitch} className={`${CARD} animate-rise [animation-delay:360ms]`}>
+      <label className="grid min-h-12 cursor-pointer grid-cols-[1fr_auto] items-center gap-x-3">
+        <span className="font-bold">{COPY.personalSwitch}</span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={journey.settings.ai_consent}
+          disabled={busy}
+          aria-describedby={`${id}-note`}
+          onChange={(event) => void toggle(event.target.checked)}
+          className="relative row-span-2 h-[26px] w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-line transition-colors duration-200 before:absolute before:top-[3px] before:left-[3px] before:size-5 before:rounded-full before:bg-surface before:shadow-sm before:transition-transform before:duration-200 before:ease-court checked:bg-primary checked:before:translate-x-[18px]"
+        />
+        <span id={`${id}-note`} className="text-meta text-muted">
+          {COPY.personalNote}
+        </span>
+      </label>
+      <p role="alert" className="text-body text-warn empty:hidden">
+        {problem}
+      </p>
+    </section>
   );
 }
 
