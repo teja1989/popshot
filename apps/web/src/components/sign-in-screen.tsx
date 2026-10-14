@@ -209,7 +209,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
                 <li key={item.title}>
                   <Reveal
                     delay={i * 0.08}
-                    className="flex h-full flex-col gap-3 rounded-3xl border border-line bg-surface p-6"
+                    className="flex h-full flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-6"
                   >
                     <span aria-hidden="true" className={`h-1.5 w-12 rounded-full ${item.accent}`} />
                     <p className="text-title-sm font-extrabold">{item.title}</p>
@@ -231,7 +231,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
                 <li key={title}>
                   <Reveal
                     delay={i * 0.08}
-                    className="flex h-full flex-col gap-3 rounded-3xl border border-line bg-surface p-6"
+                    className="flex h-full flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-6"
                   >
                     <span className="flex size-10 items-center justify-center rounded-full bg-ball text-title-sm font-extrabold text-on-ball font-numeral">
                       {i + 1}

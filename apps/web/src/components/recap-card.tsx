@@ -22,7 +22,7 @@ export function RecapCard({ groupId }: { groupId: string }) {
 
   return (
     <section aria-labelledby="recap-heading" className="flex animate-rise flex-col gap-2">
-      <h2 id="recap-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="recap-heading" className="text-title-sm font-bold text-ink">
         Latest outing
       </h2>
       <Link
@@ -43,7 +43,10 @@ export function RecapCard({ groupId }: { groupId: string }) {
         </span>
       </Link>
       {earlier.length > 0 && (
-        <ul aria-label="Earlier outings" className="overflow-hidden rounded-2xl border border-line bg-surface">
+        <ul
+          aria-label="Earlier outings"
+          className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card"
+        >
           {earlier.slice(0, 3).map((r) => (
             <li key={r.key} className="border-b border-line last:border-b-0">
               <Link

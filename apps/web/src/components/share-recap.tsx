@@ -88,7 +88,7 @@ export function ShareRecap({ groupId, recapKey, headline }: { groupId: string; r
   return (
     <section
       aria-labelledby="share-heading"
-      className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5"
+      className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
     >
       <h2 id="share-heading" className="text-lead font-extrabold">
         Share this recap

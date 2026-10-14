@@ -206,10 +206,10 @@ function Results({ event, names }: { event: CrewEvent; names: ReadonlyMap<string
     }
     return (
       <section aria-labelledby="standings-heading" className="flex flex-col gap-2">
-        <h2 id="standings-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="standings-heading" className="text-title-sm font-bold text-ink">
           Standings, this event only
         </h2>
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+        <div className="overflow-x-auto rounded-3xl border border-transparent bg-surface shadow-card">
           <table className="w-full text-left text-small tabular-nums">
             <thead>
               <tr className="border-b border-line text-muted">
@@ -304,7 +304,7 @@ function RoundCard({
     );
   }
   return (
-    <details className="rounded-2xl border border-line bg-surface p-4">
+    <details className="rounded-3xl border border-transparent bg-surface shadow-card p-4">
       <summary className="cursor-pointer text-body font-bold">Round {round.number}</summary>
       <div className="mt-3">{body}</div>
     </details>
@@ -351,9 +351,12 @@ function CourtCard({
   }
 
   return (
-    <article aria-label={label} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+    <article
+      aria-label={label}
+      className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4"
+    >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-label font-bold tracking-[0.1em] text-muted uppercase">{label}</h3>
+        <h3 className="text-title-sm font-bold text-ink">{label}</h3>
         {court.skipped && <span className="text-meta font-bold text-muted">Skipped</span>}
       </div>
       <p className="flex flex-col gap-1 text-body">
@@ -563,13 +566,13 @@ function People({
 
   return (
     // Folded away: on a phone the courts come first; this is for arrivals and leavers.
-    <details className="rounded-2xl border border-line bg-surface p-4">
+    <details className="rounded-3xl border border-transparent bg-surface shadow-card p-4">
       <summary className="min-h-11 cursor-pointer content-center text-body font-bold">
         Who&apos;s playing ({here.length})
       </summary>
       <section aria-label="Playing" className="mt-2 flex flex-col gap-2">
         <p className="text-small text-muted">Arrivals and leavers count from the next round.</p>
-        <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface">
+        <ul className="flex flex-col divide-y divide-line rounded-3xl border border-transparent bg-surface shadow-card">
           {here.map((p) => (
             <li key={p.player_id} className="flex items-center justify-between gap-3 px-4 py-2">
               <span className="font-bold">{p.display_name}</span>

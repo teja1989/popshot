@@ -31,10 +31,10 @@ export function SharedCardsSection() {
 
   return (
     <section aria-labelledby="sharing-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="sharing-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="sharing-heading" className="text-title-sm font-bold text-ink">
         Shared recaps
       </h2>
-      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-2 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <label className="grid min-h-12 cursor-pointer grid-cols-[1fr_auto] items-center gap-x-3">
           <span className="font-bold">Show my first name</span>
           <input

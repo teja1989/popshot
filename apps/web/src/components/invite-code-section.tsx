@@ -64,10 +64,10 @@ export function InviteCodeSection() {
 
   return (
     <section aria-labelledby="code-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="code-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="code-heading" className="text-title-sm font-bold text-ink">
         Your Popshot code
       </h2>
-      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <p className="text-body text-muted">
           Give it to a crew&apos;s lead so they can invite you. You choose whether to join. Nobody can find you without
           it, unless you&apos;ve been in a crew together.

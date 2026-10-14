@@ -59,12 +59,15 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
 
   return (
     <section aria-labelledby="invites-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="invites-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="invites-heading" className="text-title-sm font-bold text-ink">
         Invites for you
       </h2>
       <ul className="flex flex-col gap-3">
         {result.data.map((invite) => (
-          <li key={invite.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+          <li
+            key={invite.id}
+            className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+          >
             <div>
               <p className="text-title-sm font-extrabold">{invite.group_name}</p>
               <p className="text-body text-muted">

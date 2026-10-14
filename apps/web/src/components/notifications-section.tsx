@@ -99,10 +99,10 @@ function Notifications({ publicKey }: { publicKey: string }) {
 
   return (
     <section aria-labelledby="notify-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="notify-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="notify-heading" className="text-title-sm font-bold text-ink">
         Notifications
       </h2>
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         {support.kind === "install-first" && (
           <p className="text-body text-muted">
             On iPhone, notifications work once Popshot is on your home screen: tap Share, then{" "}
@@ -128,10 +128,20 @@ function Notifications({ publicKey }: { publicKey: string }) {
         {support.kind === "ready" && device === "on" && (
           <div className="flex flex-wrap items-center gap-2">
             <p className="grow text-body font-bold">On for this device</p>
-            <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")} disabled={busy} onClick={() => void test()}>
+            <button
+              type="button"
+              className={buttonClass("quiet", "min-h-11 px-4 text-body")}
+              disabled={busy}
+              onClick={() => void test()}
+            >
               Send a test
             </button>
-            <button type="button" className={buttonClass("quiet", "min-h-11 px-4 text-body")} disabled={busy} onClick={() => void disable()}>
+            <button
+              type="button"
+              className={buttonClass("quiet", "min-h-11 px-4 text-body")}
+              disabled={busy}
+              onClick={() => void disable()}
+            >
               Turn off
             </button>
           </div>

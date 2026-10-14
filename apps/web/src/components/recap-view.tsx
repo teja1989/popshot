@@ -41,7 +41,10 @@ export function RecapView({ groupId, recapKey }: { groupId: string; recapKey: st
         <h1 className="text-title-lg font-extrabold">We couldn&apos;t find that recap.</h1>
       )}
       {result.kind === "error" && result.status !== 404 && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load this recap just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
@@ -62,9 +65,7 @@ function RecapBody({ groupId, recap }: { groupId: string; recap: Recap }) {
           {playedWhen(recap.start)}
           {recap.venue ? ` · ${recap.venue}` : ""} · {outingSize(recap)}
         </p>
-        <h1 className="text-title-lg leading-[1.1] font-extrabold tracking-[-0.01em] font-display">
-          {recap.headline}
-        </h1>
+        <h1 className="text-title-lg leading-[1.1] font-extrabold tracking-[-0.01em] font-display">{recap.headline}</h1>
         <ul className="flex flex-col gap-2 text-lead leading-snug">
           {recap.lines.map((line) => (
             <li key={line}>{line}</li>
@@ -79,7 +80,7 @@ function RecapBody({ groupId, recap }: { groupId: string; recap: Recap }) {
 
       {recap.awards.length > 0 && (
         <section aria-labelledby="awards-heading" className="flex flex-col gap-2">
-          <h2 id="awards-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="awards-heading" className="text-title-sm font-bold text-ink">
             Awards
           </h2>
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -88,7 +89,7 @@ function RecapBody({ groupId, recap }: { groupId: string; recap: Recap }) {
               return (
                 <li
                   key={`${award.kind}-${award.players.map((p) => p.player_id).join()}`}
-                  className={`flex animate-rise flex-col gap-1 rounded-2xl border border-line bg-surface p-4 ${STAGGER[Math.min(i, STAGGER.length - 1)] ?? ""}`}
+                  className={`flex animate-rise flex-col gap-1 rounded-3xl border border-transparent bg-surface shadow-card p-4 ${STAGGER[Math.min(i, STAGGER.length - 1)] ?? ""}`}
                 >
                   <span className="flex items-center gap-2 text-lead font-extrabold">
                     <span aria-hidden="true" className="size-2.5 rounded-full bg-ball" />
@@ -104,7 +105,7 @@ function RecapBody({ groupId, recap }: { groupId: string; recap: Recap }) {
       )}
 
       <section aria-labelledby="played-heading" className="flex flex-col gap-2">
-        <h2 id="played-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="played-heading" className="text-title-sm font-bold text-ink">
           Who played
         </h2>
         <ul className="flex flex-wrap gap-2">
@@ -137,10 +138,10 @@ function OutingGames({ groupId, recap }: { groupId: string; recap: Recap }) {
   const games = result.data.games.filter((m) => recap.match_ids.includes(m.id));
   return (
     <section aria-labelledby="games-heading" className="flex flex-col gap-2">
-      <h2 id="games-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="games-heading" className="text-title-sm font-bold text-ink">
         The games
       </h2>
-      <ol className="overflow-hidden rounded-2xl border border-line bg-surface">
+      <ol className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
         {games.map((m) => (
           <li key={m.id} className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0">
             <span className="text-lead font-bold">{namesOn(m, m.winner)}</span>

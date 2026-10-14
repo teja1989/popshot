@@ -229,3 +229,19 @@ test("a tab behind a feature switch comes and goes without a reload", async ({ p
   await comeBack();
   await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You", "More"]);
 });
+
+test("Home's floating Log a game opens it for your crew", async ({ page }) => {
+  await signIn(page, newUser("Fay"));
+  const crew = `Fab check ${String(Date.now())}`;
+  await page.goto("/");
+  // No crew yet: nothing to log a game in, so no button.
+  await expect(page.getByRole("link", { name: "Log a game" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Start a group" }).first().click();
+  await page.getByLabel("Group name").fill(crew);
+  await page.getByRole("button", { name: "Create group" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(crew);
+  await page.goto("/");
+  await page.getByRole("link", { name: "Log a game" }).click();
+  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]+\/log$/);
+  await expect(page.getByRole("heading", { name: "Log a game" })).toBeVisible();
+});

@@ -17,10 +17,11 @@ import { GamesCalendar } from "./games-calendar";
 import { GroupScoped } from "./group-scoped";
 import { PlayNightsSection } from "./play-nights-section";
 import { ReflectionSheet } from "./reflection-sheet";
+import { Fab } from "./ui/fab";
 import { useApiGet } from "./use-api";
 import { buttonClass } from "./ui/button";
 import { CourtArt } from "./ui/court-art";
-import { LockIcon, PlusIcon } from "./ui/icons";
+import { LockIcon } from "./ui/icons";
 import { segmentOption, segmentTrack } from "./ui/segmented";
 
 type View = "list" | "calendar";
@@ -88,11 +89,6 @@ function GroupGames({
 
       <EventsSection group={group} />
 
-      <Link href={`/groups/${group.id}/log`} className={buttonClass("action", "h-14")}>
-        <PlusIcon />
-        Log a game
-      </Link>
-
       {justLogged && (
         <p role="status" className="animate-rise rounded-xl bg-chip px-4 py-3 text-body font-bold">
           Game logged. It&apos;s on your crew&apos;s record now, and you can edit it any time.
@@ -142,7 +138,10 @@ function GroupGames({
       {view === "list" && result.kind === "loading" && <p className="text-muted">Loading games…</p>}
 
       {view === "list" && result.kind === "error" && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load the games just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
@@ -151,7 +150,7 @@ function GroupGames({
       )}
 
       {view === "list" && result.kind === "ready" && result.data.length === 0 && (
-        <section className="flex animate-rise flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+        <section className="flex animate-rise flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
           <CourtArt className="w-40" />
           <h2 className="text-title-sm font-extrabold">No games in {group.name} yet</h2>
           <p className="text-lead leading-relaxed text-muted">
@@ -163,7 +162,7 @@ function GroupGames({
 
       {view === "list" && result.kind === "ready" && result.data.length > 0 && (
         <section aria-labelledby="recent-heading" className="flex animate-rise flex-col gap-2">
-          <h2 id="recent-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="recent-heading" className="text-title-sm font-bold text-ink">
             Recent games
           </h2>
           <ul className="flex flex-col gap-3">
@@ -217,6 +216,7 @@ function GroupGames({
           }}
         />
       )}
+      <Fab href={`/groups/${group.id}/log`} label="Log a game" />
     </>
   );
 }
@@ -253,7 +253,7 @@ function GameCard({
   }
 
   return (
-    <li className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+    <li className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4">
       <div className="flex items-center justify-between gap-3">
         <span className="text-small text-muted">{playedWhen(match.played_at)}</span>
         <span className="text-meta text-muted">

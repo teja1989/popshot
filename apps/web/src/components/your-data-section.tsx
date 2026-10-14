@@ -54,10 +54,10 @@ export function YourDataSection() {
 
   return (
     <section aria-labelledby="data-heading" className="flex animate-rise flex-col gap-3">
-      <h2 id="data-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="data-heading" className="text-title-sm font-bold text-ink">
         Your data
       </h2>
-      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <p className="text-body text-muted">
           A copy of everything Popshot keeps about you: your profile, crews, games, meetup answers, focus and notes.
         </p>

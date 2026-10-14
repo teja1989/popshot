@@ -65,7 +65,10 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
         <p className="text-meta text-muted">ID {c.id}</p>
       </Section>
       <Section title="People">
-        <ul aria-label="People in this crew" className="flex flex-col rounded-2xl border border-line bg-surface">
+        <ul
+          aria-label="People in this crew"
+          className="flex flex-col rounded-3xl border border-transparent bg-surface shadow-card"
+        >
           {c.people.map((m) => (
             <li key={m.user_id} className="flex items-center gap-2 border-b border-line pr-3 last:border-b-0">
               <Link
@@ -99,7 +102,10 @@ function CrewDetail({ crew: c, onChanged }: { crew: Crew; onChanged: () => void 
         {c.actions.length === 0 ? (
           <p className="text-muted">No changes by support.</p>
         ) : (
-          <ul aria-label="Support history" className="flex flex-col rounded-2xl border border-line bg-surface">
+          <ul
+            aria-label="Support history"
+            className="flex flex-col rounded-3xl border border-transparent bg-surface shadow-card"
+          >
             {c.actions.map((a) => (
               <li
                 key={a.created_at + a.action}

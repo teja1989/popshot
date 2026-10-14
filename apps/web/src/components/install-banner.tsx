@@ -27,7 +27,7 @@ export function InstallBanner() {
   return (
     <section
       aria-labelledby="install-heading"
-      className="flex animate-rise flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-center"
+      className="flex animate-rise flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4 sm:flex-row sm:items-center"
     >
       <div className="flex grow flex-col gap-0.5">
         <h2 id="install-heading" className="text-lead font-extrabold">
@@ -64,7 +64,9 @@ export function InstallBanner() {
           >
             <ol className="flex list-decimal flex-col gap-2 pl-5 text-lead">
               <li>Tap the Share button (the square with an arrow).</li>
-              <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+              <li>
+                Scroll down and tap <strong>Add to Home Screen</strong>.
+              </li>
               <li>Open Popshot from your home screen, then turn on notifications on the You page.</li>
             </ol>
           </Sheet>

@@ -147,11 +147,11 @@ export function MoreView() {
         const crewName = section === "crew" && current && groups.length === 1 ? ` · ${current.name}` : "";
         return (
           <section key={section} aria-labelledby={headingId} className="flex animate-rise flex-col gap-2">
-            <h2 id={headingId} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+            <h2 id={headingId} className="text-title-sm font-bold text-ink">
               {SECTION_LABEL[section]}
               {crewName}
             </h2>
-            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+            <ul className="divide-y divide-line overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
               {inSection.map((item) => (
                 <li key={item.id}>{row(item)}</li>
               ))}

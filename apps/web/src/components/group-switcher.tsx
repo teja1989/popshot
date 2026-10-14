@@ -13,7 +13,7 @@ export function GroupSwitcher({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-label font-bold tracking-[0.1em] text-muted uppercase">Group</span>
+      <span className="text-title-sm font-bold text-ink">Group</span>
       <span className="relative">
         <select
           value={current.id}
@@ -35,7 +35,14 @@ export function GroupSwitcher({
           aria-hidden="true"
           className="pointer-events-none absolute top-1/2 left-[min(calc(100%-28px),calc(24rem-28px))] -translate-y-1/2 text-muted"
         >
-          <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M4 6l4 4 4-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </span>
     </label>

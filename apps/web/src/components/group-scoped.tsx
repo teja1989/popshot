@@ -12,13 +12,7 @@ import { buttonClass } from "./ui/button";
 
 // A page about one group at a time (Play, Crew): title, group switcher, then content for
 // the chosen group. Groups you're still waiting to join aren't offered.
-export function GroupScoped({
-  title,
-  children,
-}: {
-  title: string;
-  children: (group: GroupSummary) => ReactNode;
-}) {
+export function GroupScoped({ title, children }: { title: string; children: (group: GroupSummary) => ReactNode }) {
   const { result, reload } = useApiGet<GroupSummary[]>("/v1/groups");
   const groups = result.kind === "ready" ? result.data.filter((g) => g.my_status === "active") : [];
   const { current, choose } = useCurrentGroup(groups);
@@ -30,7 +24,10 @@ export function GroupScoped({
       {result.kind === "loading" && <p className="text-muted">Loading…</p>}
 
       {result.kind === "error" && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load your groups just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
@@ -39,8 +36,10 @@ export function GroupScoped({
       )}
 
       {result.kind === "ready" && !current && (
-        <section className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
-          <p className="text-lead">You&apos;re not in a group yet. Start one or ask your crew&apos;s lead for an invite.</p>
+        <section className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
+          <p className="text-lead">
+            You&apos;re not in a group yet. Start one or ask your crew&apos;s lead for an invite.
+          </p>
           <Link href="/" className={buttonClass("primary")}>
             Go to your groups
           </Link>

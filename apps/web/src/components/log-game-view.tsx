@@ -39,7 +39,7 @@ export function EditGameView({ groupId, matchId }: { groupId: string; matchId: s
 
 function Notice({ children }: { children: ReactNode }) {
   return (
-    <section role="alert" className="rounded-2xl border border-line bg-surface p-5">
+    <section role="alert" className="rounded-3xl border border-transparent bg-surface shadow-card p-5">
       <p>{children}</p>
     </section>
   );
@@ -81,7 +81,10 @@ export function LogGameView({ groupId, initial = null }: { groupId: string; init
       {(group.result.kind === "loading" || roster.result.kind === "loading") && <p className="text-muted">Loading…</p>}
 
       {(group.result.kind === "error" || roster.result.kind === "error") && (
-        <section role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <section
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           {group.result.kind === "error" && group.result.status === 404 ? (
             <p>We couldn&apos;t find that group. You can only log games in groups you&apos;re in.</p>
           ) : (
@@ -278,7 +281,10 @@ function LogGameForm({
 
   return (
     <form className="flex animate-rise flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
-      <section aria-label="Rules" className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+      <section
+        aria-label="Rules"
+        className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-4"
+      >
         <div className="flex items-center justify-between gap-3">
           <p className="min-w-0 text-body font-bold">{describeMatch({ format, bestOf, pointsTo, winByTwo })}</p>
           <button
@@ -372,12 +378,15 @@ function LogGameForm({
       </section>
 
       <section aria-labelledby={`${ids}-teams`} className="flex flex-col gap-3">
-        <h2 id={`${ids}-teams`} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id={`${ids}-teams`} className="text-title-sm font-bold text-ink">
           Who played
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {TEAMS.map((team) => (
-            <fieldset key={team} className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+            <fieldset
+              key={team}
+              className="flex flex-col gap-2 rounded-3xl border border-transparent bg-surface shadow-card p-4"
+            >
               <legend className="sr-only">Team {team}</legend>
               <p aria-hidden="true" className="text-meta font-bold tracking-[0.08em] text-muted uppercase">
                 Team {team}
@@ -402,10 +411,10 @@ function LogGameForm({
       </section>
 
       <section aria-labelledby={`${ids}-score`} className="flex flex-col gap-3">
-        <h2 id={`${ids}-score`} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id={`${ids}-score`} className="text-title-sm font-bold text-ink">
           Score
         </h2>
-        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-2 rounded-3xl border border-transparent bg-surface shadow-card p-4">
           <div className="grid grid-cols-[4.5rem_1fr_1fr] items-end gap-3 text-meta font-bold text-muted">
             <span />
             <span className="truncate">{label("A")}</span>
@@ -447,7 +456,7 @@ function LogGameForm({
       </section>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-3 text-label font-bold tracking-[0.1em] text-muted uppercase">When</legend>
+        <legend className="mb-3 text-title-sm font-bold text-ink">When</legend>
         <div className={`${segmentTrack} grid-cols-2`}>
           {[false, true].map((value) => (
             <label key={String(value)} className={segmentOption}>

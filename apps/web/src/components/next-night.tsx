@@ -19,7 +19,7 @@ export function NextNight() {
   return (
     <section aria-labelledby="next-night-heading" className="flex animate-rise flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h2 id="next-night-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="next-night-heading" className="text-title-sm font-bold text-ink">
           Next meetup
         </h2>
         <Link href="/play" className="inline-flex min-h-11 items-center text-small font-bold text-primary">

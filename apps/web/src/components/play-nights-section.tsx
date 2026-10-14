@@ -19,7 +19,7 @@ export function PlayNightsSection({ groupId }: { groupId: string }) {
   return (
     <section aria-labelledby="nights-heading" className="flex animate-rise flex-col gap-2 [animation-delay:30ms]">
       <div className="flex min-h-11 items-center justify-between">
-        <h2 id="nights-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="nights-heading" className="text-title-sm font-bold text-ink">
           Meetups
         </h2>
         <PlanNightSheet

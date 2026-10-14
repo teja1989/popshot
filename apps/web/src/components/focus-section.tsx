@@ -3,7 +3,16 @@
 import { useState } from "react";
 
 import { apiPut, ApiError } from "@/lib/api-client";
-import { describeSuggestion, labelFor, MAX_IMPROVE, MAX_STRENGTHS, promote, type Focus, type FocusOption, type Suggestion } from "@/lib/focus";
+import {
+  describeSuggestion,
+  labelFor,
+  MAX_IMPROVE,
+  MAX_STRENGTHS,
+  promote,
+  type Focus,
+  type FocusOption,
+  type Suggestion,
+} from "@/lib/focus";
 
 import { useSignedIn } from "./auth";
 import { FocusPicker } from "./focus-picker";
@@ -20,7 +29,7 @@ export function FocusSection() {
   return (
     <section aria-labelledby="focus-heading" className="flex animate-rise flex-col gap-3 [animation-delay:40ms]">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="focus-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="focus-heading" className="text-title-sm font-bold text-ink">
           Your game
         </h2>
         <span className="flex items-center gap-1.5 text-meta text-muted">
@@ -30,7 +39,10 @@ export function FocusSection() {
       </div>
       {(options.result.kind === "loading" || focus.result.kind === "loading") && <p className="text-muted">Loading…</p>}
       {(options.result.kind === "error" || focus.result.kind === "error") && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load this just now.</p>
           <button
             type="button"
@@ -66,7 +78,15 @@ function Chips({ ids, options, empty }: { ids: string[]; options: FocusOption[];
   );
 }
 
-function FocusCard({ options, focus, onSaved }: { options: FocusOption[]; focus: Focus; onSaved: (focus: Focus) => void }) {
+function FocusCard({
+  options,
+  focus,
+  onSaved,
+}: {
+  options: FocusOption[];
+  focus: Focus;
+  onSaved: (focus: Focus) => void;
+}) {
   const { user } = useSignedIn();
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -93,7 +113,7 @@ function FocusCard({ options, focus, onSaved }: { options: FocusOption[]; focus:
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+    <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
       <div className="flex flex-col gap-2">
         <h3 className="text-lead font-extrabold">Strengths</h3>
         <Chips ids={focus.strengths} options={options} empty="Nothing picked yet." />
@@ -134,7 +154,15 @@ function FocusCard({ options, focus, onSaved }: { options: FocusOption[]; focus:
   );
 }
 
-function EditFocusSheet({ options, focus, onSaved }: { options: FocusOption[]; focus: Focus; onSaved: (focus: Focus) => void }) {
+function EditFocusSheet({
+  options,
+  focus,
+  onSaved,
+}: {
+  options: FocusOption[];
+  focus: Focus;
+  onSaved: (focus: Focus) => void;
+}) {
   const { user } = useSignedIn();
   const [open, setOpen] = useState(false);
   const [strengths, setStrengths] = useState<string[]>(focus.strengths);
@@ -198,7 +226,12 @@ function EditFocusSheet({ options, focus, onSaved }: { options: FocusOption[]; f
         <p role="alert" className="text-body text-warn empty:hidden">
           {problem}
         </p>
-        <button type="button" className={buttonClass("primary", "h-14 w-full")} disabled={saving} onClick={() => void save()}>
+        <button
+          type="button"
+          className={buttonClass("primary", "h-14 w-full")}
+          disabled={saving}
+          onClick={() => void save()}
+        >
           {saving ? "Saving…" : "Save"}
         </button>
       </div>

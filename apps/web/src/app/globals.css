@@ -159,6 +159,11 @@
   --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
 
+  /* Material 3 elevation: level 1 for cards, level 3 for the floating button. Shadows are
+     faint in dark mode on purpose; there, cards stand out by their lighter surface. */
+  --shadow-card: 0 1px 2px rgb(22 29 26 / 0.06), 0 2px 8px rgb(22 29 26 / 0.06);
+  --shadow-fab: 0 4px 8px rgb(22 29 26 / 0.12), 0 8px 20px rgb(31 107 90 / 0.25);
+
   --ease-court: cubic-bezier(0.3, 0.7, 0.2, 1);
   --animate-rise: rise 0.5s var(--ease-court) both;
   --animate-court-draw: court-draw 0.9s var(--ease-court) forwards;

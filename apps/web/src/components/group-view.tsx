@@ -27,14 +27,17 @@ export function GroupView({ groupId }: { groupId: string }) {
       {result.kind === "loading" && <p className="text-muted">Loading the group…</p>}
 
       {result.kind === "error" && result.status === 404 && (
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+        <section className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
           <h1 className="text-title-lg font-extrabold font-display">We couldn&apos;t find that group.</h1>
           <p className="text-muted">It may have been deleted, or you&apos;re not in it. Ask its lead for an invite.</p>
         </section>
       )}
 
       {result.kind === "error" && result.status !== 404 && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load this group just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
@@ -70,7 +73,7 @@ function Group({ group }: { group: GroupDetail }) {
       </section>
 
       {group.my_status === "pending" ? (
-        <section className="animate-rise rounded-2xl border border-line bg-surface p-5">
+        <section className="animate-rise rounded-3xl border border-transparent bg-surface shadow-card p-5">
           <h2 className="text-lead font-bold">Waiting for approval</h2>
           <p className="mt-1 text-muted">
             The group&apos;s lead or a co-lead will let you in. You&apos;ll see the members and games once they do.
@@ -88,7 +91,7 @@ function Group({ group }: { group: GroupDetail }) {
           <Link
             href={`/groups/${group.id}/members`}
             aria-label={`Members · ${String(active.length)}${waiting > 0 ? `, ${String(waiting)} asking to join` : ""}`}
-            className="flex min-h-16 animate-rise items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-ink no-underline [animation-delay:60ms]"
+            className="flex min-h-16 animate-rise items-center gap-3 rounded-3xl border border-transparent bg-surface shadow-card px-4 py-3 text-ink no-underline [animation-delay:60ms]"
           >
             <AvatarStack people={active.slice(0, 4)} total={active.length} />
             <span className="flex min-w-0 grow flex-col">

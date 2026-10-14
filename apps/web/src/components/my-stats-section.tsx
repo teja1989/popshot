@@ -37,7 +37,7 @@ export function MyStatsSection() {
 
   return (
     <section aria-labelledby="stats-heading" className="flex animate-rise flex-col gap-3 [animation-delay:45ms]">
-      <h2 id="stats-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="stats-heading" className="text-title-sm font-bold text-ink">
         Your stats
       </h2>
       {groups.length > 1 && <GroupSwitcher groups={groups} current={current} onChange={choose} />}
@@ -83,7 +83,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
   const s = result.data;
   if (s.rating_now === null) {
     return (
-      <p className="rounded-2xl border border-line bg-surface p-5 text-muted">
+      <p className="rounded-3xl border border-transparent bg-surface shadow-card p-5 text-muted">
         Your stats in {group.name} show up after your first game.
       </p>
     );
@@ -93,7 +93,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
     return (
       <>
         <RatingCard stats={s} />
-        <p className="rounded-2xl border border-line bg-surface p-5 text-muted">
+        <p className="rounded-3xl border border-transparent bg-surface shadow-card p-5 text-muted">
           No games in {group.name} in the last {windowLabel}. Try a longer window, or get a game in.
         </p>
       </>
@@ -105,7 +105,7 @@ function GroupStats({ group, days }: { group: GroupSummary; days: Window }) {
   return (
     <>
       <RatingCard stats={s} />
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <p className="text-lead">
           <span className="font-bold">{group.name}</span>
           <span className="text-muted">
@@ -221,7 +221,7 @@ function RatingCard({ stats }: { stats: MyStats }) {
   const high = Math.max(...values);
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+    <div className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
       <div className="flex items-end justify-between gap-3">
         <span className="flex flex-col">
           <span className="text-meta font-bold text-muted">Crew points</span>
@@ -302,7 +302,7 @@ function ActivityCard({ stats }: { stats: MyStats }) {
   const busiestWeek = Math.max(...weeks.map((w) => w.count));
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+    <div className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
       <h3 className="text-lead font-extrabold">Activity</h3>
       <figure className="flex flex-col gap-1">
         <svg

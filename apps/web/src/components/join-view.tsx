@@ -19,7 +19,6 @@ type State =
   | { kind: "failed"; token: string }
   | { kind: "ready"; token: string; preview: InvitePreview };
 
-
 export function JoinView() {
   const { user } = useSignedIn();
   const router = useRouter();
@@ -103,8 +102,7 @@ export function JoinView() {
 
       {state.kind === "no-link" && (
         <Message title="Open your invite link again.">
-          This page needs the whole link you were sent. Tap it again, or ask the group&apos;s lead
-          for a new one.
+          This page needs the whole link you were sent. Tap it again, or ask the group&apos;s lead for a new one.
         </Message>
       )}
 
@@ -115,7 +113,10 @@ export function JoinView() {
       )}
 
       {state.kind === "failed" && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t open this invite just now.</p>
           <button
             type="button"
@@ -139,11 +140,7 @@ export function JoinView() {
             {state.preview.group_name}
           </h1>
           <CrewProfileSummary profile={state.preview} onHero />
-          <Outcome
-            preview={state.preview}
-            joining={joining}
-            onJoin={() => void join(state.token)}
-          />
+          <Outcome preview={state.preview} joining={joining} onJoin={() => void join(state.token)} />
           <p role="alert" className="text-body font-bold text-ball empty:hidden">
             {problem}
           </p>
@@ -153,15 +150,7 @@ export function JoinView() {
   );
 }
 
-function Outcome({
-  preview,
-  joining,
-  onJoin,
-}: {
-  preview: InvitePreview;
-  joining: boolean;
-  onJoin: () => void;
-}) {
+function Outcome({ preview, joining, onJoin }: { preview: InvitePreview; joining: boolean; onJoin: () => void }) {
   const groupLink = preview.group_id ? `/groups/${preview.group_id}` : null;
   if (preview.my_status === "active" && groupLink) {
     return (
@@ -195,8 +184,8 @@ function Outcome({
   return (
     <>
       <p className="text-lead text-on-hero-muted">
-        Ask to join and the group&apos;s lead will approve you. Until then, only your name and
-        photo are shared with them.
+        Ask to join and the group&apos;s lead will approve you. Until then, only your name and photo are shared with
+        them.
       </p>
       <button type="button" className={buttonClass("action", "h-14")} onClick={onJoin} disabled={joining}>
         {joining ? "Sending…" : "Ask to join"}
@@ -207,7 +196,7 @@ function Outcome({
 
 function Message({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+    <section className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
       <h1 className="text-title-lg font-extrabold font-display">{title}</h1>
       <p className="text-muted">{children}</p>
     </section>
