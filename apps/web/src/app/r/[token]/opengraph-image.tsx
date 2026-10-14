@@ -10,9 +10,9 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "A Popshot recap";
 
-const HERO = "#1d4e89";
+const HERO = "#1f6b5a";
 const ON_HERO = "#ffffff";
-const MUTED = "#c8d8ec";
+const MUTED = "#d2efe5";
 const BALL = "#d7ea4c";
 
 export default async function Image({ params }: { params: Promise<{ token: string }> }) {

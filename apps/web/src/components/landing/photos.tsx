@@ -62,7 +62,7 @@ export function PhotoBand() {
       {/* A dark scrim at the bottom so the words read over the court. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-linear-to-t from-[#06101a]/85 via-[#06101a]/30 to-transparent"
+        className="absolute inset-0 -z-10 bg-linear-to-t from-[#06140f]/85 via-[#06140f]/30 to-transparent"
       />
       <div className="max-w-xl text-on-hero">
         <h2 id="courts-heading" className="text-display-sm font-extrabold tracking-[-0.02em] lg:text-display">
