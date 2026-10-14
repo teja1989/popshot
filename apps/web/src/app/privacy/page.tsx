@@ -122,7 +122,14 @@ export default async function PrivacyPage() {
           <strong>Recaps written by AI:</strong> after an outing, Google&apos;s Gemini AI (through Google Cloud, in the
           United States) may write the recap&apos;s headline and lines. It gets first names and that outing&apos;s game
           facts (games played and awards), nothing else. Google doesn&apos;t use it to train its models, and may keep it
-          in memory for up to 24 hours. AI-written recaps are labelled.
+          in memory for up to 24 hours. These recaps are labelled &ldquo;Written with Google Gemini&rdquo;.
+        </li>
+        <li>
+          <strong>Personal journey check-ins, written by AI:</strong> only if you say yes on your Journey tab (and you
+          can turn it off there any time), Google&apos;s Gemini AI writes your check-ins. It gets your first name, that
+          fortnight&apos;s games (counts, wins, crews and partners&apos; first names), what you ticked after games, your
+          learning notes, and your goal and what you&apos;d like to get better at, nothing else. The same Google terms
+          apply. Without your yes, Popshot writes them itself and nothing is sent.
         </li>
         <li>We&apos;ll share data if the law requires it, and only what&apos;s required.</li>
       </List>

@@ -2,7 +2,11 @@
 // and the day's tip. Every word here is checked by journey.test.ts: encouraging, never
 // shaming, no rankings, no he or she.
 
+import type { Pick } from "./library";
+
 export const FEATURE = "you.journey";
+// Personal check-ins (written with Google Gemini): only with this switch on and your yes.
+export const PERSONAL_FEATURE = "you.journey_ai";
 
 export const STORY_LIMITS = { origin: 800, strengths: 500, gaps: 500, goal: 300 } as const;
 export const MAX_TAGS = 4;
@@ -39,6 +43,25 @@ export interface Journey {
   settings: JourneySettings;
   notes: LearningNote[];
   learning_days: number;
+}
+
+// A check-in in the list (routes/journey_checkins.py). Words are written when it's first opened.
+export interface CheckinSummary {
+  id: string;
+  period_start: string;
+  period_end: string;
+  ready: boolean;
+  chapter: string | null;
+  headline: string | null;
+  opened: boolean;
+}
+
+// One check-in, opened. Who wrote the words isn't part of it on the web: never labelled.
+export interface Checkin extends CheckinSummary {
+  lines: string[];
+  try_next: string;
+  picks: Pick[];
+  new_chapter: boolean;
 }
 
 export interface StoryDraft {
@@ -97,6 +120,20 @@ export const COPY = {
   promptStart: "Tell your story",
   promptLater: "Not now",
   off: "Your journey isn't switched on for you yet. It's coming soon.",
+  checkinNew: "New",
+  checkinUnopened: "Ready when you are",
+  checkinLoading: "Getting your check-in ready…",
+  checkinMissing: "We couldn't find that check-in.",
+  checkinTryNext: "Try next",
+  checkinPicks: "Picked for you",
+  newChapter: "New chapter",
+  personalTitle: "Make your check-ins more personal?",
+  personalBody: "Let Popshot write your check-ins from your games, your learning notes and your story.",
+  personalNote:
+    "Uses Google Gemini, which reads your first name, your games, partners' first names, what you ticked after games, your notes, and your goal and what you'd like to get better at. Details on the Privacy page. Say no and Popshot writes them from your games on its own.",
+  personalYes: "Yes, personalise",
+  personalLater: "Not now",
+  personalSwitch: "Personal check-ins",
 } as const;
 
 export interface Tip {
@@ -282,6 +319,36 @@ export function localDate(date: Date): string {
 /** Whether to ask for your story: switched on, no story yet, and you haven't said "not now". */
 export function shouldAskForStory(journey: Journey | null): boolean {
   return journey !== null && journey.story === null && journey.settings.onboarding === "new";
+}
+
+// "Not now" to personal check-ins is remembered on this device only.
+const PERSONAL_LATER_KEY = "popshot.personal-checkins-later";
+
+export function personalLaterSaid(): boolean {
+  try {
+    return window.localStorage.getItem(PERSONAL_LATER_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function sayPersonalLater(): void {
+  try {
+    window.localStorage.setItem(PERSONAL_LATER_KEY, "1");
+  } catch {
+    // No storage: it's asked again next time, which is fine.
+  }
+}
+
+/** Whether to ask about personal check-ins: the switch is on, you haven't said yes, nor "not now" here. */
+export function shouldAskPersonal(personalOn: boolean, consent: boolean, laterSaid: boolean): boolean {
+  return personalOn && !consent && !laterSaid;
+}
+
+/** "1 Oct – 14 Oct", the two weeks a check-in covers (its end is when it was made). */
+export function periodLabel(start: string, end: string): string {
+  const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return `${day(start)} – ${day(end)}`;
 }
 
 export function emptyDraft(story: Story | null): StoryDraft {

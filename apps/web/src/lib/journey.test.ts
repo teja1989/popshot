@@ -7,7 +7,9 @@ import {
   hasWords,
   localDate,
   QUESTIONS,
+  periodLabel,
   shouldAskForStory,
+  shouldAskPersonal,
   TIPS,
   tipFor,
   workingOn,
@@ -147,5 +149,26 @@ describe("the story", () => {
 
   it("dates a note by your own calendar", () => {
     expect(localDate(new Date(2026, 0, 5, 23, 59))).toBe("2026-01-05");
+  });
+
+  it("asks about personal check-ins only with the switch on, no yes yet, and no 'not now' here", () => {
+    expect(shouldAskPersonal(true, false, false)).toBe(true);
+    expect(shouldAskPersonal(false, false, false)).toBe(false);
+    expect(shouldAskPersonal(true, true, false)).toBe(false);
+    expect(shouldAskPersonal(true, false, true)).toBe(false);
+  });
+
+  it("names Google Gemini in the note, and never says AI", () => {
+    expect(COPY.personalNote).toContain("Google Gemini");
+    for (const text of allCopy()) {
+      expect(text).not.toMatch(/\bAI\b/);
+    }
+  });
+
+  it("shows the two weeks a check-in covers", () => {
+    const label = periodLabel("2026-10-01T09:00:00Z", "2026-10-15T09:00:00Z");
+    expect(label).toContain("–");
+    expect(label).toMatch(/1/);
+    expect(label).toMatch(/15/);
   });
 });

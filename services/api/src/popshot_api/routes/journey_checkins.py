@@ -59,7 +59,7 @@ class Checkin(CheckinSummary):
     lines: list[str]
     try_next: str
     picks: list[Pick]
-    # Who wrote the words: Popshot's own lines, or the AI (shown as such).
+    # Who wrote the words: Popshot's own lines, or Gemini (kept for us; never labelled in the app).
     written_by: Literal["popshot", "ai"]
     new_chapter: bool
 
