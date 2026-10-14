@@ -377,6 +377,10 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "event_players",
         "event_rounds",
         "event_courts",
+        # Yours alone, like user_focus (0032); test_journey_api.py covers them.
+        "journey_entries",
+        "journey_notes",
+        "journey_settings",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 
