@@ -381,6 +381,9 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "journey_entries",
         "journey_notes",
         "journey_settings",
+        # Only migration 0033's functions touch these; test_content_api.py covers them.
+        "content_items",
+        "content_hosts",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 
