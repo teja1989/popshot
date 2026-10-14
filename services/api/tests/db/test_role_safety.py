@@ -90,6 +90,24 @@ def test_every_table_has_forced_rls(owner_engine: Engine) -> None:
         assert row.owner == OWNER_ROLE, row.relname
 
 
+def test_owner_deletes_can_see_their_rows(owner_engine: Engine) -> None:
+    """Row-level security applies SELECT policies to a DELETE with a WHERE clause, so a
+    definer function's delete without one quietly removes nothing (as 0023's purge did)."""
+    with owner_engine.connect() as conn:
+        missing = conn.execute(
+            text(
+                "SELECT DISTINCT d.tablename FROM pg_policies d "
+                "WHERE d.schemaname = 'public' AND d.cmd = 'DELETE' "
+                f"AND '{OWNER_ROLE}' = ANY(d.roles) "
+                "AND NOT EXISTS (SELECT 1 FROM pg_policies s "
+                "  WHERE s.schemaname = 'public' AND s.tablename = d.tablename "
+                "  AND s.cmd IN ('SELECT', 'ALL') "
+                f"  AND '{OWNER_ROLE}' = ANY(s.roles))"
+            )
+        ).scalars()
+        assert list(missing) == []
+
+
 def test_no_views_or_sequences_reachable_by_app(owner_engine: Engine) -> None:
     """Views would run with their owner's rights; keep them out until we decide otherwise."""
     with owner_engine.connect() as conn:

@@ -86,6 +86,19 @@ def week_claims_of(owner_engine: Engine, user_id: UUID) -> int:
     return count
 
 
+def private_rows_of(owner_engine: Engine, user_id: UUID) -> int:
+    with owner_engine.begin() as conn:
+        conn.execute(text("SET LOCAL ROLE popshot_owner"))
+        count: int = conn.execute(
+            text(
+                "SELECT (SELECT count(*) FROM user_focus WHERE user_id = :u)"
+                " + (SELECT count(*) FROM match_reflections WHERE user_id = :u)"
+            ),
+            {"u": user_id},
+        ).scalar_one()
+    return count
+
+
 def test_asking_to_delete_and_changing_your_mind(people: People, crew: dict[str, Any]) -> None:
     asked = ask_to_delete(people, crew["sam"])
     assert asked.status_code == 200, asked.text
@@ -119,7 +132,17 @@ def test_after_seven_days_the_account_is_emptied_but_games_stay(
     gid = crew["group_id"]
     sam_id = people.user_id(crew["sam"])
     device(people, crew["sam"])
-    people.client.put("/v1/me/focus", json={"strengths": [], "improve": []}, headers=crew["sam"])
+    people.client.put(
+        "/v1/me/focus", json={"strengths": ["footwork"], "improve": []}, headers=crew["sam"]
+    )
+    [game] = people.client.get(f"/v1/groups/{gid}/matches", headers=crew["sam"]).json()
+    reflected = people.client.put(
+        f"/v1/groups/{gid}/matches/{game['id']}/reflection",
+        json={"went_well": ["serve_consistency"], "to_improve": []},
+        headers=crew["sam"],
+    )
+    assert reflected.status_code == 200, reflected.text
+    assert private_rows_of(owner_engine, sam_id) == 2
     subject = subject_of(owner_engine, sam_id)
     # Sam played this week, so the Monday push claimed Sam.
     with jobs_engine.begin() as conn:
@@ -168,6 +191,8 @@ def test_after_seven_days_the_account_is_emptied_but_games_stay(
     assert row.deleted_at is not None
     assert devices == 0
     assert week_claims_of(owner_engine, sam_id) == 0
+    # Sam's focus and game notes are gone too (until 0031 they quietly stayed).
+    assert private_rows_of(owner_engine, sam_id) == 0
 
     # Signing in with the old Google account starts a brand-new, empty account.
     fresh = people.client.get("/v1/me", headers=crew["sam"]).json()
