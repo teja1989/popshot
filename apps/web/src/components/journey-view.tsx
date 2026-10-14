@@ -18,6 +18,8 @@ import {
   type Story,
 } from "@/lib/journey";
 
+import { pickAction, pickForDay, type Pick } from "@/lib/library";
+
 import { useSignedIn } from "./auth";
 import { useFeaturesLoaded, useYouFeature } from "./features";
 import { StorySheet } from "./story-sheet";
@@ -118,7 +120,8 @@ function JourneyBody({
   onChange: (journey: Journey) => void;
   reload: () => void;
 }) {
-  const tip = tipFor(workingOn(journey.story, improve), new Date());
+  const skills = workingOn(journey.story, improve);
+  const tip = tipFor(skills, new Date());
   return (
     <>
       <p className="flex animate-rise flex-col self-start rounded-2xl bg-secondary-container px-4 py-3 text-on-secondary-container [animation-delay:60ms]">
@@ -138,6 +141,7 @@ function JourneyBody({
           </p>
         )}
         <p className="text-lead">{tip.text}</p>
+        <TodayPick skills={skills} />
       </section>
 
       <NotesSection journey={journey} options={options} onChange={onChange} reload={reload} />
@@ -151,6 +155,33 @@ function JourneyBody({
         <p className="rounded-2xl border border-dashed border-line p-4 text-body text-muted">{COPY.checkinsSoon}</p>
       </section>
     </>
+  );
+}
+
+/** One video or article from the library for the skills you're working on, if there is one. */
+function TodayPick({ skills }: { skills: string[] }) {
+  const query = skills.map((s) => `skills=${encodeURIComponent(s)}`).join("&");
+  const picks = useApiGet<Pick[]>(`/v1/me/journey/picks${query ? `?${query}` : ""}`);
+  const pick = picks.result.kind === "ready" ? pickForDay(picks.result.data, new Date()) : null;
+  if (!pick) {
+    return null;
+  }
+  return (
+    <a
+      href={pick.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="pressable flex items-center gap-3 rounded-2xl bg-surface-low p-3 text-ink no-underline"
+      data-today-pick
+    >
+      <span className="flex min-w-0 grow flex-col">
+        <span className="text-body font-bold break-words">{pick.title}</span>
+        <span className="text-small text-muted">{pick.source}</span>
+      </span>
+      <span className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-small font-bold text-on-primary">
+        {pickAction(pick)}
+      </span>
+    </a>
   );
 }
 

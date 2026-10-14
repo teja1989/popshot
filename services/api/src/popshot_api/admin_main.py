@@ -15,6 +15,7 @@ from popshot_api.main import base_app
 from popshot_api.routes import (
     admin,
     admin_actions,
+    admin_content,
     admin_features,
     admin_funnel,
     admin_lookup,
@@ -48,4 +49,6 @@ def create_admin_app(
     app.include_router(admin_funnel.router)
     app.include_router(admin_features.router)
     app.include_router(admin_features.changes)
+    app.include_router(admin_content.router)
+    app.include_router(admin_content.changes)
     return app

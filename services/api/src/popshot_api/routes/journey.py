@@ -13,7 +13,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StrictBool
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -351,3 +351,37 @@ def delete_note(note_id: UUID, user: CurrentUserSession) -> Response:
     if deleted is None:
         raise NOT_FOUND
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class Pick(BaseModel):
+    id: UUID
+    kind: Literal["video", "article"]
+    url: str
+    title: str
+    source: str
+    skills: list[str]
+    minutes: int | None
+
+
+PICKS_SHOWN = 3
+
+
+@router.get("/picks")
+def picks(
+    user: CurrentUserSession,
+    skills: Annotated[list[str], Query(max_length=8)] = [],  # noqa: B006 - FastAPI copies it
+) -> list[Pick]:
+    """Published library items (migration 0033) for these skills (all, if none), that suit
+    your level, the closest match first."""
+    require_journey(user.session)
+    wanted = [s for s in dict.fromkeys(skills) if s in OFFERED_IDS]
+    if skills and not wanted:
+        return []
+    level = user.session.execute(
+        text("SELECT self_level FROM users WHERE id = :me"), {"me": user.user_id}
+    ).scalar_one_or_none()
+    rows = user.session.execute(
+        text("SELECT * FROM app_published_content(:skills, :level)"),
+        {"skills": wanted, "level": level},
+    ).mappings()
+    return [Pick.model_validate(dict(row)) for row in rows][:PICKS_SHOWN]
