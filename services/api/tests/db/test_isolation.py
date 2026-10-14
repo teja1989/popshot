@@ -381,6 +381,8 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "journey_entries",
         "journey_notes",
         "journey_settings",
+        # Yours alone, made only by the job (0034); test_journey_checkins_api.py covers it.
+        "journey_checkins",
         # Only migration 0033's functions touch these; test_content_api.py covers them.
         "content_items",
         "content_hosts",

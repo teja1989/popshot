@@ -43,6 +43,10 @@ RECAP_LOOKBACK = timedelta(hours=24)
 # up. 13:00 UTC is morning in the Americas and afternoon or evening in Europe and Asia.
 WEEK_SEND_AT = time(13, tzinfo=UTC)
 WEEK = timedelta(days=7)
+# Journey check-ins (migration 0034): made every two weeks someone played or reflected, and
+# only between these hours (UTC), so nobody is woken by one.
+JOURNEY_EVERY = timedelta(days=14)
+JOURNEY_HOURS = (time(13, tzinfo=UTC), time(21, tzinfo=UTC))
 
 
 class JobSettings(BaseSettings):
@@ -207,6 +211,39 @@ def announce_week(
     return len(subs), sender.send(subs, _week_message(monday))
 
 
+def journey_due(now: datetime) -> bool:
+    """Whether check-ins may be made now: within the daytime window (UTC)."""
+    start, end = JOURNEY_HOURS
+    return start <= now.astimezone(UTC).timetz() < end
+
+
+def _journey_message(now: datetime) -> Message:
+    # Nothing personal on the lock screen.
+    return Message(
+        title="Your check-in is ready",
+        body="Two weeks of your game, looked back on. Tap to see it.",
+        url="/you/journey",
+        tag=f"journey-{now.date().isoformat()}",
+    )
+
+
+def announce_journey(
+    engine: Engine, sender: PushSender | None, now: datetime
+) -> tuple[int, list[str]]:
+    """(notifications sent, endpoints that are gone). Each check-in is claimed once."""
+    if not journey_due(now):
+        return 0, []
+    with engine.begin() as conn:
+        targets = conn.execute(
+            text("SELECT * FROM app_jobs_claim_journey(:at, :every)"),
+            {"at": now, "every": JOURNEY_EVERY},
+        ).all()
+    subs = [Subscription(t.endpoint, t.p256dh, t.auth) for t in targets]
+    if sender is None or not subs:
+        return 0, []
+    return len(subs), sender.send(subs, _journey_message(now))
+
+
 class AccountDeleter(Protocol):
     def delete(self, subject: str) -> None: ...
 
@@ -291,6 +328,9 @@ def run(
     week_sent, week_gone = announce_week(engine, sender, now)
     sent += week_sent
     gone += week_gone
+    journey_sent, journey_gone = announce_journey(engine, sender, now)
+    sent += journey_sent
+    gone += journey_gone
 
     if gone:
         with engine.begin() as conn:

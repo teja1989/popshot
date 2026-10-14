@@ -83,7 +83,13 @@ _LEARNING_NOTES = """
     SELECT noted_on, body, skill, created_at
     FROM journey_notes WHERE user_id = :me ORDER BY created_at
 """
-_JOURNEY_SETTINGS = "SELECT ai_consent, onboarding FROM journey_settings WHERE user_id = :me"
+_JOURNEY_SETTINGS = (
+    "SELECT ai_consent, onboarding, started_at FROM journey_settings WHERE user_id = :me"
+)
+_CHECKINS = """
+    SELECT period_start, period_end, chapter, headline, lines, try_next, written_by, written_at
+    FROM journey_checkins WHERE user_id = :me ORDER BY period_end
+"""
 _NOTIFICATIONS = """
     SELECT (SELECT muted FROM notification_settings WHERE user_id = :me) AS muted,
            (SELECT count(*) FROM push_subscriptions WHERE user_id = :me) AS devices
@@ -112,6 +118,7 @@ def export_my_data(user: CurrentUserSession) -> JSONResponse:
             "stories": _rows(session, _STORIES, params),
             "learning_notes": _rows(session, _LEARNING_NOTES, params),
             "settings": next(iter(_rows(session, _JOURNEY_SETTINGS, params)), None),
+            "checkins": _rows(session, _CHECKINS, params),
         },
         "invites": _rows(session, "SELECT * FROM app_my_direct_invites()", params),
         "blocked_crews": _rows(session, "SELECT * FROM app_my_invite_blocks()", params),

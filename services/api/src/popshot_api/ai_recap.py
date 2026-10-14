@@ -185,12 +185,26 @@ def check(raw: Any, facts: Mapping[str, Any], crew_first_names: set[str]) -> Com
 
 
 class GeminiWriter:
-    """Gemini on Vertex AI, as the API's own service account (roles/aiplatform.user)."""
+    """Gemini on Vertex AI, as the API's own service account (roles/aiplatform.user). The
+    recap commentator by default; the journey check-ins (journey_ai.py) pass their own
+    instructions and reply shape."""
 
-    def __init__(self, project: str, location: str, model: str) -> None:
+    def __init__(  # noqa: PLR0913
+        self,
+        project: str,
+        location: str,
+        model: str,
+        *,
+        system: str = SYSTEM,
+        schema: dict[str, Any] | None = None,
+        temperature: float = 0.8,
+    ) -> None:
         self.model = model
         self._project = project
         self._location = location
+        self._system = system
+        self._schema = schema if schema is not None else RESPONSE_SCHEMA
+        self._temperature = temperature
         self._client: Any = None
 
     def write(self, facts: Mapping[str, Any]) -> Any:
@@ -210,10 +224,10 @@ class GeminiWriter:
             model=self.model,
             contents=json.dumps(facts),
             config=types.GenerateContentConfig(
-                system_instruction=SYSTEM,
+                system_instruction=self._system,
                 response_mime_type="application/json",
-                response_json_schema=RESPONSE_SCHEMA,
-                temperature=0.8,
+                response_json_schema=self._schema,
+                temperature=self._temperature,
                 max_output_tokens=1024,
                 safety_settings=[
                     types.SafetySetting(category=category, threshold=strict)

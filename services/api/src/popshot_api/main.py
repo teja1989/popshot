@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 from starlette.concurrency import run_in_threadpool
 
+from popshot_api import journey_ai
 from popshot_api.ai_recap import GeminiWriter, RecapWriter
 from popshot_api.auth.emulator import EmulatorTokenVerifier
 from popshot_api.auth.google import GoogleIdTokenVerifier
@@ -31,6 +32,7 @@ from popshot_api.routes import (
     health,
     invites,
     journey,
+    journey_checkins,
     me,
     nights,
     notifications,
@@ -52,6 +54,20 @@ def _recap_writer_for(settings: Settings) -> RecapWriter | None:
     if not settings.recap_ai or settings.gcp_project is None:
         return None
     return GeminiWriter(settings.gcp_project, settings.gemini_location, settings.gemini_model)
+
+
+def _journey_writer_for(settings: Settings) -> RecapWriter | None:
+    """The same Gemini setup, with the check-in's own instructions (journey_ai.py)."""
+    if not settings.recap_ai or settings.gcp_project is None:
+        return None
+    return GeminiWriter(
+        settings.gcp_project,
+        settings.gemini_location,
+        settings.gemini_model,
+        system=journey_ai.SYSTEM,
+        schema=journey_ai.RESPONSE_SCHEMA,
+        temperature=0.7,
+    )
 
 
 def base_app(
@@ -108,6 +124,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     verify_database_role: bool = True,
     push_sender: PushSender | None = None,
     recap_writer: RecapWriter | None = None,
+    journey_writer: RecapWriter | None = None,
 ) -> FastAPI:
     """Build the API. `verify_database_role` exists for tests that don't use a database;
     it isn't reachable from configuration, so a deployed API always checks its role.
@@ -124,6 +141,9 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.state.recap_writer = (
         recap_writer if recap_writer is not None else _recap_writer_for(settings)
     )
+    app.state.journey_writer = (
+        journey_writer if journey_writer is not None else _journey_writer_for(settings)
+    )
     app.include_router(me.router)
     app.include_router(export.router)
     app.include_router(groups.router)
@@ -133,6 +153,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(games.router)
     app.include_router(focus.router)
     app.include_router(journey.router)
+    app.include_router(journey_checkins.router)
     app.include_router(board.router)
     app.include_router(stats.router)
     app.include_router(notifications.router)

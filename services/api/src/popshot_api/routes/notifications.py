@@ -20,7 +20,15 @@ from popshot_api.push import Message, PushSender, Subscription, is_push_endpoint
 router = APIRouter(prefix="/v1")
 
 Category = Literal[
-    "games", "play_nights", "recaps", "your_week", "invites", "requests", "tab", "milestones"
+    "games",
+    "play_nights",
+    "recaps",
+    "your_week",
+    "journey",
+    "invites",
+    "requests",
+    "tab",
+    "milestones",
 ]
 # The categories people can turn off, in the order the You page lists them. Others are added
 # here as the features that send them ship.
@@ -30,6 +38,7 @@ OFFERED: tuple[Category, ...] = (
     "play_nights",
     "recaps",
     "your_week",
+    "journey",
     "games",
 )
 
@@ -200,7 +209,9 @@ def _settings(session: Session, me: UUID) -> NotificationSettings:
     devices = session.execute(
         text("SELECT count(*) FROM push_subscriptions WHERE user_id = :me"), {"me": me}
     ).scalar_one()
-    offered = list(OFFERED)
+    journey_on = session.execute(text("SELECT app_feature_on_for_me('you.journey')")).scalar_one()
+    # Journey check-ins only for people whose journey is on (migration 0034).
+    offered = [c for c in OFFERED if c != "journey" or journey_on]
     return NotificationSettings(
         categories=offered, muted=[c for c in offered if c in (muted or [])], devices=devices
     )
