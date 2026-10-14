@@ -345,10 +345,13 @@ def test_in_your_data_download(people: People, journey_on: None) -> None:
     data = people.client.get("/v1/me/export", headers=casey).json()["journey"]
     assert [s["goal"] for s in data["stories"]] == [STORY["goal"], "A new goal"]
     assert [n["body"] for n in data["learning_notes"]] == ["Patience."]
-    assert data["settings"] == {"ai_consent": False, "onboarding": "done"}
+    assert data["settings"]["ai_consent"] is False
+    assert data["settings"]["onboarding"] == "done"
+    assert data["settings"]["started_at"]
+    assert data["checkins"] == []
     # Someone else's file has none of it.
     other = people.client.get("/v1/me/export", headers=people.new("Sam")).json()["journey"]
-    assert other == {"stories": [], "learning_notes": [], "settings": None}
+    assert other == {"stories": [], "learning_notes": [], "settings": None, "checkins": []}
 
 
 def journey_rows(owner_engine: Engine, user_id: UUID) -> int:

@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from popshot_api.db import CurrentUserSession
 from popshot_api.focus import OFFERED_IDS
+from popshot_api.journey_checkin import EVERY as CHECKIN_EVERY
 
 router = APIRouter(prefix="/v1/me/journey")
 
@@ -131,6 +132,9 @@ class Journey(BaseModel):
     # Days you've played (and reflected on) a game, saved a learning note or worked on your
     # story. Only ever goes up.
     learning_days: int
+    # When your next check-in can come: two weeks after your last one, or after you started.
+    # It comes if you've played or reflected on a game by then (migration 0034).
+    next_checkin_after: datetime | None = None
 
 
 def require_journey(session: Session) -> None:
@@ -198,6 +202,17 @@ def _learning_days(user: CurrentUserSession) -> int:
     return days
 
 
+def _next_checkin(user: CurrentUserSession) -> datetime | None:
+    since: datetime | None = user.session.execute(
+        text(
+            "SELECT coalesce((SELECT max(period_end) FROM journey_checkins WHERE user_id = :me), "
+            "(SELECT started_at FROM journey_settings WHERE user_id = :me))"
+        ),
+        {"me": user.user_id},
+    ).scalar_one()
+    return since + CHECKIN_EVERY if since else None
+
+
 def _journey(user: CurrentUserSession) -> Journey:
     stories = _stories(user, HISTORY + 1)
     return Journey(
@@ -206,6 +221,7 @@ def _journey(user: CurrentUserSession) -> Journey:
         settings=_settings(user),
         notes=_notes(user),
         learning_days=_learning_days(user),
+        next_checkin_after=_next_checkin(user),
     )
 
 
@@ -237,6 +253,11 @@ def _too_many(what: str) -> HTTPException:
 @router.get("")
 def get_journey(user: CurrentUserSession) -> Journey:
     require_journey(user.session)
+    # The first look starts your journey: check-ins count from here (migration 0034).
+    user.session.execute(
+        text("INSERT INTO journey_settings (user_id) VALUES (:me) ON CONFLICT DO NOTHING"),
+        {"me": user.user_id},
+    )
     return _journey(user)
 
 
