@@ -2,9 +2,9 @@
 
 It runs as you, so row-level security decides what's in it, the same as what the app shows
 you: your profile and settings, your crews, the games you played (with your crewmates' names
-as you see them), your meetup answers, focus, game notes, invites and blocks, and where you
-first came from. Crews you've left aren't readable any more, so only your membership row of
-those is included.
+as you see them), your meetup answers, focus, game notes, your journey (story versions,
+learning notes), invites and blocks, and where you first came from. Crews you've left aren't
+readable any more, so only your membership row of those is included.
 
 Your email isn't here: Google sign-in (Firebase) holds it, not Popshot's database.
 """
@@ -74,6 +74,16 @@ _NOTES = """
     SELECT match_id, went_well, to_improve, created_at, updated_at
     FROM match_reflections WHERE user_id = :me ORDER BY created_at
 """
+# Your journey (0032): every version of your story, your learning notes, your settings.
+_STORIES = """
+    SELECT created_at, origin, strengths, gaps, goal, tag_strengths, tag_gaps, tags_source
+    FROM journey_entries WHERE user_id = :me ORDER BY created_at
+"""
+_LEARNING_NOTES = """
+    SELECT noted_on, body, skill, created_at
+    FROM journey_notes WHERE user_id = :me ORDER BY created_at
+"""
+_JOURNEY_SETTINGS = "SELECT ai_consent, onboarding FROM journey_settings WHERE user_id = :me"
 _NOTIFICATIONS = """
     SELECT (SELECT muted FROM notification_settings WHERE user_id = :me) AS muted,
            (SELECT count(*) FROM push_subscriptions WHERE user_id = :me) AS devices
@@ -98,6 +108,11 @@ def export_my_data(user: CurrentUserSession) -> JSONResponse:
         "focus": next(iter(_rows(session, _FOCUS, params)), None),
         "game_notes": _rows(session, _NOTES, params),
         "notifications": _rows(session, _NOTIFICATIONS, params)[0],
+        "journey": {
+            "stories": _rows(session, _STORIES, params),
+            "learning_notes": _rows(session, _LEARNING_NOTES, params),
+            "settings": next(iter(_rows(session, _JOURNEY_SETTINGS, params)), None),
+        },
         "invites": _rows(session, "SELECT * FROM app_my_direct_invites()", params),
         "blocked_crews": _rows(session, "SELECT * FROM app_my_invite_blocks()", params),
         # Where you first came from, if Popshot knows (migration 0024).
