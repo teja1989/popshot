@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useRef, type ReactNode } from "react";
 
 import { NAV, tabColumns, visibleNav, type NavIcon } from "@/lib/nav";
 
+import { CompactTitle } from "./compact-title";
 import { useEverywhere } from "./features";
 import { HashScroll } from "./hash-scroll";
 import { onHomeLinkClick } from "./home-refresh";
@@ -27,6 +29,8 @@ const ICONS: Record<NavIcon, ReactNode> = {
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const nav = visibleNav(NAV, useEverywhere());
+  const content = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion() ?? false;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
       {/* The column carries the background, so it runs the full height of long pages. */}
@@ -71,7 +75,8 @@ export function AppFrame({ children }: { children: ReactNode }) {
         </aside>
       </div>
 
-      <div className="flex min-w-0 flex-col pb-24 lg:pb-0">
+      <div ref={content} className="flex min-w-0 flex-col pb-24 lg:pb-0">
+        <CompactTitle content={content} />
         <header className="px-5 pt-8 lg:hidden">
           <Link
             href="/"
@@ -84,7 +89,11 @@ export function AppFrame({ children }: { children: ReactNode }) {
             <Brand />
           </Link>
         </header>
-        {children}
+        {/* Each page fades in. Opacity only: a moving transform here would shift the fixed
+            Log a game button for a moment. */}
+        <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.18 }}>
+          {children}
+        </motion.div>
         <HashScroll />
       </div>
 
