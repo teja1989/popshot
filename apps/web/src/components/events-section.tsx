@@ -31,7 +31,7 @@ export function EventsSection({ group }: { group: GroupSummary }) {
   return (
     <section aria-labelledby="events-heading" className="flex animate-rise flex-col gap-2 [animation-delay:45ms]">
       <div className="flex min-h-11 items-center justify-between">
-        <h2 id="events-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="events-heading" className="text-title-sm font-bold text-ink">
           Events
         </h2>
         {canStart && (
@@ -55,7 +55,7 @@ export function EventsSection({ group }: { group: GroupSummary }) {
         <Link
           key={e.id}
           href={`/groups/${group.id}/events/${e.id}`}
-          className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4 text-ink no-underline transition-colors duration-150 hover:border-primary"
+          className="flex items-center justify-between gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4 text-ink no-underline transition-colors duration-150 hover:border-primary"
         >
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="truncate text-title-sm font-extrabold font-display">{e.name}</span>

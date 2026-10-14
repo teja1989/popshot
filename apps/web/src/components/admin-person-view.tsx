@@ -61,7 +61,7 @@ function PersonDetail({ person: p }: { person: Person }) {
           />
           <Stat label="Crews" value={p.groups.filter((g) => g.status === "active" && !g.deleted_at).length} />
           <Stat label="Notification devices" value={p.push_devices} />
-          <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
+          <div className="flex flex-col gap-1 rounded-3xl border border-transparent bg-surface shadow-card p-4">
             <dt className="text-small text-muted">Joined</dt>
             <dd className="text-title-sm font-extrabold">{shortDate(p.created_at)}</dd>
             <dd className="text-meta text-muted">
@@ -76,7 +76,10 @@ function PersonDetail({ person: p }: { person: Person }) {
         {p.groups.length === 0 ? (
           <p className="text-muted">Not in any crew.</p>
         ) : (
-          <ul aria-label="Their crews" className="flex flex-col rounded-2xl border border-line bg-surface">
+          <ul
+            aria-label="Their crews"
+            className="flex flex-col rounded-3xl border border-transparent bg-surface shadow-card"
+          >
             {p.groups.map((g) => (
               <li key={g.group_id} className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0">
                 <Link href={`/admin/crews/${g.group_id}`} className="truncate font-bold text-ink">

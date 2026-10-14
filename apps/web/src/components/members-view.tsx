@@ -36,7 +36,10 @@ export function MembersView({ groupId }: { groupId: string }) {
         <h1 className="text-title-lg font-extrabold font-display">We couldn&apos;t find that group.</h1>
       )}
       {result.kind === "error" && result.status !== 404 && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load the members just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
@@ -135,10 +138,10 @@ function Members({
 
       {isAdmin && waiting.length > 0 && (
         <section aria-labelledby="waiting-heading" className="flex animate-rise flex-col gap-2">
-          <h2 id="waiting-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="waiting-heading" className="text-title-sm font-bold text-ink">
             Asking to join · {waiting.length}
           </h2>
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <ul className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
             {waiting.map((member) => (
               <MemberRow key={member.user_id} member={member} isMe={false}>
                 <div className="grid basis-full grid-cols-2 gap-2 sm:basis-auto sm:shrink-0">
@@ -168,10 +171,10 @@ function Members({
       )}
 
       <section aria-labelledby="members-heading" className="flex animate-rise flex-col gap-2 [animation-delay:60ms]">
-        <h2 id="members-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="members-heading" className="text-title-sm font-bold text-ink">
           Members · {active.length}
         </h2>
-        <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+        <ul className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
           {active.map((member) => {
             const isMe = member.user_id === me?.id;
             return (
@@ -201,10 +204,10 @@ function Members({
 
       {isAdmin && group.former_members.length > 0 && (
         <section aria-labelledby="former-heading" className="flex animate-rise flex-col gap-2 [animation-delay:90ms]">
-          <h2 id="former-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="former-heading" className="text-title-sm font-bold text-ink">
             Removed or declined · {group.former_members.length}
           </h2>
-          <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <ul className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
             {group.former_members.map((person) => (
               <li
                 key={person.user_id}
@@ -235,9 +238,7 @@ function Members({
               </li>
             ))}
           </ul>
-          <p className="text-small text-muted">
-            Restoring puts them straight back in. Inviting back lets them choose.
-          </p>
+          <p className="text-small text-muted">Restoring puts them straight back in. Inviting back lets them choose.</p>
         </section>
       )}
     </>
@@ -256,9 +257,7 @@ function MemberRow({ member, isMe, children }: { member: Member; isMe: boolean; 
         {member.status === "active" && <span className="text-small text-muted">{memberLine(member)}</span>}
       </span>
       {member.status === "active" && member.role !== "member" && (
-        <span className="shrink-0 rounded-full bg-chip px-2.5 py-1 text-meta font-bold">
-          {ROLE_LABEL[member.role]}
-        </span>
+        <span className="shrink-0 rounded-full bg-chip px-2.5 py-1 text-meta font-bold">{ROLE_LABEL[member.role]}</span>
       )}
       {children}
     </li>
@@ -273,10 +272,10 @@ function GuestsSection({ groupId, isAdmin }: { groupId: string; isAdmin: boolean
   }
   return (
     <section aria-labelledby="guests-heading" className="flex animate-rise flex-col gap-2 [animation-delay:90ms]">
-      <h2 id="guests-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="guests-heading" className="text-title-sm font-bold text-ink">
         Guests · {result.data.length}
       </h2>
-      <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+      <ul className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
         {result.data.map((guest) => (
           <li
             key={guest.id}

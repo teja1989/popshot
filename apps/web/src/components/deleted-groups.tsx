@@ -38,12 +38,15 @@ export function DeletedGroups() {
 
   return (
     <section aria-labelledby="deleted-heading" className="flex animate-rise flex-col gap-2">
-      <h2 id="deleted-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="deleted-heading" className="text-title-sm font-bold text-ink">
         Recently deleted
       </h2>
       <ul className="overflow-hidden rounded-2xl border border-dashed border-line">
         {result.data.map((group) => (
-          <li key={group.id} className="flex min-h-16 items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
+          <li
+            key={group.id}
+            className="flex min-h-16 items-center gap-3 border-b border-line px-4 py-3 last:border-b-0"
+          >
             <span className="flex min-w-0 grow flex-col">
               <span className="truncate text-lead font-bold">{group.name}</span>
               <span className="text-small text-muted">{timeLeft(group.restorable_until)} left to restore</span>

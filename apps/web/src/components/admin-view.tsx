@@ -115,7 +115,7 @@ function GroupsSection({ groups }: { groups: AdminGroup[] }) {
       ) : (
         <ul
           aria-label="Crews, most recently active first"
-          className="flex flex-col rounded-2xl border border-line bg-surface"
+          className="flex flex-col rounded-3xl border border-transparent bg-surface shadow-card"
         >
           {groups.map((g) => (
             <li key={g.id} className="flex flex-col gap-0.5 border-b border-line px-4 py-3 last:border-b-0">
@@ -204,7 +204,10 @@ function PeopleResultsList({ query }: { query: string }) {
     );
   }
   return (
-    <ul aria-label="People found" className="flex flex-col rounded-2xl border border-line bg-surface">
+    <ul
+      aria-label="People found"
+      className="flex flex-col rounded-3xl border border-transparent bg-surface shadow-card"
+    >
       {people.map((p) => (
         <li key={p.id} className="border-b border-line last:border-b-0">
           <Link href={`/admin/people/${p.id}`} className="flex items-center gap-3 px-4 py-3 text-ink no-underline">

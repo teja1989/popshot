@@ -92,7 +92,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
   const id = `admin-${title.toLowerCase().replace(/\W+/g, "-")}`;
   return (
     <section aria-labelledby={id} className="flex animate-rise flex-col gap-3">
-      <h2 id={id} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id={id} className="text-title-sm font-bold text-ink">
         {title}
       </h2>
       {children}
@@ -102,7 +102,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
 
 export function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-1 rounded-3xl border border-transparent bg-surface shadow-card p-4">
       <dt className="text-small text-muted">{label}</dt>
       <dd className="text-title-lg leading-none font-extrabold tabular-nums font-numeral">{value}</dd>
       {note && <dd className="text-meta text-muted">{note}</dd>}
@@ -113,7 +113,7 @@ export function Stat({ label, value, note }: { label: string; value: number; not
 /** A table that scrolls sideways inside its card on narrow screens, never the page. */
 export function Table({ label, head, rows }: { label: string; head: string[]; rows: (string | number)[][] }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+    <div className="overflow-x-auto rounded-3xl border border-transparent bg-surface shadow-card">
       <table aria-label={label} className="w-full text-left text-small tabular-nums">
         <thead>
           <tr className="border-b border-line text-muted">

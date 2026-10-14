@@ -112,7 +112,10 @@ function FunnelSections({ funnel }: { funnel: Funnel }) {
 
 function Steps({ label, steps }: { label: string; steps: Step[] }) {
   return (
-    <ol aria-label={label} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+    <ol
+      aria-label={label}
+      className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4"
+    >
       {steps.map((s) => (
         <li key={s.label} className="flex flex-col gap-1">
           <span className="flex items-baseline justify-between gap-3 text-small">
@@ -148,7 +151,7 @@ function LoopsSection({ loops }: { loops: Loops }) {
           value={loops.invite_signups}
           note={`${String(loops.code_signups)} by code`}
         />
-        <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-1 rounded-3xl border border-transparent bg-surface shadow-card p-4">
           <dt className="text-small text-muted">New players per active player</dt>
           <dd className="text-title-lg leading-none font-extrabold font-numeral">{spreadPerActive(loops)}</dd>
           <dd className="text-meta text-muted">{loops.active_users} active in the period</dd>
@@ -161,7 +164,7 @@ function LoopsSection({ loops }: { loops: Loops }) {
 function WeeklyCrews({ weeks }: { weeks: Funnel["active_crews"] }) {
   const most = Math.max(1, ...weeks.map((w) => w.active_crews));
   return (
-    <figure className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+    <figure className="flex flex-col gap-2 rounded-3xl border border-transparent bg-surface shadow-card p-4">
       <svg
         viewBox={`0 0 ${String(weeks.length * 10)} 40`}
         preserveAspectRatio="none"
@@ -188,7 +191,10 @@ function StagesSection({ stages }: { stages: CrewStage[] }) {
       {stages.length === 0 ? (
         <p className="text-muted">No crews started in the last 90 days.</p>
       ) : (
-        <ul aria-label="Newer crews, newest first" className="flex flex-col rounded-2xl border border-line bg-surface">
+        <ul
+          aria-label="Newer crews, newest first"
+          className="flex flex-col rounded-3xl border border-transparent bg-surface shadow-card"
+        >
           {stages.map((c) => (
             <li key={c.id} className="flex flex-col gap-1 border-b border-line px-4 py-3 last:border-b-0">
               <span className="flex flex-wrap items-center justify-between gap-2">

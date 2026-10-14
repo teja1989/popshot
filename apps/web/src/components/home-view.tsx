@@ -20,10 +20,12 @@ import { YourWeekCard } from "./your-week-card";
 import { NextNight } from "./next-night";
 import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { useApiGet } from "./use-api";
+import { useCurrentGroup } from "./use-current-group";
 import { Avatar, AvatarStack } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
 import { CourtArt } from "./ui/court-art";
 import { CourtPattern } from "./ui/court-pattern";
+import { Fab } from "./ui/fab";
 import { ChevronIcon, PlusIcon } from "./ui/icons";
 
 // Written out in full so Tailwind can see them (it doesn't evaluate code).
@@ -40,6 +42,10 @@ export function HomeView() {
   const { me, problem } = useSignedIn();
   const router = useRouter();
   const { result, reload } = useApiGet<GroupSummary[]>("/v1/groups");
+  // "Log a game" opens in the crew you last played or looked at (as Play does).
+  const { current: logIn } = useCurrentGroup(
+    result.kind === "ready" ? result.data.filter((g) => g.my_status === "active") : [],
+  );
   const openGroup = (group: GroupDetail) => {
     router.push(`/groups/${group.id}`);
   };
@@ -79,16 +85,10 @@ export function HomeView() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-5xl lg:px-8 lg:pt-10">
-
       <section className="relative isolate animate-rise overflow-hidden rounded-[28px] bg-hero p-6 text-on-hero lg:p-9">
         <CourtPattern />
         <div className="flex items-center gap-4">
-          <Avatar
-            name={me?.display_name}
-            photoUrl={me?.avatar_url}
-            size="lg"
-            className="ring-4 ring-hero-line"
-          />
+          <Avatar name={me?.display_name} photoUrl={me?.avatar_url} size="lg" className="ring-4 ring-hero-line" />
           <div className="min-w-0">
             <p className="text-small font-bold text-on-hero-muted">{today}</p>
             <h1 className="text-display-sm leading-[1.05] font-extrabold tracking-[-0.02em] break-words font-display lg:text-display">
@@ -137,7 +137,7 @@ export function HomeView() {
           )}
           <div className="flex min-h-11 items-center justify-between">
             <div className="flex items-baseline gap-2">
-              <h2 id="groups-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+              <h2 id="groups-heading" className="text-title-sm font-bold text-ink">
                 Your groups
               </h2>
               <p role="status" className="text-meta font-bold text-primary">
@@ -158,7 +158,10 @@ export function HomeView() {
           {result.kind === "loading" && <p className="text-muted">Loading your groups…</p>}
 
           {result.kind === "error" && (
-            <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+            <div
+              role="alert"
+              className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+            >
               <p>We couldn&apos;t load your groups just now.</p>
               <button type="button" className={buttonClass("quiet")} onClick={reload}>
                 Try again
@@ -167,11 +170,11 @@ export function HomeView() {
           )}
 
           {result.kind === "ready" && result.data.length === 0 && (
-            <div className="flex animate-rise flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+            <div className="flex animate-rise flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
               <CourtArt className="w-40" />
               <p className="text-lead leading-relaxed">
-                No groups yet. Got an invite link from your crew? Join with it. Or start a group
-                for the people you play with.
+                No groups yet. Got an invite link from your crew? Join with it. Or start a group for the people you play
+                with.
               </p>
               <div className="flex flex-wrap gap-2">
                 <JoinByLinkSheet
@@ -227,6 +230,7 @@ export function HomeView() {
           <StatsPanel top={top} loading={ratings.result.kind === "loading"} groups={ratingsCount} />
         </div>
       </div>
+      {logIn && <Fab href={`/groups/${logIn.id}/log`} label="Log a game" />}
     </main>
   );
 }
@@ -236,7 +240,7 @@ function GroupCard({ group }: { group: GroupSummary }) {
   return (
     <Link
       href={`/groups/${group.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface text-ink no-underline transition-[translate,box-shadow] duration-200 ease-court hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgb(15_27_38/0.45)]"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card text-ink no-underline transition-[translate,box-shadow] duration-200 ease-court hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgb(15_27_38/0.45)]"
     >
       <span className="relative isolate block h-20 overflow-hidden bg-hero">
         <CourtPattern />
@@ -294,9 +298,9 @@ function StatsPanel({ top, loading, groups }: { top: MyRating | undefined; loadi
   return (
     <aside
       aria-labelledby="home-stats-heading"
-      className="flex animate-rise flex-col gap-4 rounded-3xl border border-line bg-surface p-5 [animation-delay:120ms]"
+      className="flex animate-rise flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5 [animation-delay:120ms]"
     >
-      <h2 id="home-stats-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="home-stats-heading" className="text-title-sm font-bold text-ink">
         Your stats{top && groups > 1 ? ` · ${top.group_name}` : ""}
       </h2>
       {!top && !loading && (
@@ -308,8 +312,15 @@ function StatsPanel({ top, loading, groups }: { top: MyRating | undefined; loadi
         <>
           <dl className="grid grid-cols-3 gap-3">
             <PanelStat label="Crew points" value={points(top.rating)} />
-            <PanelStat label={`Last ${String(top.form.length)}`} value={`${String(wins)}–${String(top.form.length - wins)}`} />
-            <PanelStat label="Last 7 days" value={String(top.week_games)} note={top.week_games === 1 ? "game" : "games"} />
+            <PanelStat
+              label={`Last ${String(top.form.length)}`}
+              value={`${String(wins)}–${String(top.form.length - wins)}`}
+            />
+            <PanelStat
+              label="Last 7 days"
+              value={String(top.week_games)}
+              note={top.week_games === 1 ? "game" : "games"}
+            />
           </dl>
           <span
             className="flex flex-wrap gap-1"

@@ -16,6 +16,7 @@ import { SharedCardsSection } from "./shared-cards-section";
 import { SignOutButton } from "./sign-out-button";
 import { YourDataSection } from "./your-data-section";
 import { Avatar } from "./ui/avatar";
+import { segmentOption, segmentTrack } from "./ui/segmented";
 
 const THEMES: { value: ThemeChoice; label: string }[] = [
   { value: "system", label: "Match device" },
@@ -58,13 +59,10 @@ export function YouView() {
       <SharedCardsSection />
 
       <fieldset className="flex animate-rise flex-col gap-3 [animation-delay:120ms]">
-        <legend className="mb-3 text-label font-bold tracking-[0.1em] text-muted uppercase">Appearance</legend>
-        <div className="grid grid-cols-3 gap-1 rounded-xl bg-chip p-1">
+        <legend className="mb-3 text-title-sm font-bold text-ink">Appearance</legend>
+        <div className={`${segmentTrack} grid-cols-3`}>
           {THEMES.map((option) => (
-            <label
-              key={option.value}
-              className="flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-2 text-center text-body font-bold text-muted has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-sm has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
-            >
+            <label key={option.value} className={`${segmentOption} text-center`}>
               <input
                 type="radio"
                 name="theme"

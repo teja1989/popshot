@@ -42,13 +42,13 @@ export function InvitePanel({ groupId, groupName }: { groupId: string; groupName
 
   return (
     <section aria-labelledby="invite-heading" className="flex animate-rise flex-col gap-3 [animation-delay:180ms]">
-      <h2 id="invite-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="invite-heading" className="text-title-sm font-bold text-ink">
         Invite links
       </h2>
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <p className="text-muted">
-          Share a link in your crew&apos;s chat. Everyone who uses it waits for you or a co-lead to
-          let them in. Links last {INVITE_DAYS} days.
+          Share a link in your crew&apos;s chat. Everyone who uses it waits for you or a co-lead to let them in. Links
+          last {INVITE_DAYS} days.
         </p>
         <InviteSheet groupId={groupId} groupName={groupName} onMade={reload} />
 
@@ -61,9 +61,7 @@ export function InvitePanel({ groupId, groupName }: { groupId: string; groupName
                   <p className="text-small text-muted">
                     {describeJoined(invite)} · {describeExpiry(invite.expires_at)}
                   </p>
-                  {invite.created_by_name && (
-                    <p className="text-small text-muted">Made by {invite.created_by_name}</p>
-                  )}
+                  {invite.created_by_name && <p className="text-small text-muted">Made by {invite.created_by_name}</p>}
                 </div>
                 <button
                   type="button"
@@ -91,15 +89,7 @@ export function InvitePanel({ groupId, groupName }: { groupId: string; groupName
   );
 }
 
-function InviteSheet({
-  groupId,
-  groupName,
-  onMade,
-}: {
-  groupId: string;
-  groupName: string;
-  onMade: () => void;
-}) {
+function InviteSheet({ groupId, groupName, onMade }: { groupId: string; groupName: string; onMade: () => void }) {
   const { user } = useSignedIn();
   const [open, setOpen] = useState(false);
   const [uses, setUses] = useState<number>(1);
@@ -187,8 +177,8 @@ function InviteSheet({
             />
           </label>
           <p className="text-small text-muted">
-            Anyone with this link can ask to join, so share it only with your crew. You won&apos;t
-            see it again after closing this; make a new one if you need it.
+            Anyone with this link can ask to join, so share it only with your crew. You won&apos;t see it again after
+            closing this; make a new one if you need it.
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
             <button type="button" className={buttonClass("action", "h-14")} onClick={() => void copy(link)}>

@@ -19,10 +19,10 @@ export function YourWeekCard() {
   return (
     <section
       aria-labelledby="your-week-heading"
-      className="flex animate-rise flex-col gap-3 rounded-3xl border border-line bg-surface p-5"
+      className="flex animate-rise flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
     >
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="your-week-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="your-week-heading" className="text-title-sm font-bold text-ink">
           Your week
         </h2>
         <p className="text-meta text-muted">{weekRange(week)}</p>

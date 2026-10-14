@@ -29,12 +29,15 @@ export function NightView({ groupId, nightId }: { groupId: string; nightId: stri
       </Link>
       {result.kind === "loading" && <p className="text-muted">Loading the meetup…</p>}
       {result.kind === "error" && result.status === 404 && (
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+        <section className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
           <h1 className="text-title-lg font-extrabold">We couldn&apos;t find that meetup.</h1>
         </section>
       )}
       {result.kind === "error" && result.status !== 404 && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+        >
           <p>We couldn&apos;t load this meetup just now.</p>
           <button type="button" className={buttonClass("quiet")} onClick={reload}>
             Try again
@@ -63,14 +66,20 @@ function NightDetail({ night, onChange }: { night: Night; onChange: (night: Nigh
       </section>
 
       {night.open && (
-        <section aria-label="Your answer" className="flex animate-rise flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+        <section
+          aria-label="Your answer"
+          className="flex animate-rise flex-col gap-2 rounded-3xl border border-transparent bg-surface shadow-card p-4"
+        >
           {status && <p className="font-bold">{status}</p>}
           <RsvpButtons night={night} onChange={onChange} />
         </section>
       )}
       {!night.open && !night.cancelled && <p className="text-muted">Answers for this meetup have closed.</p>}
 
-      <PeopleList title={`Going · ${String(night.going.length)}${night.spots ? ` of ${String(night.spots)}` : ""}`} people={night.going} />
+      <PeopleList
+        title={`Going · ${String(night.going.length)}${night.spots ? ` of ${String(night.spots)}` : ""}`}
+        people={night.going}
+      />
       <PeopleList title={`Waitlist · ${String(night.waitlist.length)}`} people={night.waitlist} numbered />
       <PeopleList title={`Maybe · ${String(night.maybe.length)}`} people={night.maybe} />
       <PeopleList title={`Can't make it · ${String(night.out.length)}`} people={night.out} />
@@ -101,12 +110,15 @@ function PeopleList({ title, people, numbered = false }: { title: string; people
   const id = `list-${title.split(" ")[0]?.toLowerCase() ?? "people"}`;
   return (
     <section aria-labelledby={id} className="flex animate-rise flex-col gap-2">
-      <h2 id={id} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id={id} className="text-title-sm font-bold text-ink">
         {title}
       </h2>
-      <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+      <ul className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
         {people.map((person, index) => (
-          <li key={person.user_id} className="flex min-h-14 items-center gap-3 border-b border-line px-4 py-2 last:border-b-0">
+          <li
+            key={person.user_id}
+            className="flex min-h-14 items-center gap-3 border-b border-line px-4 py-2 last:border-b-0"
+          >
             {numbered && <span className="w-5 text-center font-extrabold text-muted tabular-nums">{index + 1}</span>}
             <Avatar name={person.display_name} photoUrl={person.avatar_url} size="sm" />
             <span className="truncate text-lead font-bold">{person.display_name}</span>

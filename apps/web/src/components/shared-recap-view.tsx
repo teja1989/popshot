@@ -28,9 +28,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
         <p className="text-small font-bold text-on-hero-muted">
           {recap.crew} · {outingSize(recap)}
         </p>
-        <h1 className="text-title-lg leading-[1.1] font-extrabold tracking-[-0.01em] font-display">
-          {recap.headline}
-        </h1>
+        <h1 className="text-title-lg leading-[1.1] font-extrabold tracking-[-0.01em] font-display">{recap.headline}</h1>
         <ul className="flex flex-col gap-2 text-lead leading-snug">
           {recap.lines.map((line) => (
             <li key={line}>{line}</li>
@@ -44,7 +42,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
 
       {recap.awards.length > 0 && (
         <section aria-labelledby="awards-heading" className="flex flex-col gap-2">
-          <h2 id="awards-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+          <h2 id="awards-heading" className="text-title-sm font-bold text-ink">
             Awards
           </h2>
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -53,7 +51,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
               return (
                 <li
                   key={`${award.kind}-${award.names.join()}-${String(award.more)}`}
-                  className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4"
+                  className="flex flex-col gap-1 rounded-3xl border border-transparent bg-surface shadow-card p-4"
                 >
                   <span className="flex items-center gap-2 text-lead font-extrabold">
                     <span aria-hidden="true" className="size-2.5 rounded-full bg-ball" />
@@ -69,7 +67,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
       )}
 
       <section aria-labelledby="played-heading" className="flex flex-col gap-2">
-        <h2 id="played-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="played-heading" className="text-title-sm font-bold text-ink">
           Who played
         </h2>
         <ul className="flex flex-wrap gap-2">
@@ -88,10 +86,10 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
       </section>
 
       <section aria-labelledby="games-heading" className="flex flex-col gap-2">
-        <h2 id="games-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="games-heading" className="text-title-sm font-bold text-ink">
           The games
         </h2>
-        <ol className="overflow-hidden rounded-2xl border border-line bg-surface">
+        <ol className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card">
           {recap.matches.map((m, i) => {
             const aWon = teamAWon(m.games);
             const [winners, others] = aWon ? [m.team_a, m.team_b] : [m.team_b, m.team_a];
@@ -108,7 +106,7 @@ export function SharedRecapView({ recap }: { recap: SharedRecap }) {
         </ol>
       </section>
 
-      <section className="mt-2 flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+      <section className="mt-2 flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <p className="text-lead font-extrabold">Keep score with your own crew.</p>
         <p className="text-body text-muted">
           Popshot logs your games, plans meetups and writes a recap like this after you play.

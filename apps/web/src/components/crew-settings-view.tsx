@@ -44,10 +44,7 @@ export function CrewSettingsView({ groupId }: { groupId: string }) {
   const { result, replace } = useApiGet<GroupDetail>(`/v1/groups/${groupId}`);
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
-      <Link
-        href={`/groups/${groupId}`}
-        className="flex items-center gap-1 self-start text-body font-bold text-primary"
-      >
+      <Link href={`/groups/${groupId}`} className="flex items-center gap-1 self-start text-body font-bold text-primary">
         <BackIcon />
         {result.kind === "ready" ? result.data.name : "Back"}
       </Link>
@@ -80,12 +77,14 @@ function SettingsSection({
   return (
     <section aria-labelledby={id} className="flex animate-rise flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <h2 id={id} className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id={id} className="text-title-sm font-bold text-ink">
           {title}
         </h2>
         {description && <p className="text-small text-muted">{description}</p>}
       </div>
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">{children}</div>
+      <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
+        {children}
+      </div>
     </section>
   );
 }

@@ -35,7 +35,7 @@ import { buttonClass } from "./ui/button";
 import { segmentOption, segmentTrack } from "./ui/segmented";
 
 const SECTION = "flex flex-col gap-3";
-const HEADING = "text-label font-bold tracking-[0.1em] text-muted uppercase";
+const HEADING = "text-title-sm font-bold text-ink";
 
 /** Start an event: format, who's playing, courts, details and rules, then start. */
 export function EventSetupView({ groupId }: { groupId: string }) {

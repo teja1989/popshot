@@ -118,7 +118,7 @@ export function GamesCalendar({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-line bg-surface p-2">
+      <div className="rounded-3xl border border-transparent bg-surface shadow-card p-2">
         <div aria-hidden="true" className="grid grid-cols-7 pb-1 text-center text-meta font-bold text-muted">
           {WEEKDAYS.map((d, i) => (
             <span key={i}>{d}</span>
@@ -151,9 +151,7 @@ export function GamesCalendar({
                   key === selected ? "bg-primary text-on-primary" : outside ? "text-muted" : "text-ink"
                 } ${span === "week" ? "min-h-16" : "min-h-12"}`}
               >
-                <span
-                  className={`text-body tabular-nums ${key === today ? "font-extrabold underline" : "font-bold"}`}
-                >
+                <span className={`text-body tabular-nums ${key === today ? "font-extrabold underline" : "font-bold"}`}>
                   {day.getDate()}
                 </span>
                 <span aria-hidden="true" className="flex h-2 items-center gap-1">
@@ -175,7 +173,7 @@ export function GamesCalendar({
       </p>
 
       <section aria-label="Selected day" className="flex flex-col gap-3">
-        <h3 className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h3 className="text-title-sm font-bold text-ink">
           {selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
         </h3>
         {result.kind === "loading" && <p className="text-muted">Loading…</p>}

@@ -16,7 +16,7 @@ export function CrewHighlights({ groupId }: { groupId: string }) {
 
   return (
     <section aria-labelledby="highlights-heading" className="flex animate-rise flex-col gap-2">
-      <h2 id="highlights-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="highlights-heading" className="text-title-sm font-bold text-ink">
         Lately · {days} days
       </h2>
       <ul className="grid gap-2 sm:grid-cols-2">
@@ -60,7 +60,7 @@ export function CrewHighlights({ groupId }: { groupId: string }) {
 function Card({ label, value, who, hint }: { label: string; value: string; who: string; hint?: string }) {
   // A compact row on phones (what and who on the left, the number on the right); a card from sm up.
   return (
-    <li className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 sm:flex-col sm:items-start sm:justify-start sm:gap-1">
+    <li className="flex items-center justify-between gap-3 rounded-3xl border border-transparent bg-surface shadow-card px-4 py-3 sm:flex-col sm:items-start sm:justify-start sm:gap-1">
       <span className="flex min-w-0 flex-col sm:contents">
         <span className="text-meta font-bold text-muted sm:order-1">{label}</span>
         <span className="truncate text-body font-bold sm:order-3 sm:max-w-full">{who}</span>

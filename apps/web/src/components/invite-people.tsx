@@ -36,10 +36,10 @@ export function InvitePeople({ groupId }: { groupId: string }) {
 
   return (
     <section aria-labelledby="people-heading" className="flex animate-rise flex-col gap-3 [animation-delay:150ms]">
-      <h2 id="people-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+      <h2 id="people-heading" className="text-title-sm font-bold text-ink">
         Invite people
       </h2>
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         <p className="text-muted">
           Invite someone you&apos;ve played with, or anyone who gives you their Popshot code. They&apos;ll see it on
           their Home screen. Saying yes puts them straight in.

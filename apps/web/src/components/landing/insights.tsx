@@ -39,7 +39,7 @@ function InsightItem({ index, children }: { index: number; children: ReactNode }
   const entrance = useEntrance({ opacity: 0, y: 20 }, { delay: index * 0.08, duration: 0.5 }, 0.4);
   return (
     <motion.li
-      className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface p-5"
+      className="flex items-center justify-between gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5"
       {...entrance}
     >
       {children}
@@ -86,7 +86,10 @@ export function YourStats() {
   const arrive = useTransform(scrollYProgress, [0.85, 1], still ? [1, 1] : [0, 1]);
 
   return (
-    <div ref={ref} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-5 sm:p-6">
+    <div
+      ref={ref}
+      className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5 sm:p-6"
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-small font-bold text-muted">Crew points</p>

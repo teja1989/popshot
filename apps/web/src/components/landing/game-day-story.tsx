@@ -90,7 +90,8 @@ export function GameDayStory() {
   );
 }
 
-const card = "rounded-3xl border border-line bg-surface p-5 shadow-[0_18px_40px_-28px_rgb(15_27_38/0.35)] sm:p-6";
+const card =
+  "rounded-3xl border border-transparent bg-surface shadow-card p-5 shadow-[0_18px_40px_-28px_rgb(15_27_38/0.35)] sm:p-6";
 
 function StepVisual({ index }: { index: number }) {
   if (index === 0) {
@@ -168,7 +169,7 @@ export function RecapSample({ children }: { children?: ReactNode }) {
 function AwardItem({ award, index }: { award: (typeof AWARDS)[number]; index: number }) {
   const entrance = useEntrance({ opacity: 0, y: 16 }, { delay: 0.15 + index * 0.1 });
   return (
-    <motion.li className="rounded-2xl border border-line bg-surface p-4" {...entrance}>
+    <motion.li className="rounded-3xl border border-transparent bg-surface shadow-card p-4" {...entrance}>
       <p className="text-small font-extrabold">{award.title}</p>
       <p className="text-meta text-muted">{award.why}</p>
       <p className="mt-2 text-small font-bold text-primary">{award.who}</p>

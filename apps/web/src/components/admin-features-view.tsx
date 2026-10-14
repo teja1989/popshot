@@ -219,7 +219,10 @@ function FeatureCard({
 }) {
   const [showCrews, setShowCrews] = useState(false);
   return (
-    <article aria-label={feature.title} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+    <article
+      aria-label={feature.title}
+      className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <h3 className="text-title-sm font-extrabold">{feature.title}</h3>
@@ -505,7 +508,7 @@ function Plans() {
             return (
               <li
                 key={`${p.group_id}-${p.plan}`}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4"
               >
                 <span className="flex min-w-0 flex-col gap-1">
                   <Link href={`/admin/crews/${p.group_id}`} className="truncate font-bold text-primary">
@@ -651,7 +654,7 @@ export function CrewAccessSection({
         </p>
       )}
       {access.result.kind === "ready" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4">
           <p className="text-body">
             {running
               ? `Organizer (${SOURCE_LABEL[running.source]}) since ${shortDate(running.starts_at)}${

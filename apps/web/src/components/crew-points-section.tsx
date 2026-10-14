@@ -51,12 +51,12 @@ export function CrewPointsSection() {
   return (
     <section aria-labelledby="points-heading" className="flex animate-rise flex-col gap-3 [animation-delay:30ms]">
       <div className="-my-2 flex items-center gap-0.5">
-        <h2 id="points-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="points-heading" className="text-title-sm font-bold text-ink">
           Crew points
         </h2>
         <CrewPointsInfo />
       </div>
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-4 rounded-3xl border border-transparent bg-surface shadow-card p-5">
         {ratings.result.kind === "ready" && ratings.result.data.length === 0 && (
           <p className="text-muted">Your crew points show up after your first game.</p>
         )}

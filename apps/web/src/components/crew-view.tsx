@@ -26,7 +26,10 @@ function GroupCrew({ groupId }: { groupId: string }) {
   }
   if (result.kind === "error") {
     return (
-      <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+      <div
+        role="alert"
+        className="flex flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5"
+      >
         <p>We couldn&apos;t load your crew just now.</p>
         <button type="button" className={buttonClass("quiet")} onClick={reload}>
           Try again
@@ -45,7 +48,7 @@ function GroupCrew({ groupId }: { groupId: string }) {
       <CrewHighlights groupId={groupId} />
 
       {noGames && (
-        <section className="flex animate-rise flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-5">
+        <section className="flex animate-rise flex-col items-start gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-5">
           <h2 className="text-title-sm font-extrabold">No games yet</h2>
           <p className="text-lead leading-relaxed text-muted">
             Log your first game and this is where the crew&apos;s streaks, partnerships and welcomes show up.
@@ -59,10 +62,13 @@ function GroupCrew({ groupId }: { groupId: string }) {
       {me && <MyPoints row={me} />}
 
       <section aria-labelledby="everyone-heading" className="flex animate-rise flex-col gap-2 [animation-delay:60ms]">
-        <h2 id="everyone-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="everyone-heading" className="text-title-sm font-bold text-ink">
           Everyone · {people.length}
         </h2>
-        <ul aria-labelledby="everyone-heading" className="overflow-hidden rounded-2xl border border-line bg-surface">
+        <ul
+          aria-labelledby="everyone-heading"
+          className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card"
+        >
           {people.map((row) => (
             <li
               key={row.player_id}
@@ -90,10 +96,10 @@ function MyPoints({ row }: { row: BoardRow }) {
   return (
     <section
       aria-labelledby="my-points-heading"
-      className="flex animate-rise flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+      className="flex animate-rise flex-col gap-2 rounded-3xl border border-transparent bg-surface shadow-card p-4"
     >
       <div className="flex items-center gap-0.5">
-        <h2 id="my-points-heading" className="text-label font-bold tracking-[0.1em] text-muted uppercase">
+        <h2 id="my-points-heading" className="text-title-sm font-bold text-ink">
           Your crew points
         </h2>
         <CrewPointsInfo />
@@ -103,9 +109,7 @@ function MyPoints({ row }: { row: BoardRow }) {
           {points(row.rating)}
         </span>
         {moved && (
-          <span className={`text-small font-bold ${moved.up ? "text-win" : "text-muted"}`}>
-            {moved.text} this week
-          </span>
+          <span className={`text-small font-bold ${moved.up ? "text-win" : "text-muted"}`}>{moved.text} this week</span>
         )}
       </p>
       <p className="text-small text-muted">

@@ -21,7 +21,7 @@ export function NightCard({
   return (
     <article
       aria-label={`Meetup at ${night.venue}`}
-      className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4"
+      className="flex flex-col gap-3 rounded-3xl border border-transparent bg-surface shadow-card p-4"
     >
       <Link href={`/groups/${night.group_id}/nights/${night.id}`} className="flex flex-col gap-1 text-ink no-underline">
         <span className="flex items-baseline justify-between gap-3">
