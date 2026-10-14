@@ -28,6 +28,9 @@ type View = "list" | "calendar";
 const VIEWS: readonly View[] = ["list", "calendar"];
 const VIEW_KEY = "popshot.games.view";
 
+// How long after arriving from logging a game the reflection sheet waits to open.
+const REFLECT_DELAY_MS = 350;
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /**
@@ -68,8 +71,23 @@ function GroupGames({
 }) {
   const { result, reload, replace } = useApiGet<Match[]>(`/v1/groups/${group.id}/matches`);
   const options = useApiGet<FocusOption[]>("/v1/focus-options");
-  // The game whose reflection sheet is open. Right after logging, the one you just played.
-  const [reflecting, setReflecting] = useState<string | null>(reflectFirst);
+  // The game whose reflection sheet is open. Right after logging, the one you just played,
+  // a moment after arriving so the page settles before the sheet slides up over it.
+  const [reflecting, setReflecting] = useState<string | null>(null);
+  useEffect(() => {
+    if (!reflectFirst) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => {
+        setReflecting(reflectFirst);
+      },
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : REFLECT_DELAY_MS,
+    );
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [reflectFirst]);
   const reflectingMatch = result.kind === "ready" ? result.data.find((m) => m.id === reflecting) : undefined;
   const labels = options.result.kind === "ready" ? options.result.data : [];
   const [view, setView] = useState<View>(() => recall(VIEW_KEY, VIEWS, "list"));
