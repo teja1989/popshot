@@ -41,3 +41,14 @@ variable "monthly_budget_usd" {
   type        = number
   default     = 25
 }
+
+variable "site_domain" {
+  description = "The app's own address (Firebase Hosting custom domain). Not a secret."
+  type        = string
+  default     = "popshotpb.com"
+
+  validation {
+    condition     = can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", var.site_domain))
+    error_message = "A bare domain name, like example.com: no scheme, path or port."
+  }
+}

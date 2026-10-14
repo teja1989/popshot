@@ -31,6 +31,7 @@ resource "google_project_service" "apis" {
     "cloudscheduler.googleapis.com",
     "compute.googleapis.com",
     "firebase.googleapis.com",
+    "firebasehosting.googleapis.com",
     "identitytoolkit.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",

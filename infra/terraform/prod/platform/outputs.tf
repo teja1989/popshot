@@ -69,3 +69,26 @@ output "jobs" {
     tick         = google_cloud_run_v2_job.tick.name
   }
 }
+
+# The DNS records to add at Cloudflare (DNS only, grey cloud) for the site and www, as
+# Firebase wants them. Empty for a domain once it's connected.
+output "dns_records" {
+  value = distinct(flatten([
+    for domain in [google_firebase_hosting_custom_domain.apex, google_firebase_hosting_custom_domain.www] : [
+      for update in domain.required_dns_updates : [
+        for wanted in update.desired : [
+          for record in wanted.records : {
+            name   = record.domain_name
+            type   = record.type
+            value  = record.rdata
+            action = record.required_action
+          } if record.required_action == "ADD"
+        ]
+      ]
+    ]
+  ]))
+}
+
+output "site_domain" {
+  value = var.site_domain
+}
