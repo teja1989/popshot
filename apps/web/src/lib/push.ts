@@ -16,13 +16,23 @@ export interface NotificationSettings {
   devices: number;
 }
 
-export type Category = "games" | "play_nights" | "recaps" | "your_week" | "invites" | "requests" | "tab" | "milestones";
+export type Category =
+  | "games"
+  | "play_nights"
+  | "recaps"
+  | "your_week"
+  | "journey"
+  | "invites"
+  | "requests"
+  | "tab"
+  | "milestones";
 
 export const CATEGORY_LABEL: Record<Category, { title: string; body: string }> = {
   games: { title: "Games you played", body: "When someone logs a game you were in." },
   play_nights: { title: "Meetups", body: "New meetups, reminders and open spots." },
   recaps: { title: "Recaps", body: "When the recap of a game day you played in is ready." },
   your_week: { title: "Your week", body: "On Mondays, a look back at your week, if you played." },
+  journey: { title: "Journey check-ins", body: "Every two weeks you played, a look at how your game is growing." },
   invites: { title: "Invites", body: "When a crew invites you to join." },
   requests: { title: "Join requests", body: "When someone asks to join a crew you lead." },
   tab: { title: "Crew tab", body: "Expenses and settle-ups that involve you." },
@@ -50,7 +60,10 @@ export function isStandalone(): boolean {
   );
 }
 
-export function isIos(userAgent: string = navigator.userAgent, touchPoints: number = navigator.maxTouchPoints): boolean {
+export function isIos(
+  userAgent: string = navigator.userAgent,
+  touchPoints: number = navigator.maxTouchPoints,
+): boolean {
   // iPadOS reports itself as a Mac; touch gives it away.
   return /iPhone|iPad|iPod/.test(userAgent) || (userAgent.includes("Macintosh") && touchPoints > 1);
 }
