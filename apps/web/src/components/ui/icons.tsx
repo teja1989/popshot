@@ -156,6 +156,18 @@ export function YouIcon() {
   );
 }
 
+/** Four rounded squares: the More tab, everything else Popshot does. */
+export function MoreIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <rect x="3" y="3" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
+      <rect x="12.5" y="3" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
+      <rect x="3" y="12.5" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
+      <rect x="12.5" y="12.5" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
 export function InfoIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">

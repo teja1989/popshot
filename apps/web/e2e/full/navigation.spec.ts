@@ -27,6 +27,7 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
     ["Play", "/play", "Play"],
     ["Crew", "/crew", "Crew"],
     ["You", "/you", user.name],
+    ["More", "/more", "More"],
     ["Home", "/", /^Good (morning|afternoon|evening), Nia\.$/],
   ] as const) {
     await nav(page).getByRole("link", { name: label }).click();
@@ -210,11 +211,11 @@ test("Play shows the crew's meetups first, and old Games links still work", asyn
 
 test("a tab behind a feature switch comes and goes without a reload", async ({ page }) => {
   await signIn(page, newUser("Ivo"));
-  // The real answer first: the four tabs, with nothing extra switched on.
+  // The real answer first: the five tabs, with nothing extra switched on.
   const real = page.waitForResponse((r) => r.url().endsWith("/api/v1/me/features"));
   await page.goto("/");
   expect((await real).status()).toBe(200);
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You", "More"]);
 
   // Stand in for an admin switching Learn on, then off again.
   let on = ["learn.tab"];
@@ -223,8 +224,8 @@ test("a tab behind a feature switch comes and goes without a reload", async ({ p
   );
   const comeBack = () => page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
   await comeBack();
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "Learn", "You"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "Learn", "You", "More"]);
   on = [];
   await comeBack();
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You", "More"]);
 });

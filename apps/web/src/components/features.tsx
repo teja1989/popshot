@@ -66,6 +66,11 @@ export function useFeaturesLoaded(): boolean {
   return useContext(FeaturesContext).loaded;
 }
 
+/** Everything that's on, by crew: for checking several keys at once. */
+export function useMyFeatures(): MyFeatures {
+  return useContext(FeaturesContext).features;
+}
+
 /** Is `key` (or, with "area.*", anything in that area) on for this crew? */
 export function useFeature(key: string, crewId: string | null): boolean {
   return featureOn(useContext(FeaturesContext).features, key, crewId);

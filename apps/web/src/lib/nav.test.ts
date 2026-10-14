@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { NAV, tabColumns, visibleNav } from "./nav";
 
 describe("main menu", () => {
-  it("shows the four tabs, and Learn only while its switch is on", () => {
+  it("shows the five tabs, and Learn only while its switch is on", () => {
     const labels = (on: string[]) => visibleNav(NAV, new Set(on)).map((item) => item.label);
-    expect(labels([])).toEqual(["Home", "Play", "Crew", "You"]);
-    expect(labels(["recaps.ai"])).toEqual(["Home", "Play", "Crew", "You"]);
-    expect(labels(["learn.tab"])).toEqual(["Home", "Play", "Crew", "Learn", "You"]);
+    expect(labels([])).toEqual(["Home", "Play", "Crew", "You", "More"]);
+    expect(labels(["recaps.ai"])).toEqual(["Home", "Play", "Crew", "You", "More"]);
+    expect(labels(["learn.tab"])).toEqual(["Home", "Play", "Crew", "Learn", "You", "More"]);
   });
 
   it("knows which tab a page belongs to", () => {
@@ -20,6 +20,7 @@ describe("main menu", () => {
     expect(active("/groups/abc/events/def")).toEqual(["Play"]);
     expect(active("/learn/drops")).toEqual(["Learn"]);
     expect(active("/you")).toEqual(["You"]);
+    expect(active("/more")).toEqual(["More"]);
   });
 
   it("gives the phone tab bar one column per tab", () => {
