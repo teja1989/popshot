@@ -110,7 +110,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.08 }}
               >
-                The friendly <span className="text-ball">pickleball</span> app.
+                One last <span className="text-ball">game.</span>
               </motion.h1>
               <motion.p
                 className="mt-5 max-w-xl text-title-sm leading-relaxed text-on-hero-muted"
@@ -120,7 +120,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
               >
                 {invited
                   ? "Someone wants you in their Popshot group. Sign in to see which one and ask to join."
-                  : "No rankings. Just your crew, your games, your stats and the story of every game day."}
+                  : "Said every pickleball player, ever. Popshot is the friendly app for your crew: no rankings, just your games, your stats and the story of every game day."}
               </motion.p>
               <motion.div
                 className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center"

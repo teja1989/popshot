@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import { points, type MyRating } from "@/lib/board";
+import { nextCourtLine } from "@/lib/court-lines";
 import { ROLE_LABEL, type GroupDetail, type GroupSummary } from "@/lib/groups";
 import { firstName, greetingFor } from "@/lib/people";
 
@@ -52,10 +53,11 @@ export function HomeView() {
   };
 
   // Local time: rendered in the browser only, so no server/client mismatch.
-  const { greeting, today } = useMemo(() => {
+  const { greeting, today, courtLine } = useMemo(() => {
     const now = new Date();
     return {
       greeting: greetingFor(now.getHours()),
+      courtLine: nextCourtLine(),
       today: new Intl.DateTimeFormat(undefined, {
         weekday: "long",
         day: "numeric",
@@ -102,7 +104,7 @@ export function HomeView() {
                 "."
               )}
             </h1>
-            <p className="mt-1 text-lead text-on-hero-muted">Play, laugh, stay active. Popshot keeps the score.</p>
+            <p className="mt-1 text-lead text-on-hero-muted">{courtLine}</p>
             {problem && <p className="text-body font-bold text-ball">{problem}</p>}
           </div>
         </div>
