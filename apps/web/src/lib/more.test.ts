@@ -35,6 +35,12 @@ describe("the More list", () => {
     expect(on).toContain("events");
   });
 
+  it("shows per-person switches only while they're on for you, crew or not", () => {
+    expect(ids(availableItems(MORE_ITEMS, { crewId: null, featureOn: () => true }))).not.toContain("journey");
+    const on = { crewId: null, featureOn: nothingOn, youOn: (key: string) => key === "you.journey" };
+    expect(ids(availableItems(MORE_ITEMS, on))).toContain("journey");
+  });
+
   it("never links a crew page without a crew", () => {
     for (const item of availableItems(MORE_ITEMS, { crewId: null, featureOn: () => true })) {
       expect(item.href?.(null) ?? "").not.toContain("/groups/");

@@ -27,15 +27,21 @@ export default async function PrivacyPage() {
           it.
         </li>
         <li>
-          <strong>What you add:</strong> the groups you start or join (and a group&apos;s profile: its about,
-          usual times and home courts), invites, games (players, scores, rules and when
-          they were played), meetups (time, venue, note, who&apos;s going), your playing level, the focus areas and
-          game notes you pick, and your notification choices.
+          <strong>What you add:</strong> the groups you start or join (and a group&apos;s profile: its about, usual
+          times and home courts), invites, games (players, scores, rules and when they were played), meetups (time,
+          venue, note, who&apos;s going), your playing level, the focus areas and game notes you pick, and your
+          notification choices.
         </li>
         <li>
-          <strong>Invites:</strong> your Popshot code (a random code you can change any time), invites crews send
-          you and how you answered, crews you&apos;ve stopped from inviting you, and when leads looked codes up (to
-          limit how often they can, so codes can&apos;t be guessed).
+          <strong>Your journey:</strong> the story you write in your own words (how you started, what you&apos;re good
+          at, what you&apos;re working on, a goal) and your learning notes. Each time you update your story we keep the
+          earlier version too, so you can look back on how your game has grown. It&apos;s in your data download and
+          deleted with your account.
+        </li>
+        <li>
+          <strong>Invites:</strong> your Popshot code (a random code you can change any time), invites crews send you
+          and how you answered, crews you&apos;ve stopped from inviting you, and when leads looked codes up (to limit
+          how often they can, so codes can&apos;t be guessed).
         </li>
         <li>
           <strong>Names you add for others:</strong> when you add a guest to a game, the name you type is kept in that
@@ -46,8 +52,8 @@ export default async function PrivacyPage() {
           notifications to that device.
         </li>
         <li>
-          <strong>Where you came from:</strong> if you arrive through an invite link or a tagged link (for example
-          from a shared recap or a poster), your browser remembers that one word, such as &ldquo;recap&rdquo; or
+          <strong>Where you came from:</strong> if you arrive through an invite link or a tagged link (for example from
+          a shared recap or a poster), your browser remembers that one word, such as &ldquo;recap&rdquo; or
           &ldquo;invite&rdquo;, and sends it once when you first sign up. It&apos;s kept with your account, only our
           staff see it (as totals, to learn which ways of finding Popshot work), it&apos;s in your data download, and
           it&apos;s deleted with your account.
@@ -83,7 +89,7 @@ export default async function PrivacyPage() {
           someone in it shares (below).
         </li>
         <li>
-          <strong>Only you:</strong> your focus areas and game notes.
+          <strong>Only you:</strong> your focus areas, game notes, journey story and learning notes.
         </li>
         <li>
           <strong>People invited to a group:</strong> see its name, its about and usual play times, and who invited
@@ -91,17 +97,17 @@ export default async function PrivacyPage() {
         </li>
         <li>
           <strong>Invites:</strong> there&apos;s no search for people on Popshot. A crew&apos;s lead or co-lead can
-          invite you only if you&apos;ve been in a crew together, or if you gave them your Popshot code. With your
-          code they see your first name and photo, to check it&apos;s you. You decide whether to join. If you say no,
-          they aren&apos;t told, and you can stop that crew from inviting you again.
+          invite you only if you&apos;ve been in a crew together, or if you gave them your Popshot code. With your code
+          they see your first name and photo, to check it&apos;s you. You decide whether to join. If you say no, they
+          aren&apos;t told, and you can stop that crew from inviting you again.
         </li>
         <li>
           <strong>Shared recap links:</strong> anyone in a crew can share an outing&apos;s recap as a link. Anyone with
-          the link can see that one recap, without signing in: the crew&apos;s name, first names, scores and awards,
-          but not where you played. Links stop working after 30 days, and whoever shared one, or the crew&apos;s lead
-          or a co-lead, can turn it off sooner. If you&apos;d rather not be named, turn off &ldquo;Show my first
-          name&rdquo; on your You page and you&apos;ll show as &ldquo;Crew member&rdquo;. Guests added by name
-          can&apos;t change this themselves; ask your lead to rename a guest.
+          the link can see that one recap, without signing in: the crew&apos;s name, first names, scores and awards, but
+          not where you played. Links stop working after 30 days, and whoever shared one, or the crew&apos;s lead or a
+          co-lead, can turn it off sooner. If you&apos;d rather not be named, turn off &ldquo;Show my first name&rdquo;
+          on your You page and you&apos;ll show as &ldquo;Crew member&rdquo;. Guests added by name can&apos;t change
+          this themselves; ask your lead to rename a guest.
         </li>
         <li>
           <strong>Popshot support:</strong> a small number of our staff can look up an account or group, and its email
@@ -132,12 +138,12 @@ export default async function PrivacyPage() {
       <H2>Your choices and rights</H2>
       <p>
         You can change your name and level in the app, turn notifications off, keep your name off shared recaps, change
-        your Popshot code, stop a crew from inviting you, and leave any group. On your You page you can download a
-        copy of your data and delete your account. Deleting has a 7-day window to change your mind; after that your
-        sign-in, name, photo, notes, settings and devices are deleted for good. Your name and photo are removed from
-        your groups&apos; games and you show as &ldquo;Former player&rdquo;; the scores stay, so your crew&apos;s
-        history still adds up. If you lead a group with other members, make someone else the lead first. For anything
-        else, such as correcting your data, email {email}. We&apos;ll confirm it&apos;s you and reply within 30 days.
+        your Popshot code, stop a crew from inviting you, and leave any group. On your You page you can download a copy
+        of your data and delete your account. Deleting has a 7-day window to change your mind; after that your sign-in,
+        name, photo, notes, settings and devices are deleted for good. Your name and photo are removed from your
+        groups&apos; games and you show as &ldquo;Former player&rdquo;; the scores stay, so your crew&apos;s history
+        still adds up. If you lead a group with other members, make someone else the lead first. For anything else, such
+        as correcting your data, email {email}. We&apos;ll confirm it&apos;s you and reply within 30 days.
       </p>
       <p>
         Depending on where you live (for example California or the EU), you may have further rights, such as to know

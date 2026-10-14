@@ -20,6 +20,7 @@ describe("main menu", () => {
     expect(active("/groups/abc/events/def")).toEqual(["Play"]);
     expect(active("/learn/drops")).toEqual(["Learn"]);
     expect(active("/you")).toEqual(["You"]);
+    expect(active("/you/journey")).toEqual(["You"]);
     expect(active("/more")).toEqual(["More"]);
   });
 

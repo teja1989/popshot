@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type ReactNode } from "react";
 
-import { featureOn } from "@/lib/features";
+import { featureOn, youOn } from "@/lib/features";
 import type { GroupSummary } from "@/lib/groups";
 import { availableItems, isNew, MORE_ITEMS, searchItems, SECTION_LABEL, SECTIONS, type MoreItem } from "@/lib/more";
 
@@ -58,7 +58,11 @@ export function MoreView() {
   const date = today();
 
   const items = searchItems(
-    availableItems(MORE_ITEMS, { crewId, featureOn: (key) => featureOn(features, key, crewId) }),
+    availableItems(MORE_ITEMS, {
+      crewId,
+      featureOn: (key) => featureOn(features, key, crewId),
+      youOn: (key) => youOn(features, key),
+    }),
     query,
   );
   const searching = query.trim().length > 0;

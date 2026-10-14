@@ -30,6 +30,8 @@ export interface MoreItem {
   crew?: boolean;
   // Shown only while this feature is on for the picked crew.
   feature?: string;
+  // Shown only while this per-person switch (area 'you') is on for you.
+  youFeature?: string;
   // Marked "New" for NEW_DAYS after this date (YYYY-MM-DD).
   added?: string;
 }
@@ -119,6 +121,16 @@ export const MORE_ITEMS: readonly MoreItem[] = [
     description: "Streaks, close games, partners and your form.",
     keywords: "record wins partner nemesis head to head",
     href: () => "/you#stats-heading",
+  },
+  {
+    id: "journey",
+    section: "you",
+    label: "Your journey",
+    description: "Your pickleball story, a tip a day and what you're learning.",
+    keywords: "story learn learning notes tips progress goals",
+    youFeature: "you.journey",
+    added: "2026-10-14",
+    href: () => "/you/journey",
   },
   {
     id: "focus",
@@ -222,13 +234,17 @@ export interface MoreContext {
   crewId: string | null;
   // Whether a feature is on for the picked crew.
   featureOn: (key: string) => boolean;
+  // Whether a per-person switch is on for you.
+  youOn?: (key: string) => boolean;
 }
 
 /** The items that work for you right now, in order. */
 export function availableItems(items: readonly MoreItem[], context: MoreContext): MoreItem[] {
   return items.filter(
     (item) =>
-      (!item.crew || context.crewId !== null) && (item.feature === undefined || context.featureOn(item.feature)),
+      (!item.crew || context.crewId !== null) &&
+      (item.feature === undefined || context.featureOn(item.feature)) &&
+      (item.youFeature === undefined || (context.youOn?.(item.youFeature) ?? false)),
   );
 }
 

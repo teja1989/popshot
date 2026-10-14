@@ -15,6 +15,7 @@ import { LegalLinks } from "./legal-page";
 import { SharedCardsSection } from "./shared-cards-section";
 import { SignOutButton } from "./sign-out-button";
 import { YourDataSection } from "./your-data-section";
+import { YouTabs } from "./you-tabs";
 import { Avatar } from "./ui/avatar";
 import { segmentOption, segmentTrack } from "./ui/segmented";
 
@@ -31,6 +32,7 @@ export function YouView() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">
+      <YouTabs />
       <section className="flex animate-rise items-center gap-4">
         <Avatar name={me?.display_name} photoUrl={me?.avatar_url} size="lg" />
         <div className="min-w-0 grow">
