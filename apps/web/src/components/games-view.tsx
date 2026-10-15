@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { apiDelete, ApiError } from "@/lib/api-client";
@@ -39,9 +40,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  */
 export function PlayView() {
   // After logging a game: "?logged=1", plus "&reflect=<id>" when you played in it. Read
-  // once, then tidy the address so a reload doesn't repeat them.
+  // once, then tidy the address so a reload doesn't repeat them. From the router, not
+  // window.location: when Play is prefetched it renders before the address bar changes.
+  const params = useSearchParams();
   const [arrival] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
     const reflect = params.get("reflect");
     return { logged: params.has("logged"), reflect: reflect && UUID.test(reflect) ? reflect : null };
   });

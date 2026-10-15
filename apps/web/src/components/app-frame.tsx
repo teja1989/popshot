@@ -15,7 +15,9 @@ import { SignOutButton } from "./sign-out-button";
 import { Brand } from "./ui/brand";
 import { BookIcon, CrewIcon, HomeIcon, MoreIcon, PaddleIcon, YouIcon } from "./ui/icons";
 
-// The signed-in frame: a sidebar on wide screens, a bottom tab bar on phones.
+// The signed-in frame: a sidebar on wide screens, a bottom tab bar on phones. The tabs are
+// prefetched in full (Next.js keeps them 5 minutes): their pages hold no personal data (that
+// loads in the browser), so a tap swaps the page without waiting for the server.
 
 const ICONS: Record<NavIcon, ReactNode> = {
   home: <HomeIcon />,
@@ -54,6 +56,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      prefetch
                       aria-current={active ? "page" : undefined}
                       onClick={(event) => {
                         if (item.href === "/") {
@@ -89,9 +92,14 @@ export function AppFrame({ children }: { children: ReactNode }) {
             <Brand />
           </Link>
         </header>
-        {/* Each page fades in. Opacity only: a moving transform here would shift the fixed
-            Log a game button for a moment. */}
-        <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.18 }}>
+        {/* Each page fades in (keyed by path: the frame itself stays put between pages).
+            Opacity only: a moving transform here would shift the fixed Log a game button. */}
+        <motion.div
+          key={pathname}
+          initial={reduced ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.18 }}
+        >
           {children}
         </motion.div>
         <HashScroll />
@@ -108,6 +116,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  prefetch
                   aria-current={active ? "page" : undefined}
                   onClick={(event) => {
                     if (item.href === "/") {
