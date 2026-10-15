@@ -27,7 +27,9 @@ resource "google_cloud_run_v2_service" "api" {
     max_instance_request_concurrency = 40
 
     scaling {
-      min_instance_count = 0
+      # One instance stays warm, so a tap never waits for this service to start (about
+      # $10 a month at the idle rate: CPU is only allocated during requests).
+      min_instance_count = 1
       max_instance_count = 3
     }
 
@@ -261,7 +263,9 @@ resource "google_cloud_run_v2_service" "web" {
     max_instance_request_concurrency = 80
 
     scaling {
-      min_instance_count = 0
+      # One instance stays warm, so a tap never waits for this service to start (about
+      # $10 a month at the idle rate: CPU is only allocated during requests).
+      min_instance_count = 1
       max_instance_count = 3
     }
 

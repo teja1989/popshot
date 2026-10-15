@@ -237,6 +237,15 @@ resource "google_sql_database_instance" "main" {
       }
     }
 
+    # Query Insights: which queries are slow, with literals stripped (no player data in the
+    # query text). No client addresses or app tags are recorded.
+    insights_config {
+      query_insights_enabled  = true
+      query_string_length     = 1024
+      record_application_tags = false
+      record_client_address   = false
+    }
+
     maintenance_window {
       day          = 7
       hour         = 8
