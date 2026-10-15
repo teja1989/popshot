@@ -157,6 +157,7 @@ run_app() {
     POPSHOT_AUTH_EMULATOR=true \
     POPSHOT_DATABASE_URL="$API_DB_URL" \
     POPSHOT_PUSH_VAPID_PRIVATE_KEY="$PUSH_KEY" \
+    POPSHOT_PLACES=fake \
       exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
       --host 127.0.0.1 --port "$API_PORT" --reload
   ) &
@@ -257,6 +258,7 @@ run_e2e() {
     POPSHOT_AUTH_EMULATOR=true \
     POPSHOT_DATABASE_URL="$API_DB_URL" \
     POPSHOT_PUSH_VAPID_PRIVATE_KEY="$PUSH_KEY" \
+    POPSHOT_PLACES=fake \
       exec uv run --frozen uvicorn --factory popshot_api.main:create_app \
       --host 127.0.0.1 --port "$E2E_API_PORT"
   ) > "$STATE/e2e-api.log" 2>&1 &
