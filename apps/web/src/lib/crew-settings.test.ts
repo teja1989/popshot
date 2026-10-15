@@ -9,8 +9,8 @@ function as(role: GroupDetail["my_role"], status: GroupDetail["my_status"]): Gro
 
 describe("crew settings sections", () => {
   it("leads and co-leads run the crew; everyone can leave", () => {
-    expect(sectionsFor(as("lead", "active"))).toEqual(["crew", "profile", "rules", "leave"]);
-    expect(sectionsFor(as("co_lead", "active"))).toEqual(["crew", "profile", "rules", "leave"]);
+    expect(sectionsFor(as("lead", "active"))).toEqual(["crew", "court", "profile", "rules", "leave"]);
+    expect(sectionsFor(as("co_lead", "active"))).toEqual(["crew", "court", "profile", "rules", "leave"]);
     expect(sectionsFor(as("member", "active"))).toEqual(["leave"]);
   });
 
