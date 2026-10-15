@@ -38,13 +38,12 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
-test("moving between tabs keeps you signed in on screen: no reload of your profile, no 'One moment'", async ({
-  page,
-}) => {
+test("moving between tabs keeps the app on screen, and shows what it already has", async ({ page }) => {
   const user = newUser("Ines");
   await signIn(page, user);
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Ines/);
+  await expect(page.getByText("No groups yet.")).toBeVisible();
 
   // From here on, every tab should open inside the app that's already running.
   const reloads: string[] = [];
@@ -60,8 +59,13 @@ test("moving between tabs keeps you signed in on screen: no reload of your profi
   });
   await page.evaluate(() => {
     new MutationObserver(() => {
-      if (document.body.innerText.includes("One moment…")) {
-        void (window as unknown as { sawLoadingScreen: (w: string) => void }).sawLoadingScreen(location.pathname);
+      // The whole-app "One moment…", or Home waiting for groups it has already shown.
+      for (const text of ["One moment…", "Loading your groups…"]) {
+        if (document.body.innerText.includes(text)) {
+          void (window as unknown as { sawLoadingScreen: (w: string) => void }).sawLoadingScreen(
+            `${location.pathname}: ${text}`,
+          );
+        }
       }
     }).observe(document.body, { childList: true, subtree: true, characterData: true });
   });
