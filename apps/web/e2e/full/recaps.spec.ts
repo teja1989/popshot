@@ -135,7 +135,7 @@ test("a shared recap opens for anyone, hides people who opt out, and can be turn
   );
 
   // Nora would rather not be named on shared cards.
-  await page.goto("/you");
+  await page.goto("/you/settings");
   const shared = page.getByRole("region", { name: "Shared recaps" });
   // Saved first, then the switch moves (like the notification switches).
   await shared.getByRole("switch", { name: /Show my first name/ }).click();

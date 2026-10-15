@@ -11,9 +11,7 @@ test("a signed-in user lands on their home, with their profile from the API", as
   await page.goto("/");
 
   // The name comes back through web -> API -> Postgres, not from the browser's session.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    /^Good (morning|afternoon|evening), Alice\.$/,
-  );
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Good (morning|afternoon|evening), Alice\.$/);
   await expect(page.getByRole("heading", { name: "Your stats" })).toBeVisible();
   await expect(page.getByText("No groups yet.")).toBeVisible();
   // No crew, no week to look back on.
@@ -23,8 +21,8 @@ test("a signed-in user lands on their home, with their profile from the API", as
 
 test("signing out returns to the sign-in screen and stays signed out", async ({ page }) => {
   await signIn(page, newUser("Bob"));
-  await page.goto("/you");
-  // The You page's own button (on desktop the sidebar has one too).
+  await page.goto("/you/settings");
+  // Settings' own button (on desktop the sidebar has one too).
   await page.getByRole("main").getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
 
@@ -32,10 +30,10 @@ test("signing out returns to the sign-in screen and stays signed out", async ({ 
   await expect(page.getByRole("button", { name: "Continue with Google" }).first()).toBeVisible();
 });
 
-test("the You page links to privacy, terms and contact, and they keep you signed in", async ({ page }) => {
+test("Settings links to privacy, terms and contact, and they keep you signed in", async ({ page }) => {
   await signIn(page, newUser("Dana"));
   const problems = await watchProblems(page);
-  await page.goto("/you");
+  await page.goto("/you/settings");
   await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy policy");
   await page.getByRole("link", { name: "Popshot home" }).click();
@@ -43,9 +41,7 @@ test("the You page links to privacy, terms and contact, and they keep you signed
   expect(problems).toEqual([]);
 });
 
-test("the API rejects a request without a token, even with a session in the browser", async ({
-  page,
-}) => {
+test("the API rejects a request without a token, even with a session in the browser", async ({ page }) => {
   await signIn(page, newUser("Cara"));
   const status = await page.evaluate(async () => (await fetch("/api/v1/me")).status);
   expect(status).toBe(401);

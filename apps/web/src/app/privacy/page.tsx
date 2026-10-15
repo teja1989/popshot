@@ -106,7 +106,7 @@ export default async function PrivacyPage() {
           the link can see that one recap, without signing in: the crew&apos;s name, first names, scores and awards, but
           not where you played. Links stop working after 30 days, and whoever shared one, or the crew&apos;s lead or a
           co-lead, can turn it off sooner. If you&apos;d rather not be named, turn off &ldquo;Show my first name&rdquo;
-          on your You page and you&apos;ll show as &ldquo;Crew member&rdquo;. Guests added by name can&apos;t change
+          in You → Settings and you&apos;ll show as &ldquo;Crew member&rdquo;. Guests added by name can&apos;t change
           this themselves; ask your lead to rename a guest.
         </li>
         <li>

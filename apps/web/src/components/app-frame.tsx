@@ -13,7 +13,7 @@ import { HashScroll } from "./hash-scroll";
 import { onHomeLinkClick } from "./home-refresh";
 import { SignOutButton } from "./sign-out-button";
 import { Brand } from "./ui/brand";
-import { BookIcon, CrewIcon, HomeIcon, MoreIcon, PaddleIcon, YouIcon } from "./ui/icons";
+import { CrewIcon, FindIcon, HomeIcon, PaddleIcon, YouIcon } from "./ui/icons";
 
 // The signed-in frame: a sidebar on wide screens, a bottom tab bar on phones. The tabs are
 // prefetched in full (Next.js keeps them 5 minutes): their pages hold no personal data (that
@@ -22,10 +22,9 @@ import { BookIcon, CrewIcon, HomeIcon, MoreIcon, PaddleIcon, YouIcon } from "./u
 const ICONS: Record<NavIcon, ReactNode> = {
   home: <HomeIcon />,
   play: <PaddleIcon />,
+  find: <FindIcon />,
   crew: <CrewIcon />,
-  learn: <BookIcon />,
   you: <YouIcon />,
-  more: <MoreIcon />,
 };
 
 export function AppFrame({ children }: { children: ReactNode }) {

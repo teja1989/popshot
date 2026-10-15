@@ -22,7 +22,7 @@ test("a tagged link is counted, remembered, and sent once at sign-up", async ({ 
   await expect.poll(() => page.evaluate(() => localStorage.getItem("popshot.source"))).toBeNull();
 
   // It's in your data download.
-  await page.goto("/you");
+  await page.goto("/you/settings");
   const download = page.waitForEvent("download");
   await page.getByRole("region", { name: "Your data" }).getByRole("button", { name: "Download my data" }).click();
   const file = await (await download).path();
