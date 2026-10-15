@@ -38,6 +38,48 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
+test("moving between tabs keeps you signed in on screen: no reload of your profile, no 'One moment'", async ({
+  page,
+}) => {
+  const user = newUser("Ines");
+  await signIn(page, user);
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Ines/);
+
+  // From here on, every tab should open inside the app that's already running.
+  const reloads: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path === "/api/v1/me" || path === "/api/v1/me/features") {
+      reloads.push(path);
+    }
+  });
+  const flashes: string[] = [];
+  await page.exposeFunction("sawLoadingScreen", (where: string) => {
+    flashes.push(where);
+  });
+  await page.evaluate(() => {
+    new MutationObserver(() => {
+      if (document.body.innerText.includes("One moment…")) {
+        void (window as unknown as { sawLoadingScreen: (w: string) => void }).sawLoadingScreen(location.pathname);
+      }
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  });
+
+  for (const [label, heading] of [
+    ["Play", "Play"],
+    ["Crew", "Crew"],
+    ["You", user.name],
+    ["More", "More"],
+    ["Home", /Ines/],
+  ] as const) {
+    await nav(page).getByRole("link", { name: label }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+  }
+  expect(reloads).toEqual([]);
+  expect(flashes).toEqual([]);
+});
+
 test("Play and Crew follow the chosen group and remember it", async ({ page }) => {
   await signIn(page, newUser("Omar"));
   await startGroup(page, "Alpha Crew");

@@ -3,6 +3,7 @@
 import { onAuthStateChanged, type User } from "@firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { clearCache } from "@/lib/api-cache";
 import { apiGet } from "@/lib/api-client";
 import type { FirebaseWebConfig } from "@/lib/config";
 import { getClientAuth, signInWithGoogle, signOut } from "@/lib/firebase-client";
@@ -47,16 +48,19 @@ export function AuthProvider({
   children: ReactNode;
 }) {
   // Browser-only: the app shell is loaded with ssr: false.
-  const auth = useMemo(
-    () => getClientAuth(firebase, authEmulatorHost),
-    [firebase, authEmulatorHost],
-  );
+  const auth = useMemo(() => getClientAuth(firebase, authEmulatorHost), [firebase, authEmulatorHost]);
   const [state, setState] = useState<AuthState>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
+    let lastUid: string | null = null;
     return onAuthStateChanged(auth, (user) => {
+      // Remembered API answers belong to one account: drop them on sign-out or a switch.
+      if (user?.uid !== lastUid) {
+        clearCache();
+        lastUid = user?.uid ?? null;
+      }
       if (!user) {
         setState({ kind: "signed-out" });
         return;

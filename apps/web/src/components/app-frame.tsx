@@ -89,9 +89,14 @@ export function AppFrame({ children }: { children: ReactNode }) {
             <Brand />
           </Link>
         </header>
-        {/* Each page fades in. Opacity only: a moving transform here would shift the fixed
-            Log a game button for a moment. */}
-        <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.18 }}>
+        {/* Each page fades in (keyed by path: the frame itself stays put between pages).
+            Opacity only: a moving transform here would shift the fixed Log a game button. */}
+        <motion.div
+          key={pathname}
+          initial={reduced ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.18 }}
+        >
           {children}
         </motion.div>
         <HashScroll />
