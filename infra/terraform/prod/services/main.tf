@@ -97,6 +97,12 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "POPSHOT_GCP_PROJECT"
         value = var.project_id
       }
+      env {
+        # Court search through Google Places as this service's account (platform: places).
+        # Hidden per crew by the courts.places switch; daily cap in the database (0035).
+        name  = "POPSHOT_PLACES"
+        value = "google"
+      }
 
       volume_mounts {
         name       = "sql-ca"

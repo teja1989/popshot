@@ -26,6 +26,7 @@ from sqlalchemy import Engine, Row, text
 from popshot_api.accounts import AccountDeleteError, IdentityPlatformDeleter
 from popshot_api.db import make_engine
 from popshot_api.log_config import configure_logging
+from popshot_api.places import GooglePlaces, Places, PlacesUnavailableError
 from popshot_api.push import Message, PushSender, Subscription
 from popshot_api.rating import PlayedMatch
 from popshot_api.recap import OUTING_GAP, Outing, outings
@@ -71,6 +72,7 @@ class Summary:
     deleted_accounts: int = 0
     purged_visit_days: int = 0
     week_notifications: int = 0
+    refreshed_places: int = 0
 
 
 def _about(starts_at: datetime, now: datetime) -> str:
@@ -273,14 +275,51 @@ def delete_accounts(engine: Engine, deleter: AccountDeleter | None) -> int:
     return deleted
 
 
+# Places refreshed per run at most; the job runs often, and the daily cap applies anyway.
+PLACES_PER_RUN = 50
+
+
+def refresh_places(engine: Engine, places: Places | None) -> int:
+    """Refresh the coordinates of places crews use before Google's 30 days are up, within the
+    day's place lookups (migration 0035); then clear any still too old, and drop unused ones."""
+    refreshed = 0
+    if places is not None:
+        with engine.begin() as conn:
+            due = conn.execute(
+                text("SELECT * FROM app_jobs_places_to_refresh(:n)"), {"n": PLACES_PER_RUN}
+            ).all()
+        for place in due:
+            with engine.begin() as conn:
+                if not conn.execute(text("SELECT app_jobs_place_lookup()")).scalar_one():
+                    log.info("tick.places_resting")
+                    break
+            try:
+                found = places.locate(place.google_place_id, None)
+            except PlacesUnavailableError:
+                break  # Try again next run; the counted lookup stands.
+            if found is None:
+                continue  # Google no longer knows it: its coordinates expire with the tidy-up.
+            with engine.begin() as conn:
+                conn.execute(
+                    text("SELECT app_jobs_place_coords(:id, :lat, :lng)"),
+                    {"id": place.id, "lat": found.lat, "lng": found.lng},
+                )
+            refreshed += 1
+    with engine.begin() as conn:
+        conn.execute(text("SELECT app_jobs_tidy_places()"))
+    return refreshed
+
+
 def run(
     engine: Engine,
     sender: PushSender | None,
     now: datetime | None = None,
     deleter: AccountDeleter | None = None,
+    places: Places | None = None,
 ) -> Summary:
     now = now or datetime.now(UTC)
     deleted_accounts = delete_accounts(engine, deleter)
+    refreshed_places = refresh_places(engine, places)
     with engine.begin() as conn:
         purged = int(conn.execute(text("SELECT app_purge_deleted_groups()")).scalar_one())
         old_activity = int(conn.execute(text("SELECT app_jobs_purge_activity()")).scalar_one())
@@ -345,6 +384,7 @@ def run(
         deleted_accounts=deleted_accounts,
         purged_visit_days=old_visits,
         week_notifications=week_sent,
+        refreshed_places=refreshed_places,
     )
     log.info(
         "tick.done",
@@ -356,6 +396,7 @@ def run(
         deleted_accounts=summary.deleted_accounts,
         purged_visit_days=summary.purged_visit_days,
         week_notifications=summary.week_notifications,
+        refreshed_places=summary.refreshed_places,
     )
     return summary
 
@@ -376,8 +417,10 @@ def main() -> int:
         if settings.firebase_project_id
         else None
     )
+    # Stored places are refreshed as the job's own service account, in the same project.
+    places = GooglePlaces(settings.firebase_project_id) if settings.firebase_project_id else None
     try:
-        run(engine, sender, deleter=deleter)
+        run(engine, sender, deleter=deleter, places=places)
     finally:
         engine.dispose()
     return 0

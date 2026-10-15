@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     gcp_project: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
     gemini_model: str = Field(default="gemini-3.5-flash-lite", pattern=r"^[a-z0-9.-]{1,64}$")
     gemini_location: Literal["us", "eu", "global"] = "us"
+    # Finding courts (popshot_api.places): Google Places as the API's service account, a few
+    # made-up courts for local development and tests, or off.
+    places: Literal["off", "google", "fake"] = "off"
 
     @model_validator(mode="after")
     def _auth_emulator_is_local_only(self) -> Self:
@@ -71,6 +74,17 @@ class Settings(BaseSettings):
             local, _, domain = email.partition("@")
             if not local or "." not in domain or any(c.isspace() for c in email):
                 raise ValueError("admin_emails must be comma-separated email addresses")
+        return self
+
+    @model_validator(mode="after")
+    def _places_settings_fit(self) -> Self:
+        if self.places == "google" and self.gcp_project is None:
+            raise ValueError("places=google needs gcp_project")
+        if self.places == "fake" and (
+            self.environment not in (Environment.LOCAL, Environment.TEST)
+            or os.environ.get("K_SERVICE")
+        ):
+            raise ValueError("places=fake is for local development and tests only")
         return self
 
     @model_validator(mode="after")

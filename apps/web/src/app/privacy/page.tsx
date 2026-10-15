@@ -119,6 +119,13 @@ export default async function PrivacyPage() {
           notifications. They handle data only to provide those services.
         </li>
         <li>
+          <strong>Court search:</strong> when a crew&apos;s lead or co-lead searches for its home court, what they type
+          goes to Google Maps from our servers, never with their name or email. We keep only Google&apos;s ID for the
+          place they pick, its map position (checked with Google every month) and the name the crew gives it, which only
+          the crew&apos;s members see. To keep searching fair, we also note when each person searched, and delete that
+          after 2 days.
+        </li>
+        <li>
           <strong>Recaps written by AI:</strong> after an outing, Google&apos;s Gemini AI (through Google Cloud, in the
           United States) may write the recap&apos;s headline and lines. It gets first names and that outing&apos;s game
           facts (games played and awards), nothing else. Google doesn&apos;t use it to train its models, and may keep it

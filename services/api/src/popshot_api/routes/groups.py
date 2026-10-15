@@ -166,6 +166,9 @@ class GroupDetail(GroupSummary):
     usual_days: list[Day] = []
     usual_times: list[TimeOfDay] = []
     home_courts: list[str] = []
+    # The crew's home court picked from Google Places (0035), by the crew's own name for it.
+    # For members only, like home courts.
+    home_place: str | None = None
     members: list[Member]
     # Leads and co-leads only: people removed or declined, who can be restored.
     former_members: list[FormerMember] = []
@@ -304,6 +307,7 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
                        g.about, g.usual_days, g.usual_times,
                        CASE WHEN m.status = 'active' THEN g.home_courts
                             ELSE '{}'::text[] END AS home_courts,
+                       CASE WHEN m.status = 'active' THEN g.home_place_label END AS home_place,
                        m.role AS my_role, m.status AS my_status
                 FROM groups g
                 JOIN group_members m ON m.group_id = g.id AND m.user_id = :me
