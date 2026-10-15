@@ -11,9 +11,8 @@ resource "google_firebase_project" "this" {
 }
 
 # The browser key the web app ships. It can only call the two sign-in APIs, and only from
-# the web app's addresses (run.app, and our domain through Firebase Hosting) and the auth
-# domain: the sign-in popup runs on <project>.firebaseapp.com (our domain from D2) and calls
-# Identity Toolkit with this key from there.
+# the web app's addresses: our domain, where the sign-in pages (/__/auth) also run, and the
+# run.app address while we switch over. The firebaseapp.com entry is the old auth domain.
 resource "google_apikeys_key" "web" {
   name         = "popshot-web"
   display_name = "Popshot web (sign-in only)"
@@ -22,7 +21,7 @@ resource "google_apikeys_key" "web" {
     browser_key_restrictions {
       allowed_referrers = [
         "${local.web_url}/*",
-        "https://${var.site_domain}/*",
+        "${local.run_url}/*",
         "https://${var.project_id}.firebaseapp.com/*",
       ]
     }
@@ -59,9 +58,10 @@ resource "google_identity_platform_config" "this" {
   authorized_domains = [
     "${var.project_id}.firebaseapp.com",
     "${var.project_id}.web.app",
+    # Our domain, through Firebase Hosting (hosting.tf); www only redirects, so it isn't here.
     local.web_host,
-    # Our domain, through Firebase Hosting (hosting.tf). www only redirects, so it isn't here.
-    var.site_domain,
+    # The direct Cloud Run address, while we switch over.
+    local.run_host,
   ]
 
   sign_in {

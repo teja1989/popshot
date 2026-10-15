@@ -1,7 +1,12 @@
-# The deterministic URL, not .uri (the older hash-style one). Sign-in is only allowed from
-# this one: the browser API key's referrer rule and Firebase's authorized domains name it.
+# The app's address: our domain, through Firebase Hosting.
 output "web_url" {
   value = local.platform.web_url
+}
+
+# Cloud Run's deterministic URL, not .uri (the older hash-style one). Pages opened there
+# redirect to web_url.
+output "run_url" {
+  value = local.platform.run_url
 }
 
 output "api_url" {

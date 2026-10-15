@@ -5,6 +5,11 @@ output "web_url" {
   value = local.web_url
 }
 
+# The direct Cloud Run address, which now redirects pages to web_url.
+output "run_url" {
+  value = local.run_url
+}
+
 output "network" {
   value = google_compute_network.main.id
 }

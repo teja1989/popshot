@@ -20,8 +20,10 @@ const load = cache((token: string) => fetchSharedRecap(token, { config: readServ
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
   const recap = await load(token);
-  // Absolute links for the preview image, which chat apps need, dead link or not.
-  const metadataBase = siteOrigin(await headers());
+  // Absolute links for the preview image, which chat apps need, dead link or not: our
+  // domain when there is one, so a forwarded header can't point them anywhere else.
+  const { canonicalHost } = readServerConfig();
+  const metadataBase = canonicalHost ? new URL(`https://${canonicalHost}`) : siteOrigin(await headers());
   if (!recap) {
     return { metadataBase, title: "Popshot" };
   }

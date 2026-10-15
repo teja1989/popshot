@@ -95,8 +95,10 @@ six records, and no Cloudflare token in CI. The run.app address keeps working al
 4. Check: `curl -I https://popshotpb.com` (a valid certificate, the app's CSP and HSTS
    headers) and `curl -I https://www.popshotpb.com` (a redirect to popshotpb.com).
 
-The app itself moves to the domain in a later change (sign-in, links, push and a redirect
-from run.app), once the certificate is live.
+The app runs on the domain: sign-in's pages are on `popshotpb.com/__/auth`, push and share
+previews use it, and pages opened on the run.app or `*.web.app` address redirect there
+(`CANONICAL_HOST`). Sign-in is still allowed from run.app while we switch; that goes in a
+follow-up once the domain has settled.
 
 ## Costs (rough, us-east4)
 
