@@ -158,7 +158,7 @@ function InviteSheet({ groupId, onSent }: { groupId: string; onSent: () => void 
       });
       setFound(person);
       if (!person) {
-        setNote("No one has that code. Check it with them; they can find it on their You page.");
+        setNote("No one has that code. Check it with them; they can find it in You → Settings.");
       }
     } catch (error) {
       setNote(problemOf(error));

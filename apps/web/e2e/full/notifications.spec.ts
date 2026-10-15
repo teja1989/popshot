@@ -6,7 +6,7 @@ import { watchProblems } from "./problems";
 test("the You page offers notifications, and the service worker is served", async ({ page }) => {
   await signIn(page, newUser("Noa"));
   const problems = await watchProblems(page);
-  await page.goto("/you");
+  await page.goto("/you/settings");
   const section = page.getByRole("region", { name: "Notifications" });
   await expect(section.getByRole("button", { name: "Turn on notifications" })).toBeVisible();
 

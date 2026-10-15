@@ -67,7 +67,7 @@ export function InstallBanner() {
               <li>
                 Scroll down and tap <strong>Add to Home Screen</strong>.
               </li>
-              <li>Open Popshot from your home screen, then turn on notifications on the You page.</li>
+              <li>Open Popshot from your home screen, then turn on notifications in You → Settings.</li>
             </ol>
           </Sheet>
         )}

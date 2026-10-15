@@ -15,7 +15,7 @@ async function startGroup(page: Page, name: string): Promise<string> {
 }
 
 async function codeOf(page: Page): Promise<string> {
-  await page.goto("/you");
+  await page.goto("/you/settings");
   const code = page.getByLabel("Your code");
   await expect(code).toHaveText(/^[0-9A-Z]{4}-[0-9A-Z]{4}$/);
   return (await code.textContent()) ?? "";
@@ -105,7 +105,7 @@ test("saying no is quiet, and a crew can be stopped from inviting again", async 
   await expect(page.getByRole("list", { name: "Waiting for an answer" })).toHaveCount(0);
 
   // Jo can change their mind on the You page, and get a new code.
-  await other.goto("/you");
+  await other.goto("/you/settings");
   const section = other.getByRole("region", { name: "Your Popshot code" });
   await expect(section).toContainText("Crews that can't invite you");
   await section.getByRole("button", { name: "Allow invites" }).click();

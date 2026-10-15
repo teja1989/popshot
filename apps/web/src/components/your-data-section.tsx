@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { apiGet, apiPost, ApiError } from "@/lib/api-client";
@@ -171,9 +172,9 @@ export function DeletionNotice() {
   return (
     <p role="status" className="rounded-2xl border border-warn bg-surface p-4 text-body">
       Your account will be deleted on <strong>{deletionDate(me.delete_on)}</strong>. Changed your mind?{" "}
-      <a href="/you" className="font-bold text-primary">
+      <Link href="/you/settings#data-heading" className="font-bold text-primary">
         Keep my account
-      </a>
+      </Link>
     </p>
   );
 }

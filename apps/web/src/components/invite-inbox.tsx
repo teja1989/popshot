@@ -42,7 +42,7 @@ export function InviteInbox({ onJoined }: { onJoined: () => void }) {
       }
       setNote(
         what === "block"
-          ? `Declined. ${invite.group_name} can't invite you again unless you allow it on your You page.`
+          ? `Declined. ${invite.group_name} can't invite you again unless you allow it in You → Settings.`
           : "Declined. Nobody is told.",
       );
     } catch (error) {

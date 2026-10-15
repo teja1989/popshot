@@ -119,19 +119,6 @@ export function PaddleIcon() {
   );
 }
 
-/** An open book: the Learn tab. */
-export function BookIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-      <path
-        d="M11 6c-1.8-1.4-4.3-2-7.5-2v12.5c3.2 0 5.7.6 7.5 2 1.8-1.4 4.3-2 7.5-2V4c-3.2 0-5.7.6-7.5 2zM11 6v12.5"
-        strokeWidth="1.8"
-        {...stroke}
-      />
-    </svg>
-  );
-}
-
 export function CrewIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
@@ -156,14 +143,26 @@ export function YouIcon() {
   );
 }
 
-/** Four rounded squares: the More tab, everything else Popshot does. */
-export function MoreIcon() {
+/** A magnifier: the Find tab, crews near you. */
+export function FindIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-      <rect x="3" y="3" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
-      <rect x="12.5" y="3" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
-      <rect x="3" y="12.5" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
-      <rect x="12.5" y="12.5" width="6.5" height="6.5" rx="2" strokeWidth="1.8" {...stroke} />
+      <circle cx="10" cy="10" r="6" strokeWidth="1.8" {...stroke} />
+      <path d="M14.5 14.5 19 19" strokeWidth="1.8" {...stroke} />
+    </svg>
+  );
+}
+
+/** A cog: settings. */
+export function SettingsIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="11" r="3" strokeWidth="1.8" {...stroke} />
+      <path
+        d="M11 2.5v2.2M11 17.3v2.2M2.5 11h2.2M17.3 11h2.2M5 5l1.6 1.6M15.4 15.4 17 17M5 17l1.6-1.6M15.4 6.6 17 5"
+        strokeWidth="1.8"
+        {...stroke}
+      />
     </svg>
   );
 }

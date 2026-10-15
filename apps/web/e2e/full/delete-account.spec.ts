@@ -6,7 +6,7 @@ import { watchProblems } from "./problems";
 test("download your data, ask to delete your account, then keep it", async ({ page }) => {
   await signIn(page, newUser("Dana"));
   const problems = await watchProblems(page);
-  await page.goto("/you");
+  await page.goto("/you/settings");
   const data = page.getByRole("region", { name: "Your data" });
 
   const download = page.waitForEvent("download");
@@ -51,7 +51,7 @@ test("a lead with crewmates is asked to hand over first", async ({ page, browser
   await page.reload();
   await page.getByRole("button", { name: `Let ${sam.name} in` }).click();
 
-  await page.goto("/you");
+  await page.goto("/you/settings");
   await page.getByRole("button", { name: "Delete my account" }).click();
   const sheet = page.getByRole("dialog", { name: "Delete your account?" });
   await sheet.getByLabel("I understand").check();

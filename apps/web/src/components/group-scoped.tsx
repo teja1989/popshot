@@ -12,7 +12,16 @@ import { buttonClass } from "./ui/button";
 
 // A page about one group at a time (Play, Crew): title, group switcher, then content for
 // the chosen group. Groups you're still waiting to join aren't offered.
-export function GroupScoped({ title, children }: { title: string; children: (group: GroupSummary) => ReactNode }) {
+export function GroupScoped({
+  title,
+  children,
+  actions,
+}: {
+  title: string;
+  children: (group: GroupSummary) => ReactNode;
+  // Shown once your groups have loaded, with or without a group (Crew: start or join one).
+  actions?: ReactNode;
+}) {
   const { result, reload } = useApiGet<GroupSummary[]>("/v1/groups");
   const groups = result.kind === "ready" ? result.data.filter((g) => g.my_status === "active") : [];
   const { current, choose } = useCurrentGroup(groups);
@@ -56,6 +65,8 @@ export function GroupScoped({ title, children }: { title: string; children: (gro
           {children(current)}
         </>
       )}
+
+      {result.kind === "ready" && actions}
     </main>
   );
 }

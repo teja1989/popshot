@@ -1,8 +1,10 @@
-// The main menu: Home, Play, Crew, You and More always; other tabs only while their feature
-// switch is on (migration 0027) in at least one of your crews, so there's never an empty tab.
-// More lists everything else Popshot does (lib/more.ts).
+// The main menu: five tabs at most, the most iOS and Android tab bars hold, so the same menu
+// carries over to the apps (docs/adr/0006-navigation.md). Every page belongs to exactly one
+// tab, which stays lit while you're on it. A tab behind a feature switch (migration 0027)
+// shows only while that switch is on somewhere for you, so there's never an empty tab.
+// Settings live under You; there's no catch-all "More".
 
-export type NavIcon = "home" | "play" | "crew" | "learn" | "you" | "more";
+export type NavIcon = "home" | "play" | "find" | "crew" | "you";
 
 export interface NavItem {
   href: string;
@@ -13,23 +15,22 @@ export interface NavItem {
   matches: (pathname: string) => boolean;
 }
 
-// Recaps are opened from the Crew tab; events from Play.
-const RECAP = /^\/groups\/[^/]+\/recaps\//;
-const EVENT = /^\/groups\/[^/]+\/events(\/|$)/;
+// Pages under /groups/<id>: getting on court belongs to Play, the rest of the crew to Crew.
+const GROUP = /^\/groups\/[^/]+/;
+const PLAY_IN_GROUP = /^\/groups\/[^/]+\/(events|log|nights|matches)(\/|$)/;
 
 export const NAV: readonly NavItem[] = [
+  { href: "/", label: "Home", icon: "home", matches: (p) => p === "/" },
+  { href: "/play", label: "Play", icon: "play", matches: (p) => p.startsWith("/play") || PLAY_IN_GROUP.test(p) },
+  // Open crews near you. Its switch arrives with open crews; until then the tab stays hidden.
+  { href: "/find", label: "Find", icon: "find", feature: "crew.open", matches: (p) => p.startsWith("/find") },
   {
-    href: "/",
-    label: "Home",
-    icon: "home",
-    matches: (p) => p === "/" || (p.startsWith("/groups/") && !RECAP.test(p) && !EVENT.test(p)),
+    href: "/crew",
+    label: "Crew",
+    icon: "crew",
+    matches: (p) => p.startsWith("/crew") || (GROUP.test(p) && !PLAY_IN_GROUP.test(p)),
   },
-  { href: "/play", label: "Play", icon: "play", matches: (p) => p.startsWith("/play") || EVENT.test(p) },
-  { href: "/crew", label: "Crew", icon: "crew", matches: (p) => p.startsWith("/crew") || RECAP.test(p) },
-  // The shot library. Its page and switch arrive together; until then the switch doesn't exist.
-  { href: "/learn", label: "Learn", icon: "learn", feature: "learn.tab", matches: (p) => p.startsWith("/learn") },
   { href: "/you", label: "You", icon: "you", matches: (p) => p.startsWith("/you") },
-  { href: "/more", label: "More", icon: "more", matches: (p) => p.startsWith("/more") },
 ];
 
 /** The tabs to show, given what's on for you anywhere (empty while it's still loading). */

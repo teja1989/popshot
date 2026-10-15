@@ -1,22 +1,91 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { change, everyone, points, type Board, type BoardRow } from "@/lib/board";
 
+import { CreateGroupDialog } from "./create-group-dialog";
 import { CrewHighlights } from "./crew-highlights";
 import { CrewPointsInfo } from "./crew-points-info";
 import { GroupScoped } from "./group-scoped";
+import { JoinByLinkSheet } from "./join-by-link-sheet";
 import { RecapCard } from "./recap-card";
 import { useApiGet } from "./use-api";
 import { Avatar } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
+import { ChevronIcon, PlusIcon } from "./ui/icons";
 
 // The Crew tab: what's worth celebrating lately, everyone in the crew (A to Z, never
 // ranked), and your own crew points.
 
 export function CrewView() {
-  return <GroupScoped title="Crew">{(group) => <GroupCrew key={group.id} groupId={group.id} />}</GroupScoped>;
+  return (
+    <GroupScoped title="Crew" actions={<CrewActions />}>
+      {(group) => <GroupCrew key={group.id} groupId={group.id} />}
+    </GroupScoped>
+  );
+}
+
+// The crew's own pages, one tap from the tab.
+function CrewLinks({ groupId }: { groupId: string }) {
+  const links = [
+    { href: `/groups/${groupId}`, label: "Crew page" },
+    { href: `/groups/${groupId}/members`, label: "Members and invites" },
+    { href: `/groups/${groupId}/settings`, label: "Crew settings" },
+  ];
+  return (
+    <nav
+      aria-label="This crew"
+      className="overflow-hidden rounded-3xl border border-transparent bg-surface shadow-card"
+    >
+      <ul>
+        {links.map((link) => (
+          <li key={link.href} className="border-b border-line last:border-b-0">
+            <Link
+              href={link.href}
+              className="flex min-h-12 items-center justify-between gap-3 px-4 text-lead font-bold text-ink no-underline hover:bg-surface-high"
+            >
+              {link.label}
+              <ChevronIcon />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+// Another crew: start one, or join with the link a lead sent.
+function CrewActions() {
+  const router = useRouter();
+  return (
+    <section aria-labelledby="another-crew-heading" className="flex flex-col gap-3 border-t border-line pt-5">
+      <h2 id="another-crew-heading" className="text-title-sm font-bold text-ink">
+        Another crew
+      </h2>
+      <div className="flex flex-wrap gap-3">
+        <CreateGroupDialog
+          onCreated={(group) => {
+            router.push(`/groups/${group.id}`);
+          }}
+          trigger={
+            <button type="button" className={buttonClass("quiet")}>
+              <PlusIcon />
+              Start a crew
+            </button>
+          }
+        />
+        <JoinByLinkSheet
+          trigger={
+            <button type="button" className={buttonClass("quiet")}>
+              Join with an invite link
+            </button>
+          }
+        />
+      </div>
+    </section>
+  );
 }
 
 function GroupCrew({ groupId }: { groupId: string }) {
@@ -43,6 +112,8 @@ function GroupCrew({ groupId }: { groupId: string }) {
 
   return (
     <>
+      <CrewLinks groupId={groupId} />
+
       <RecapCard groupId={groupId} />
 
       <CrewHighlights groupId={groupId} />

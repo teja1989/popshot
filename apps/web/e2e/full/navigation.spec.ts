@@ -27,7 +27,6 @@ test("the tabs move between pages and show where you are", async ({ page }) => {
     ["Play", "/play", "Play"],
     ["Crew", "/crew", "Crew"],
     ["You", "/you", user.name],
-    ["More", "/more", "More"],
     ["Home", "/", /^Good (morning|afternoon|evening), Nia\.$/],
   ] as const) {
     await nav(page).getByRole("link", { name: label }).click();
@@ -74,7 +73,6 @@ test("moving between tabs keeps the app on screen, and shows what it already has
     ["Play", "Play"],
     ["Crew", "Crew"],
     ["You", user.name],
-    ["More", "More"],
     ["Home", /Ines/],
   ] as const) {
     await nav(page).getByRole("link", { name: label }).click();
@@ -186,7 +184,7 @@ test("your level sets where crew points start", async ({ page }) => {
 test("appearance is remembered and applied before the page paints", async ({ page }) => {
   await signIn(page, newUser("Quinn"));
   const problems = await watchProblems(page);
-  await page.goto("/you");
+  await page.goto("/you/settings");
   const theme = () => page.evaluate(() => document.documentElement.dataset.theme ?? "system");
 
   await page.getByText("Dark", { exact: true }).click();
@@ -257,23 +255,70 @@ test("Play shows the crew's meetups first, and old Games links still work", asyn
 
 test("a tab behind a feature switch comes and goes without a reload", async ({ page }) => {
   await signIn(page, newUser("Ivo"));
-  // The real answer first: the five tabs, with nothing extra switched on.
+  // The real answer first: four tabs, with nothing extra switched on.
   const real = page.waitForResponse((r) => r.url().endsWith("/api/v1/me/features"));
   await page.goto("/");
   expect((await real).status()).toBe(200);
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You", "More"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
 
-  // Stand in for an admin switching Learn on, then off again.
-  let on = ["learn.tab"];
+  // Stand in for an admin switching open crews on, then off again: Find comes and goes.
+  let on = ["crew.open"];
   await page.route("**/api/v1/me/features", (route) =>
     route.fulfill({ contentType: "application/json", body: JSON.stringify({ crews: {}, everywhere: on }) }),
   );
   const comeBack = () => page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
   await comeBack();
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "Learn", "You", "More"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Find", "Crew", "You"]);
+  await nav(page).getByRole("link", { name: "Find" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Find");
   on = [];
   await comeBack();
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You", "More"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
+});
+
+test("Settings sit under You, and old More links land there", async ({ page }) => {
+  const user = newUser("Tess");
+  await signIn(page, user);
+  const problems = await watchProblems(page);
+  await page.goto("/you");
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/you\/settings$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings");
+  await expect(nav(page).getByRole("link", { name: "You" })).toHaveAttribute("aria-current", "page");
+  for (const name of ["Notifications", "Your Popshot code", "Shared recaps", "Your data"]) {
+    await expect(page.getByRole("region", { name })).toBeVisible();
+  }
+  await expect(page.getByRole("radio", { name: "Match device" })).toBeVisible();
+  await page.getByRole("main").getByRole("link", { name: "You" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(user.name);
+
+  await page.goto("/more");
+  await expect(page).toHaveURL(/\/you\/settings$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings");
+  expect(problems).toEqual([]);
+});
+
+test("a crew's own pages light Crew, its games light Play, and Crew starts or joins a crew", async ({ page }) => {
+  await signIn(page, newUser("Uma"));
+  const crew = `Tabs check ${String(Date.now())}`;
+
+  // No crew yet: Crew offers to start or join one.
+  await page.goto("/crew");
+  await expect(page.getByRole("button", { name: "Join with an invite link" })).toBeVisible();
+  await page.getByRole("button", { name: "Start a crew" }).click();
+  await page.getByLabel("Group name").fill(crew);
+  await page.getByRole("button", { name: "Create group" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(crew);
+  await expect(nav(page).getByRole("link", { name: "Crew" })).toHaveAttribute("aria-current", "page");
+
+  await nav(page).getByRole("link", { name: "Crew" }).click();
+  const links = page.getByRole("navigation", { name: "This crew" });
+  await links.getByRole("link", { name: "Members and invites" }).click();
+  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]+\/members$/);
+  await expect(nav(page).getByRole("link", { name: "Crew" })).toHaveAttribute("aria-current", "page");
+
+  await page.goto(page.url().replace(/\/members$/, "/log"));
+  await expect(nav(page).getByRole("link", { name: "Play" })).toHaveAttribute("aria-current", "page");
 });
 
 test("Home's floating Log a game opens it for your crew", async ({ page }) => {
