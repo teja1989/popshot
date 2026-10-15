@@ -18,8 +18,16 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
+from popshot_api.courts import (
+    CourtRefusedError,
+    add_court,
+    list_courts,
+    make_default,
+    map_court,
+    remove_court,
+)
 from popshot_api.db import CurrentUserSession
-from popshot_api.places import Places, PlacesUnavailableError, Suggestion
+from popshot_api.places import Location, Places, PlacesUnavailableError, Suggestion
 from popshot_api.routes.features import feature_on
 from popshot_api.routes.groups import (
     NOT_FOUND,
@@ -45,6 +53,7 @@ RESTING_TODAY = HTTPException(
     status.HTTP_503_SERVICE_UNAVAILABLE,
     detail="Court search is resting until tomorrow. You can still type the court's name.",
 )
+COURTS_FULL = HTTPException(status.HTTP_409_CONFLICT, detail="A crew can save up to 5 courts.")
 ADMINS_ONLY = HTTPException(
     status.HTTP_403_FORBIDDEN, detail="Only the crew's lead or a co-lead can do that."
 )
@@ -120,6 +129,15 @@ def _count(session: Session, lookup: Literal["search", "pick"]) -> None:
         raise
 
 
+def upsert_place(session: Session, location: Location) -> UUID:
+    """The place's row, with fresh coordinates."""
+    place_id: UUID = session.execute(
+        text("SELECT app_upsert_place(:gid, :lat, :lng)"),
+        {"gid": location.place_id, "lat": location.lat, "lng": location.lng},
+    ).scalar_one()
+    return place_id
+
+
 def _suggestion(found: Suggestion) -> PlaceSuggestion:
     return PlaceSuggestion(place_id=found.place_id, main=found.main, secondary=found.secondary)
 
@@ -154,14 +172,27 @@ def set_home_place(
         return HomePlaceResult(outcome="unavailable", group=_detail_or_404(session, me, group_id))
     if location is None:
         return HomePlaceResult(outcome="not_found", group=_detail_or_404(session, me, group_id))
-    place_id = session.execute(
-        text("SELECT app_upsert_place(:gid, :lat, :lng)"),
-        {"gid": location.place_id, "lat": location.lat, "lng": location.lng},
-    ).scalar_one()
-    session.execute(
-        text("UPDATE groups SET home_place_id = :place, home_place_label = :label WHERE id = :g"),
-        {"place": place_id, "label": body.label, "g": group_id},
-    )
+    place_id = upsert_place(session, location)
+    # The court on the map is now the crew's default saved court (0036).
+    saved = list_courts(session, group_id)
+    old = map_court(saved)
+    same = session.execute(
+        text("SELECT id FROM crew_courts WHERE group_id = :g AND place_id = :p"),
+        {"g": group_id, "p": place_id},
+    ).scalar_one_or_none()
+    if same is None:
+        if old is not None:
+            remove_court(session, group_id, old.id)
+        try:
+            same = add_court(session, group_id, me, body.label, place_id)
+        except CourtRefusedError:
+            raise COURTS_FULL from None
+    else:
+        session.execute(
+            text("UPDATE crew_courts SET label = :label, updated_at = now() WHERE id = :c"),
+            {"label": body.label, "c": same},
+        )
+    make_default(session, group_id, same)
     _log(session, group_id, me, "group.home_place_set", group_id)
     return HomePlaceResult(outcome="saved", group=_detail_or_404(session, me, group_id))
 
@@ -171,9 +202,8 @@ def clear_home_place(group_id: UUID, user: CurrentUserSession) -> GroupDetail:
     """No home court on the map any more (the place itself goes with the job's tidy-up)."""
     session, me = user.session, user.user_id
     _require_admin_with_feature(session, me, group_id)
-    session.execute(
-        text("UPDATE groups SET home_place_id = NULL, home_place_label = NULL WHERE id = :g"),
-        {"g": group_id},
-    )
+    on_map = map_court(list_courts(session, group_id))
+    if on_map is not None:
+        remove_court(session, group_id, on_map.id)
     _log(session, group_id, me, "group.home_place_cleared", group_id)
     return _detail_or_404(session, me, group_id)

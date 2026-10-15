@@ -7,6 +7,7 @@ a group exists to someone outside it.
 
 import re
 import unicodedata
+from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import Annotated, Literal
 from uuid import UUID
@@ -23,6 +24,14 @@ from pydantic import (
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from popshot_api.courts import (
+    CourtRefusedError,
+    add_court,
+    list_courts,
+    map_court,
+    remove_court,
+    typed_courts,
+)
 from popshot_api.db import CurrentUserSession
 
 router = APIRouter(prefix="/v1/groups")
@@ -100,7 +109,9 @@ class CrewProfile(BaseModel):
     about: About | None = None
     usual_days: list[Day] = Field(default_factory=list, max_length=7)
     usual_times: list[TimeOfDay] = Field(default_factory=list, max_length=3)
-    home_courts: list[CourtName] = Field(default_factory=list, max_length=3)
+    # Leave out to keep the crew's courts as they are. Given, it replaces the typed courts
+    # (crew courts without a Google place, migration 0036); courts on the map stay.
+    home_courts: list[CourtName] | None = Field(default=None, max_length=3)
 
     @field_validator("about", mode="before")
     @classmethod
@@ -156,6 +167,15 @@ class FormerMember(BaseModel):
     since: datetime
 
 
+class Court(BaseModel):
+    id: UUID
+    # The crew's own name for it.
+    label: str
+    # Set when it was found on Google Maps, for an "Open in Maps" link.
+    google_place_id: str | None
+    is_default: bool
+
+
 class GroupDetail(GroupSummary):
     default_format: Format
     default_points_to: int
@@ -165,11 +185,12 @@ class GroupDetail(GroupSummary):
     about: str | None = None
     usual_days: list[Day] = []
     usual_times: list[TimeOfDay] = []
+    # The crew's saved courts (migration 0036, ADR 0007), default included: members only.
+    courts: list[Court] = []
+    # The same courts as the screens before crew courts showed them (removed once the web has
+    # moved to `courts`): the typed ones, and the one on the map with Google's ID for it.
     home_courts: list[str] = []
-    # The crew's home court picked from Google Places (0035), by the crew's own name for it.
-    # For members only, like home courts.
     home_place: str | None = None
-    # Google's ID for that place, for an "Open in Maps" link. Members only too.
     home_place_google_id: str | None = None
     members: list[Member]
     # Leads and co-leads only: people removed or declined, who can be restored.
@@ -307,15 +328,9 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
                 SELECT g.id, g.name, g.default_format, g.default_points_to,
                        g.default_win_by_two, g.created_at,
                        g.about, g.usual_days, g.usual_times,
-                       CASE WHEN m.status = 'active' THEN g.home_courts
-                            ELSE '{}'::text[] END AS home_courts,
-                       CASE WHEN m.status = 'active' THEN g.home_place_label END AS home_place,
-                       CASE WHEN m.status = 'active' THEN p.google_place_id
-                            END AS home_place_google_id,
                        m.role AS my_role, m.status AS my_status
                 FROM groups g
                 JOIN group_members m ON m.group_id = g.id AND m.user_id = :me
-                LEFT JOIN places p ON p.id = g.home_place_id
                 WHERE g.id = :group_id AND m.status IN ('active', 'pending')
                 """
             ),
@@ -365,8 +380,15 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
         ]
 
     active = sum(1 for m in members if m.status == "active")
+    # crew_courts' policy shows them to active members only.
+    saved = list_courts(session, group_id) if group["my_status"] == "active" else []
+    on_map = map_court(saved)
     return GroupDetail(
         **group,
+        courts=[Court(**asdict(c)) for c in saved],
+        home_courts=[c.label for c in typed_courts(saved)][:3],
+        home_place=on_map.label if on_map else None,
+        home_place_google_id=on_map.google_place_id if on_map else None,
         member_count=active if group["my_status"] == "active" else None,
         members=members,
         former_members=former,
@@ -441,6 +463,23 @@ def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) 
     return _detail_or_404(session, me, group_id)
 
 
+def _replace_typed_courts(session: Session, group_id: UUID, me: UUID, labels: list[str]) -> None:
+    """The home courts of the screens before crew courts: the typed courts become `labels`,
+    in that order, after the courts on the map."""
+    keep = {c.label: c for c in typed_courts(list_courts(session, group_id))}
+    for court in keep.values():
+        if court.label not in labels:
+            remove_court(session, group_id, court.id)
+    for label in labels:
+        if label not in keep:
+            try:
+                add_court(session, group_id, me, label)
+            except CourtRefusedError:
+                raise HTTPException(
+                    status.HTTP_409_CONFLICT, detail="A crew can save up to 5 courts."
+                ) from None
+
+
 def _in_order(values: list[str], order: tuple[str, ...]) -> list[str]:
     return [v for v in order if v in values]
 
@@ -453,12 +492,10 @@ def set_profile(group_id: UUID, body: CrewProfile, user: CurrentUserSession) -> 
         raise HTTPException(
             status.HTTP_403_FORBIDDEN, detail="Only the group's lead or a co-lead can do that."
         )
-    courts = list(dict.fromkeys(body.home_courts))  # Without repeats, in the order given.
     session.execute(
         text(
             """
-            UPDATE groups SET about = :about, usual_days = :days, usual_times = :times,
-                              home_courts = :courts
+            UPDATE groups SET about = :about, usual_days = :days, usual_times = :times
             WHERE id = :group_id
             """
         ),
@@ -467,9 +504,10 @@ def set_profile(group_id: UUID, body: CrewProfile, user: CurrentUserSession) -> 
             "about": body.about,
             "days": _in_order(list(body.usual_days), DAYS),
             "times": _in_order(list(body.usual_times), TIMES),
-            "courts": courts,
         },
     )
+    if body.home_courts is not None:
+        _replace_typed_courts(session, group_id, me, list(dict.fromkeys(body.home_courts)))
     _log(session, group_id, me, "group.profile_updated", group_id)
     return _detail_or_404(session, me, group_id)
 

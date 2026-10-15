@@ -69,8 +69,10 @@ row-level security.
 - **Games:** `players` (a person within a crew, or a guest), `matches`, `match_players`,
   `match_games`, `match_confirmations`, `match_reflections` (only the author can read theirs),
   `ratings`, `rating_history`.
-- **Getting on court:** `play_nights` and `play_night_rsvps` (meetups), and `events`,
-  `event_players`, `event_rounds`, `event_courts`.
+- **Getting on court:** `crew_courts` (a crew's saved courts, one the default; ADR 0007),
+  `places` and `place_lookups` (Google place IDs and the lookups that limit them),
+  `play_nights` and `play_night_rsvps` (meetups), and `events`, `event_players`,
+  `event_rounds`, `event_courts`.
 - **Recaps:** `recap_texts`, `recap_notifications`, `recap_shares`, `week_notifications`.
 - **Your journey** (yours alone): `journey_entries`, `journey_notes`, `journey_settings`,
   `journey_checkins`.

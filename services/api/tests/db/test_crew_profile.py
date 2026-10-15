@@ -58,6 +58,10 @@ def test_leads_set_the_profile_and_members_see_it(people: People, crew: dict[str
     cleared = set_profile(people, crew["casey"], gid, {"about": "  "})
     assert cleared.status_code == 200
     assert cleared.json()["about"] is None
+    # Leaving the courts out keeps them (they're the crew's saved courts now, migration 0036);
+    # an empty list clears them.
+    assert cleared.json()["home_courts"] == PROFILE["home_courts"]
+    cleared = set_profile(people, crew["casey"], gid, {"home_courts": []})
     assert cleared.json()["home_courts"] == []
 
 

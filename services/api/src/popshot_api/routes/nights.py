@@ -57,6 +57,9 @@ class NewNight(BaseModel):
 
     starts_at: AwareDatetime
     venue: Venue
+    # One of the crew's saved courts (migration 0036), when it's at one. The venue keeps
+    # its own text, so renaming or removing the court never rewrites the meetup.
+    court_id: UUID | None = None
     note: Note | None = None
     # No limit when left out.
     spots: Spots | None = None
@@ -71,6 +74,7 @@ class NightChange(BaseModel):
 
     starts_at: AwareDatetime
     venue: Venue
+    court_id: UUID | None = None
     note: Note | None = None
     spots: Spots | None = None
 
@@ -94,6 +98,10 @@ class Night(BaseModel):
     series_id: UUID | None
     starts_at: datetime
     venue: str
+    # The saved court it's at, and Google's ID for it when there is one (an "Open in Maps"
+    # link). None once the court is removed.
+    court_id: UUID | None = None
+    court_google_place_id: str | None = None
     note: str | None
     spots: int | None
     created_by_name: str
@@ -159,10 +167,13 @@ def _rsvps(session: Session, night_id: UUID) -> list[_Rsvp]:
 
 _NIGHT_SQL = """
     SELECT n.id, n.group_id, g.name AS group_name, n.series_id, n.starts_at, n.venue, n.note,
-           n.spots, n.created_by, u.display_name AS created_by_name, n.cancelled_at
+           n.spots, n.created_by, u.display_name AS created_by_name, n.cancelled_at,
+           n.court_id, p.google_place_id AS court_google_place_id
     FROM play_nights n
     JOIN groups g ON g.id = n.group_id
     JOIN users u ON u.id = n.created_by
+    LEFT JOIN crew_courts c ON c.id = n.court_id
+    LEFT JOIN places p ON p.id = c.place_id
 """
 
 
@@ -200,6 +211,8 @@ def _load(session: Session, me: UUID, rows: Sequence[Row[Any]], now: datetime) -
                 series_id=r.series_id,
                 starts_at=r.starts_at,
                 venue=r.venue,
+                court_id=r.court_id,
+                court_google_place_id=r.court_google_place_id,
                 note=r.note,
                 spots=r.spots,
                 created_by_name=r.created_by_name,
@@ -273,6 +286,20 @@ def _check_time(starts_at: datetime, now: datetime) -> None:
         )
 
 
+def _check_court(session: Session, group_id: UUID, court_id: UUID | None) -> None:
+    """A meetup's court must be one of its crew's saved courts."""
+    if court_id is None:
+        return
+    found = session.execute(
+        text("SELECT 1 FROM crew_courts WHERE id = :c AND group_id = :g"),
+        {"c": court_id, "g": group_id},
+    ).first()
+    if found is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="That court isn't one of the crew's."
+        )
+
+
 @router.post("/groups/{group_id}/nights", status_code=status.HTTP_201_CREATED)
 def plan_night(
     group_id: UUID, body: NewNight, user: CurrentUserSession, notifier: CurrentNotifier
@@ -282,6 +309,7 @@ def plan_night(
     _require_member(session, me, group_id)
     now = datetime.now(UTC)
     _check_time(body.starts_at, now)
+    _check_court(session, group_id, body.court_id)
     upcoming = session.execute(
         text(
             "SELECT count(*) FROM play_nights WHERE group_id = :g AND cancelled_at IS NULL "
@@ -301,9 +329,9 @@ def plan_night(
         session.execute(
             text(
                 """
-                INSERT INTO play_nights (group_id, series_id, starts_at, venue, note, spots,
-                                         created_by)
-                VALUES (:g, :series, :starts_at, :venue, :note, :spots, :me)
+                INSERT INTO play_nights (group_id, series_id, starts_at, venue, court_id, note,
+                                         spots, created_by)
+                VALUES (:g, :series, :starts_at, :venue, :court, :note, :spots, :me)
                 RETURNING id
                 """
             ),
@@ -313,6 +341,7 @@ def plan_night(
                 # Same local time each week: add whole weeks to the instant the browser sent.
                 "starts_at": body.starts_at + timedelta(weeks=week),
                 "venue": body.venue,
+                "court": body.court_id,
                 "note": body.note or None,
                 "spots": body.spots,
                 "me": me,
@@ -456,10 +485,12 @@ def change_night(
     session, me = user.session, user.user_id
     night = _editable(session, me, group_id, night_id)
     _check_time(body.starts_at, datetime.now(UTC))
+    _check_court(session, group_id, body.court_id)
     session.execute(
         text(
             """
-            UPDATE play_nights SET starts_at = :starts_at, venue = :venue, note = :note,
+            UPDATE play_nights SET starts_at = :starts_at, venue = :venue, court_id = :court,
+                   note = :note,
                    spots = :spots, updated_at = now(),
                    -- A new time means new reminders.
                    reminded_day_at = CASE WHEN starts_at = :starts_at THEN reminded_day_at END,
@@ -472,6 +503,7 @@ def change_night(
             "g": group_id,
             "starts_at": body.starts_at,
             "venue": body.venue,
+            "court": body.court_id,
             "note": body.note or None,
             "spots": body.spots,
         },
