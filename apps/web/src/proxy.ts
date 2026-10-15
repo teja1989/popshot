@@ -1,13 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { canonicalRedirect } from "@/lib/canonical";
 import { readServerConfig } from "@/lib/config";
 import { buildCsp, newNonce } from "@/lib/csp";
 
-// Adds a per-request CSP nonce to every page. Next.js reads the nonce from the
-// request's CSP header and stamps it on the scripts it renders.
+// Sends pages opened on another address to the domain, then adds a per-request CSP nonce to
+// every page. Next.js reads the nonce from the request's CSP header and stamps it on the
+// scripts it renders.
 export function proxy(request: NextRequest): NextResponse {
-  const nonce = newNonce();
   const config = readServerConfig();
+  // Pages opened on the run.app or web.app address move to the domain (API calls, static
+  // files and the health probe never reach here: see the matcher).
+  const elsewhere = canonicalRedirect(request.nextUrl, request.headers, config.canonicalHost);
+  if (elsewhere) {
+    return NextResponse.redirect(elsewhere, 308);
+  }
+  const nonce = newNonce();
   const csp = buildCsp({
     nonce,
     authDomain: config.firebase.authDomain,

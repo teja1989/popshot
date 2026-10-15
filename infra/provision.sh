@@ -302,13 +302,13 @@ ok "Deploy finished"
 
 step "7/7 Last step: turn on Google sign-in"
 
-# The deterministic Cloud Run URL: the only one sign-in is allowed from (not the hash-style
-# URL Cloud Run also serves).
-project_number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)' 2>/dev/null || true)"
-web_url="${project_number:+https://web-${project_number}.${REGION}.run.app}"
+# The app lives on our domain (Firebase Hosting); the run.app address redirects there. The
+# domain needs its DNS records first: infra/terraform/prod/README.md, "Our domain".
+web_url="https://popshotpb.com"
 firebase_url="https://console.firebase.google.com/project/${PROJECT_ID}/authentication/providers"
 cat <<EOF
-Popshot is live${web_url:+ at $web_url}.
+Popshot is live at $web_url once its DNS records are in (infra/terraform/prod/README.md,
+"Our domain").
 
 One click left, in the Firebase console (it creates the OAuth client, which stays out of
 Terraform so its secret never lands in state):

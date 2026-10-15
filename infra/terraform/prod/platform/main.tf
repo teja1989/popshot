@@ -6,8 +6,12 @@ data "google_project" "this" {}
 
 locals {
   project_number = data.google_project.this.number
-  # Cloud Run's deterministic URL for the "web" service (see services stack).
-  web_host = "web-${local.project_number}.${var.region}.run.app"
+  # Cloud Run's deterministic URL for the "web" service (see services stack). Pages opened
+  # there redirect to the domain; sign-in stays allowed on it until we drop it (step 3).
+  run_host = "web-${local.project_number}.${var.region}.run.app"
+  run_url  = "https://${local.run_host}"
+  # The app's address: our domain, through Firebase Hosting (hosting.tf).
+  web_host = var.site_domain
   web_url  = "https://${local.web_host}"
 
   db_name           = "popshot"

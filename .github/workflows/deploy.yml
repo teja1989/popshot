@@ -245,10 +245,17 @@ jobs:
         run: |
           set -euo pipefail
           url="$(terraform output -raw web_url)"
+          run_url="$(terraform output -raw run_url)"
           headers="$(curl -fsS -D - -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors "$url/")"
           echo "$headers" | grep -qi '^content-security-policy:.*nonce-'
           echo "$headers" | grep -qi '^strict-transport-security:'
           test "$(curl -s -o /dev/null -w '%{http_code}' "$url/api/v1/me")" = "401"
+          # Sign-in's pages are served on our domain by Firebase Hosting.
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$url/__/auth/handler")" = "200"
+          # www and the direct Cloud Run address both send people to the domain.
+          www="https://www.${url#https://}"
+          test "$(curl -s -o /dev/null -w '%{redirect_url}' "$www/")" = "$url/"
+          test "$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$run_url/privacy?x=1")" = "308 $url/privacy?x=1"
           # The API must not answer from the internet (internal ingress, web-only invoker).
           api_url="$(terraform output -raw api_url)"
           api_status="$(curl -s -o /dev/null -w '%{http_code}' "$api_url/healthz")"
@@ -260,4 +267,4 @@ jobs:
           case "$admin_status" in 2*|3*) echo "The admin service is reachable from the internet"; exit 1;; esac
           # Through the web app, admin pages answer only to a signed-in admin.
           test "$(curl -s -o /dev/null -w '%{http_code}' "$url/api/v1/admin/overview")" = "401"
-          echo "Smoke check passed: page served with CSP, /api/v1/me and /api/v1/admin require sign-in, API and admin service not public." >> "$GITHUB_STEP_SUMMARY"
+          echo "Smoke check passed on $url: page served with CSP, sign-in pages served, www and run.app redirect, /api/v1/me and /api/v1/admin require sign-in, API and admin service not public." >> "$GITHUB_STEP_SUMMARY"

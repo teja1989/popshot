@@ -311,8 +311,15 @@ resource "google_cloud_run_v2_service" "web" {
         value = local.platform.firebase.api_key
       }
       env {
+        # Sign-in runs on our domain (Firebase Hosting serves /__/auth there), so the sign-in
+        # popup is first-party: browsers that block third-party storage still sign in.
         name  = "FIREBASE_AUTH_DOMAIN"
-        value = local.platform.firebase.auth_domain
+        value = local.platform.site_domain
+      }
+      env {
+        # Pages opened on any other address (run.app, web.app) redirect here.
+        name  = "CANONICAL_HOST"
+        value = local.platform.site_domain
       }
       env {
         name  = "FIREBASE_PROJECT_ID"

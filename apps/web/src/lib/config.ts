@@ -24,6 +24,9 @@ export interface ServerConfig {
   firebase: FirebaseWebConfig;
   // Local development only: host:port of the Firebase Auth emulator (dev/README.md).
   authEmulatorHost: string | null;
+  // The app's own address (popshotpb.com in prod). Pages reached on any other host redirect
+  // there, and share previews link to it. Unset locally and in tests.
+  canonicalHost: string | null;
 }
 
 export class ConfigError extends Error {}
@@ -78,7 +81,12 @@ export function readServerConfig(env: Env = process.env): ServerConfig {
     throw new ConfigError("FIREBASE_PROJECT_ID is not a valid project ID");
   }
   const adminBase = optional(env, "ADMIN_API_BASE_URL");
+  const canonicalHost = optional(env, "CANONICAL_HOST")?.toLowerCase() ?? null;
+  if (canonicalHost !== null && !HOSTNAME.test(canonicalHost)) {
+    throw new ConfigError("CANONICAL_HOST must be a bare hostname");
+  }
   return {
+    canonicalHost,
     authEmulatorHost: parseAuthEmulatorHost(env, projectId),
     apiBaseUrl: parseApiBaseUrl(required(env, "API_BASE_URL")),
     apiAudience: optional(env, "API_AUDIENCE"),

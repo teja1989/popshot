@@ -97,3 +97,21 @@ describe("FIREBASE_AUTH_EMULATOR_HOST", () => {
     ).toThrow(/Cloud Run/);
   });
 });
+
+describe("CANONICAL_HOST", () => {
+  it("is off unless set", () => {
+    expect(readServerConfig(BASE).canonicalHost).toBeNull();
+    expect(readServerConfig({ ...BASE, CANONICAL_HOST: " " }).canonicalHost).toBeNull();
+  });
+
+  it("is a bare hostname", () => {
+    expect(readServerConfig({ ...BASE, CANONICAL_HOST: "PopshotPB.com" }).canonicalHost).toBe("popshotpb.com");
+  });
+
+  it.each(["https://popshotpb.com", "popshotpb.com/", "popshotpb.com:443", "localhost", "a b"])(
+    "rejects %j",
+    (value) => {
+      expect(() => readServerConfig({ ...BASE, CANONICAL_HOST: value })).toThrow(ConfigError);
+    },
+  );
+});
