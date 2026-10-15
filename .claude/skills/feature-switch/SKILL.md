@@ -27,10 +27,12 @@ rules.
 ```sql
 INSERT INTO features (key, area, title, description, needs_plan, rollout) VALUES
     ('crew.open', 'crew', 'Open crews', 'Leads can open a crew so anyone on Popshot can join.',
-     NULL, 'off');
+     NULL, 'crews');
 ```
 
-Start with `'off'` or `'crews'`, never `'everyone'` for something new. `downgrade()` deletes
+Start with `'crews'` and an empty list: nobody has it until an admin adds a crew, and you can
+try it with one crew first (tests add their own crew to the list). `'off'` is off for every
+crew, even ones on the list. Never start with `'everyone'` for something new. `downgrade()` deletes
 the row (`DELETE FROM features WHERE key = ...`).
 
 ## 3. Check it in the API

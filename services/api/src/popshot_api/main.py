@@ -16,6 +16,7 @@ from popshot_api.auth.verifier import TokenVerifier
 from popshot_api.db import check_database_role, make_engine
 from popshot_api.log_config import configure_logging
 from popshot_api.middleware import RequestContextMiddleware
+from popshot_api.places import FakePlaces, GooglePlaces, Places
 from popshot_api.push import PushSender
 from popshot_api.routes import (
     board,
@@ -41,6 +42,7 @@ from popshot_api.routes import (
     stats,
     week,
 )
+from popshot_api.routes import places as places_routes
 from popshot_api.settings import Settings
 
 
@@ -125,6 +127,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     push_sender: PushSender | None = None,
     recap_writer: RecapWriter | None = None,
     journey_writer: RecapWriter | None = None,
+    places: Places | None = None,
 ) -> FastAPI:
     """Build the API. `verify_database_role` exists for tests that don't use a database;
     it isn't reachable from configuration, so a deployed API always checks its role.
@@ -144,6 +147,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.state.journey_writer = (
         journey_writer if journey_writer is not None else _journey_writer_for(settings)
     )
+    app.state.places = places if places is not None else _places_for(settings)
     app.include_router(me.router)
     app.include_router(export.router)
     app.include_router(groups.router)
@@ -165,7 +169,17 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(week.router)
     app.include_router(features.router)
     app.include_router(events.router)
+    app.include_router(places_routes.router)
     return app
+
+
+def _places_for(settings: Settings) -> Places | None:
+    if settings.places == "google" and settings.gcp_project:
+        return GooglePlaces(settings.gcp_project)
+    if settings.places == "fake":
+        # Settings already refused this outside local development and tests.
+        return FakePlaces()
+    return None
 
 
 def _token_verifier_for(settings: Settings) -> TokenVerifier:

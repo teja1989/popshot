@@ -386,6 +386,10 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         # Only migration 0033's functions touch these; test_content_api.py covers them.
         "content_items",
         "content_hosts",
+        # Written only by migration 0035's functions, read through a crew or as your own;
+        # test_places_api.py covers them.
+        "places",
+        "place_lookups",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 

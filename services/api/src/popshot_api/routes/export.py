@@ -122,6 +122,13 @@ def export_my_data(user: CurrentUserSession) -> JSONResponse:
         },
         "invites": _rows(session, "SELECT * FROM app_my_direct_invites()", params),
         "blocked_crews": _rows(session, "SELECT * FROM app_my_invite_blocks()", params),
+        # When you searched for or picked a court in the last two days (migration 0035): kept
+        # only to limit how often anyone can ask Google.
+        "court_searches": _rows(
+            session,
+            "SELECT kind, at FROM place_lookups WHERE user_id = :me ORDER BY at",
+            params,
+        ),
         # Where you first came from, if Popshot knows (migration 0024).
         "signup_source": session.execute(text("SELECT app_my_signup_source()")).scalar_one(),
     }
