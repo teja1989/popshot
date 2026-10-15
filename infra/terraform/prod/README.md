@@ -107,6 +107,12 @@ services keep one instance warm each (about $10/month each at the idle rate), so
 waits for a cold start; the admin service still scales to zero. No NAT, no load balancer, no
 connector; Firebase Hosting costs little or nothing. Expect under the $45 budget at crew scale.
 
+**Google Places** (finding courts): each place picked is about 8 search requests and one
+details request, and stored coordinates are refreshed monthly. Google gives 10,000 of each
+free every month, so 200 picks a month costs $0. The API stops at 330 lookups a day of each
+kind (its own counter), which keeps even a month of full days inside the free allowance:
+the most it can cost is $0. Raise the cap only alongside the budget.
+
 **Finding slow requests:** the API logs every request with its `duration_ms`. In Logs Explorer:
 `resource.labels.service_name="api" jsonPayload.event="request" jsonPayload.duration_ms>300`.
 Slow database queries show in Cloud SQL → Query insights.

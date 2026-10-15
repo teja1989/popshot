@@ -37,6 +37,7 @@ resource "google_project_service" "apis" {
     "firebase.googleapis.com",
     "firebasehosting.googleapis.com",
     "identitytoolkit.googleapis.com",
+    "places.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
     "servicenetworking.googleapis.com",
@@ -198,6 +199,23 @@ resource "google_project_iam_member" "api_vertex_ai" {
   project = var.project_id
   role    = "roles/aiplatform.user"
   member  = google_service_account.api.member
+
+  depends_on = [google_project_service.apis]
+}
+
+# Google Places (New), for finding courts. The API looks places up as itself (OAuth with its
+# own service account), so there's no API key to store or leak; the job refreshes the stored
+# coordinates monthly, as Google's terms require. Calling it as the project means using the
+# project's services (X-Goog-User-Project), which is all this role grants. The API caps its
+# own use well inside Google's free monthly allowance (see the README's Costs).
+resource "google_project_iam_member" "places" {
+  for_each = {
+    api  = google_service_account.api.member
+    tick = google_service_account.tick.member
+  }
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = each.value
 
   depends_on = [google_project_service.apis]
 }
