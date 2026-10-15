@@ -8,6 +8,10 @@ describe("isDraft", () => {
     expect(isDraft({ company: "[Company name] LLC", state: "Virginia", contactEmail: "hi@popshot.app" })).toBe(true);
     expect(isDraft({ company: "Rally Labs LLC", state: "[State]", contactEmail: "hi@popshot.app" })).toBe(true);
     expect(isDraft({ company: "Rally Labs LLC", state: "Virginia", contactEmail: "hello@example.com" })).toBe(true);
+    // Our real address, with the company details still to come.
+    expect(isDraft({ company: "[Company name] LLC", state: "[State]", contactEmail: "hello@popshotpb.com" })).toBe(
+      true,
+    );
   });
 
   it("isn't once the real details are in", () => {

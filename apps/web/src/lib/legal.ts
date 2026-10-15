@@ -5,7 +5,7 @@
 export const LEGAL = {
   company: "[Company name] LLC",
   state: "[State]",
-  contactEmail: "hello@example.com",
+  contactEmail: "hello@popshotpb.com",
   // When the current wording took effect.
   updated: "2026-10-12",
 } as const;
