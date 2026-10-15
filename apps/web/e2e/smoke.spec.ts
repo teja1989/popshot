@@ -234,9 +234,9 @@ test("privacy, terms and contact open signed out, from the landing page, within 
   const response = await page.goto("/contact");
   expect(response?.status()).toBe(200);
   expect(response?.headers()["content-security-policy"]).toContain("'strict-dynamic'");
-  await expect(page.getByRole("link", { name: "hello@example.com" }).first()).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "hello@popshotpb.com" }).first()).toHaveAttribute(
     "href",
-    "mailto:hello@example.com",
+    "mailto:hello@popshotpb.com",
   );
   await page.getByRole("link", { name: "Popshot home" }).click();
   await expect(page).toHaveURL("/");

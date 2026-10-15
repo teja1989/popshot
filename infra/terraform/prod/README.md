@@ -62,14 +62,24 @@ six records, and no Cloudflare token in CI. The run.app address keeps working al
 
 1. **Cloudflare → popshotpb.com → DNS → Records.** Add every record from the deploy run's
    summary ("DNS records to add at Cloudflare", also `terraform output dns_records`), with
-   **Proxy status: DNS only** (grey cloud). Then the "this domain sends and receives no
-   email" records, so nobody can send mail as popshotpb.com:
+   **Proxy status: DNS only** (grey cloud). Firebase can take a minute to work out the
+   records after the domains are created, so if that table is empty, take them from Firebase
+   console → Hosting → the `-web` site → Custom domains → each domain's "View".
+
+   Email: `hello@popshotpb.com` forwards to the team's inbox through **Cloudflare Email
+   Routing** (Email → Email Routing; the address is under Routing rules → Custom addresses).
+   It only receives: replies go out from the inbox it forwards to. Email Routing adds and
+   manages its own records; alongside them we keep a DMARC record, since nothing sends mail
+   as popshotpb.com:
 
    | Type | Name | Content |
    |---|---|---|
-   | MX | `@` | `.` (priority 0) |
-   | TXT | `@` | `v=spf1 -all` |
+   | MX | `@` | `route1.mx.cloudflare.net`, `route2…`, `route3…` (added by Email Routing) |
+   | TXT | `@` | `v=spf1 include:_spf.mx.cloudflare.net ~all` (added by Email Routing) |
+   | TXT | `cf2024-1._domainkey` | DKIM key (added by Email Routing) |
    | TXT | `_dmarc` | `v=DMARC1; p=reject; adkim=s; aspf=s` |
+
+   Only one SPF record may sit on `@`.
 
    Don't add CAA records or turn on the orange-cloud proxy: either can stop Firebase issuing
    or renewing the certificate.
