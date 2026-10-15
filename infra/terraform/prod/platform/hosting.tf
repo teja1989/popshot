@@ -30,11 +30,34 @@ resource "google_firebase_hosting_site" "web" {
   }
 }
 
+# Bump to publish Hosting afresh: a new version, and a release of it. Firebase won't
+# re-release the version that's already live, so the version itself has to be new.
+# 2: the first release predates the custom domains.
+resource "terraform_data" "hosting_revision" {
+  input = 2
+}
+
+# The first version, live since domain step 1: forgotten, never deleted (deleting the live
+# version would take the site down). Its successor below replaces it in Hosting.
+removed {
+  from = google_firebase_hosting_version.web
+
+  lifecycle {
+    destroy = false
+  }
+}
+
 # Everything goes to the web service; Hosting itself answers only its reserved /__/ paths
 # (the sign-in handler). Page HTML is never cached: the app sends it as private, no-store.
-resource "google_firebase_hosting_version" "web" {
+resource "google_firebase_hosting_version" "web_v2" {
   provider = google-beta
   site_id  = google_firebase_hosting_site.web.site_id
+
+  lifecycle {
+    # A bump makes a new version; the old one goes only after the new one is released.
+    replace_triggered_by  = [terraform_data.hosting_revision]
+    create_before_destroy = true
+  }
 
   config {
     rewrites {
@@ -50,10 +73,8 @@ resource "google_firebase_hosting_version" "web" {
 resource "google_firebase_hosting_release" "web" {
   provider     = google-beta
   site_id      = google_firebase_hosting_site.web.site_id
-  version_name = google_firebase_hosting_version.web.name
-  # Bump when Hosting needs a fresh release (a release is immutable). (2): the first one
-  # predates the custom domains.
-  message = "Cloud Run web service, from Terraform (2)"
+  version_name = google_firebase_hosting_version.web_v2.name
+  message      = "Cloud Run web service, from Terraform (${terraform_data.hosting_revision.output})"
 }
 
 resource "google_firebase_hosting_custom_domain" "apex" {
