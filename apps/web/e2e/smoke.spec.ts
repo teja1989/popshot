@@ -120,6 +120,26 @@ test("/favicon.ico serves the app icon instead of a 404", async ({ request }) =>
   expect(response.headers()["content-type"]).toBe("image/png");
 });
 
+test("the landing headline flips to a new line, with one steady heading for screen readers", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("One last game.");
+  const board = page.locator("[data-headline]");
+  await expect(board).toHaveAttribute("data-headline", "One last game.");
+  // The board flips to another line within a few seconds; the heading doesn't change.
+  await expect(board).not.toHaveAttribute("data-headline", "One last game.", { timeout: 8000 });
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("One last game.");
+  await expect(board).toHaveAttribute("aria-hidden", "true");
+});
+
+test("with reduce motion, the landing headline stays put", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const board = page.locator("[data-headline]");
+  await expect(board).toHaveAttribute("data-headline", "One last game.");
+  await page.waitForTimeout(5500);
+  await expect(board).toHaveAttribute("data-headline", "One last game.");
+});
+
 test("the landing page explains the app and offers sign-in top and bottom", async ({ page }) => {
   await page.goto("/");
   for (const title of [
