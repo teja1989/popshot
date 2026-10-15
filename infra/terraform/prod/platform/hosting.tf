@@ -16,10 +16,18 @@ locals {
 }
 
 resource "google_firebase_hosting_site" "web" {
-  provider   = google-beta
-  project    = var.project_id
-  site_id    = local.hosting_site_id
+  provider = google-beta
+  project  = var.project_id
+  site_id  = local.hosting_site_id
+  # The web app whose config the sign-in pages (/__/auth, /__/firebase/init.json) serve.
+  app_id     = google_firebase_web_app.web.app_id
   depends_on = [google_firebase_project.this, google_project_service.apis]
+
+  # Replacing the site would drop the connected domains and their certificates: a plan that
+  # wants to fails instead.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Everything goes to the web service; Hosting itself answers only its reserved /__/ paths
@@ -43,7 +51,9 @@ resource "google_firebase_hosting_release" "web" {
   provider     = google-beta
   site_id      = google_firebase_hosting_site.web.site_id
   version_name = google_firebase_hosting_version.web.name
-  message      = "Cloud Run web service, from Terraform"
+  # Bump when Hosting needs a fresh release (a release is immutable). (2): the first one
+  # predates the custom domains.
+  message = "Cloud Run web service, from Terraform (2)"
 }
 
 resource "google_firebase_hosting_custom_domain" "apex" {
@@ -52,6 +62,10 @@ resource "google_firebase_hosting_custom_domain" "apex" {
   site_id               = google_firebase_hosting_site.web.site_id
   custom_domain         = var.site_domain
   wait_dns_verification = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # www only redirects to the main address.
@@ -62,4 +76,8 @@ resource "google_firebase_hosting_custom_domain" "www" {
   custom_domain         = local.www_domain
   redirect_target       = google_firebase_hosting_custom_domain.apex.custom_domain
   wait_dns_verification = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
