@@ -169,6 +169,8 @@ class GroupDetail(GroupSummary):
     # The crew's home court picked from Google Places (0035), by the crew's own name for it.
     # For members only, like home courts.
     home_place: str | None = None
+    # Google's ID for that place, for an "Open in Maps" link. Members only too.
+    home_place_google_id: str | None = None
     members: list[Member]
     # Leads and co-leads only: people removed or declined, who can be restored.
     former_members: list[FormerMember] = []
@@ -308,9 +310,12 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
                        CASE WHEN m.status = 'active' THEN g.home_courts
                             ELSE '{}'::text[] END AS home_courts,
                        CASE WHEN m.status = 'active' THEN g.home_place_label END AS home_place,
+                       CASE WHEN m.status = 'active' THEN p.google_place_id
+                            END AS home_place_google_id,
                        m.role AS my_role, m.status AS my_status
                 FROM groups g
                 JOIN group_members m ON m.group_id = g.id AND m.user_id = :me
+                LEFT JOIN places p ON p.id = g.home_place_id
                 WHERE g.id = :group_id AND m.status IN ('active', 'pending')
                 """
             ),

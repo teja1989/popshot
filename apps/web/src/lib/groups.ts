@@ -50,6 +50,9 @@ export interface GroupDetail extends GroupSummary {
   usual_days?: Day[];
   usual_times?: TimeOfDay[];
   home_courts?: string[];
+  // The crew's court on the map (lib/places.ts): its own name for it and Google's ID. Members only.
+  home_place?: string | null;
+  home_place_google_id?: string | null;
   default_format: Format;
   default_points_to: PointsTo;
   default_win_by_two: boolean;
@@ -83,7 +86,9 @@ export const ROLE_LABEL: Record<Role, string> = {
   member: "Member",
 };
 
-export function describeRules(group: Pick<GroupDetail, "default_format" | "default_points_to" | "default_win_by_two">): string {
+export function describeRules(
+  group: Pick<GroupDetail, "default_format" | "default_points_to" | "default_win_by_two">,
+): string {
   const format = group.default_format === "doubles" ? "Doubles" : "Singles";
   const winBy = group.default_win_by_two ? ", win by 2" : "";
   return `${format} · games to ${String(group.default_points_to)}${winBy}`;

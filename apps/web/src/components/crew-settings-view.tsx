@@ -18,8 +18,11 @@ import {
 } from "@/lib/crew-profile";
 import { sectionsFor, type SectionId } from "@/lib/crew-settings";
 import { describeRules, GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
+import { PLACES_FEATURE } from "@/lib/places";
 
 import { useSignedIn } from "./auth";
+import { CourtPicker } from "./court-picker";
+import { useFeature } from "./features";
 import { GroupExit } from "./group-exit";
 import { GroupRulesFields, type Rules } from "./group-rules-fields";
 import { buttonClass } from "./ui/button";
@@ -34,6 +37,7 @@ interface SectionProps {
 // One component per section in lib/crew-settings.ts. A new section is a new entry in both.
 const SECTION_VIEWS: Record<SectionId, (props: SectionProps) => ReactNode> = {
   crew: CrewSection,
+  court: CourtSection,
   profile: ProfileSection,
   rules: RulesSection,
   leave: LeaveSection,
@@ -168,6 +172,20 @@ function CrewSection({ group, onSaved }: SectionProps) {
           {status}
         </div>
       </form>
+    </SettingsSection>
+  );
+}
+
+function CourtSection({ group, onSaved }: SectionProps) {
+  if (!useFeature(PLACES_FEATURE, group.id)) {
+    return null;
+  }
+  return (
+    <SettingsSection
+      title="Court on the map"
+      description="Where your crew usually plays, found on Google Maps. Only members see it."
+    >
+      <CourtPicker group={group} onSaved={onSaved} />
     </SettingsSection>
   );
 }

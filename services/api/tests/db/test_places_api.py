@@ -134,8 +134,12 @@ def test_a_lead_searches_picks_and_names_the_home_court(
     assert saved.json()["group"]["home_place"] == "Riverside courts"
     # The pick ends the search's Google session.
     assert fake.calls[-1] == ("locate", session)
-    # Members see it by the crew's own name.
-    assert detail(people, crew["sam"], gid)["home_place"] == "Riverside courts"
+    # Members see it by the crew's own name, with Google's ID for an "Open in Maps" link.
+    seen = detail(people, crew["sam"], gid)
+    assert (seen["home_place"], seen["home_place_google_id"]) == (
+        "Riverside courts",
+        "fake-riverside-park",
+    )
 
 
 def test_only_ids_and_fresh_coordinates_are_kept(
@@ -170,7 +174,8 @@ def test_members_strangers_and_waiting_people_cant(people: People, crew: dict[st
     waiting = people.new("Wren")
     token = people.client.post(f"/v1/groups/{gid}/invites", json={}, headers=crew["casey"]).json()
     people.client.post("/v1/invites/join", json={"token": token["token"]}, headers=waiting)
-    assert detail(people, waiting, gid)["home_place"] is None
+    hidden = detail(people, waiting, gid)
+    assert (hidden["home_place"], hidden["home_place_google_id"]) == (None, None)
 
 
 def test_hidden_while_the_switch_is_off_or_places_are_off(
@@ -280,7 +285,7 @@ def test_clearing_the_home_court(people: People, crew: dict[str, Any]) -> None:
     )
     cleared = people.client.delete(f"/v1/groups/{gid}/home-place", headers=crew["casey"])
     assert cleared.status_code == 200
-    assert cleared.json()["home_place"] is None
+    assert (cleared.json()["home_place"], cleared.json()["home_place_google_id"]) == (None, None)
 
 
 def test_the_app_reads_places_only_through_crews_and_never_writes_them(

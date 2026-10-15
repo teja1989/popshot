@@ -19,7 +19,7 @@ export interface SettingsContext {
   plan: Plan;
 }
 
-export type SectionId = "crew" | "profile" | "rules" | "leave";
+export type SectionId = "crew" | "court" | "profile" | "rules" | "leave";
 
 interface Section {
   id: SectionId;
@@ -32,6 +32,8 @@ const runsTheCrew = (ctx: SettingsContext) =>
 /** In page order. */
 export const SECTIONS: readonly Section[] = [
   { id: "crew", show: runsTheCrew },
+  // The court on the map. Its view also checks the courts.places switch.
+  { id: "court", show: runsTheCrew },
   { id: "profile", show: runsTheCrew },
   { id: "rules", show: runsTheCrew },
   // Leave (or cancel a request to join) for everyone; the lead sees Delete here instead.
