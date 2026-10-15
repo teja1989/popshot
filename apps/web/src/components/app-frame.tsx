@@ -10,6 +10,7 @@ import { NAV, tabColumns, visibleNav, type NavIcon } from "@/lib/nav";
 import { CompactTitle } from "./compact-title";
 import { useEverywhere } from "./features";
 import { HashScroll } from "./hash-scroll";
+import { ScrollTop } from "./scroll-top";
 import { onHomeLinkClick } from "./home-refresh";
 import { SignOutButton } from "./sign-out-button";
 import { Brand } from "./ui/brand";
@@ -101,6 +102,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
         >
           {children}
         </motion.div>
+        <ScrollTop />
         <HashScroll />
       </div>
 
