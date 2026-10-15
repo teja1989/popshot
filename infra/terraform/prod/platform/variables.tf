@@ -39,7 +39,8 @@ variable "billing_account" {
 variable "monthly_budget_usd" {
   description = "Monthly budget; alerts go to billing admins at 50%, 90% and 100%."
   type        = number
-  default     = 25
+  # 45: about 25 of running costs plus about 20 for the always-warm web and API instances.
+  default = 45
 }
 
 variable "site_domain" {
