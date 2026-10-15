@@ -55,18 +55,26 @@ There's one environment for now. A separate dev project can be added later witho
 the stacks. Infrastructure lives in `infra/terraform` (bootstrap, then `prod/platform` and
 `prod/services`); see `infra/terraform/prod/README.md`.
 
-## Data model (initial)
+## Data model
 
-- `users`: identity provider subject, display name, avatar
-- `groups`: name, default format and points
-- `group_members`: user, group, role (lead, co_lead, member), status
-- `group_invites`: hashed token, expiry, use limit, approval required
-- `players`: a person within a group, linked to a user or a guest awaiting claim
-- `matches`: group, format, points-to, win-by-2, best of (1 or 3), played at, entered by, status
-- `match_players`: match, player, team (A or B)
-- `match_games`: match, game number, team A score, team B score
-- `match_confirmations`: match, confirming user, decision (unused while games count as soon as they're logged)
-- `ratings` and `rating_history`: per group, per player
-- `audit_log`: who did what, when
-- `user_focus`: your Strengths and Areas to improve (option IDs). Private to you, enforced by RLS; not on `users`, which group-mates can read
-- `match_reflections`: what went well and what to improve, per game and player. A group table, but only the author can read or change a row
+The migrations are the source of truth: each file in `services/api/migrations/versions/`
+starts with a docstring saying what it adds and who can see it. Every table has forced
+row-level security.
+
+- **People:** `users` (crewmates can read it, so nothing private goes here), `user_focus`,
+  `user_activity`, `push_subscriptions`, `notification_settings`.
+- **Crews:** `groups` (with the crew profile), `group_members` (lead, co_lead or member;
+  pending, active or removed), `group_invites`, `direct_invites`, `invite_blocks`,
+  `invite_code_lookups`.
+- **Games:** `players` (a person within a crew, or a guest), `matches`, `match_players`,
+  `match_games`, `match_confirmations`, `match_reflections` (only the author can read theirs),
+  `ratings`, `rating_history`.
+- **Getting on court:** `play_nights` and `play_night_rsvps` (meetups), and `events`,
+  `event_players`, `event_rounds`, `event_courts`.
+- **Recaps:** `recap_texts`, `recap_notifications`, `recap_shares`, `week_notifications`.
+- **Your journey** (yours alone): `journey_entries`, `journey_notes`, `journey_settings`,
+  `journey_checkins`.
+- **Content and switches:** `content_items` and `content_hosts` (the library), `features`,
+  `feature_crews`, `crew_plans`.
+- **Admin and records:** `admin_views`, `admin_actions`, `audit_log`, `signup_sources`,
+  `page_visits`.
