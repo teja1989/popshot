@@ -6,6 +6,7 @@ import { useRef } from "react";
 
 import { useAuth } from "./auth";
 import { CountVisit } from "./funnel-tracking";
+import { FlipHeadline } from "./landing/flip-headline";
 import { GameDayStory } from "./landing/game-day-story";
 import { CrewInsights, YourStats } from "./landing/insights";
 import { HeroPhoto, PhotoBand } from "./landing/photos";
@@ -104,14 +105,20 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
               >
                 {invited ? "You've been invited" : "Pickleball with your crew"}
               </motion.p>
-              <motion.h1
+              <motion.div
                 className="mt-4 text-jumbo font-extrabold tracking-[-0.035em] sm:text-jumbo-lg lg:text-jumbo-xl"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.08 }}
               >
-                One last <span className="text-ball">game.</span>
-              </motion.h1>
+                {invited ? (
+                  <h1>
+                    One last <span className="text-ball">game.</span>
+                  </h1>
+                ) : (
+                  <FlipHeadline />
+                )}
+              </motion.div>
               <motion.p
                 className="mt-5 max-w-xl text-title-sm leading-relaxed text-on-hero-muted"
                 initial={{ opacity: 0, y: 16 }}
@@ -120,7 +127,7 @@ export function SignInScreen({ invited = false }: { invited?: boolean }) {
               >
                 {invited
                   ? "Someone wants you in their Popshot group. Sign in to see which one and ask to join."
-                  : "Said every pickleball player, ever. Popshot is the friendly app for your crew: no rankings, just your games, your stats and the story of every game day."}
+                  : "Popshot is the friendly pickleball app for your crew: no rankings, just your games, your stats and the story of every game day."}
               </motion.p>
               <motion.div
                 className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center"
