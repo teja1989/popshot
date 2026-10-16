@@ -15,6 +15,9 @@ export interface Night {
   series_id: string | null;
   starts_at: string;
   venue: string;
+  // The crew's saved court it's at (lib/courts.ts), and Google's ID for a Maps link.
+  court_id?: string | null;
+  court_google_place_id?: string | null;
   note: string | null;
   spots: number | null;
   created_by_name: string;

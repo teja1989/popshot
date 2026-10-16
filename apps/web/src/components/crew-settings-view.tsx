@@ -4,25 +4,12 @@ import Link from "next/link";
 import { useId, useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { apiPatch, apiPut, ApiError } from "@/lib/api-client";
-import {
-  ABOUT_MAX,
-  COURT_MAX,
-  COURTS_MAX,
-  DAY_LABEL,
-  DAYS,
-  TIME_LABEL,
-  TIMES,
-  hasLink,
-  type Day,
-  type TimeOfDay,
-} from "@/lib/crew-profile";
+import { ABOUT_MAX, DAY_LABEL, DAYS, TIME_LABEL, TIMES, hasLink, type Day, type TimeOfDay } from "@/lib/crew-profile";
 import { sectionsFor, type SectionId } from "@/lib/crew-settings";
 import { describeRules, GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
-import { PLACES_FEATURE } from "@/lib/places";
 
 import { useSignedIn } from "./auth";
-import { CourtPicker } from "./court-picker";
-import { useFeature } from "./features";
+import { CrewCourts } from "./crew-courts";
 import { GroupExit } from "./group-exit";
 import { GroupRulesFields, type Rules } from "./group-rules-fields";
 import { buttonClass } from "./ui/button";
@@ -177,15 +164,12 @@ function CrewSection({ group, onSaved }: SectionProps) {
 }
 
 function CourtSection({ group, onSaved }: SectionProps) {
-  if (!useFeature(PLACES_FEATURE, group.id)) {
-    return null;
-  }
   return (
     <SettingsSection
-      title="Court on the map"
-      description="Where your crew usually plays, found on Google Maps. Only members see it."
+      title="Courts"
+      description="Where your crew plays. The default is picked first for meetups. Only members see these."
     >
-      <CourtPicker group={group} onSaved={onSaved} />
+      <CrewCourts group={group} onSaved={onSaved} />
     </SettingsSection>
   );
 }
@@ -195,10 +179,6 @@ function ProfileSection({ group, onSaved }: SectionProps) {
   const [about, setAbout] = useState(group.about ?? "");
   const [days, setDays] = useState<Day[]>(group.usual_days ?? []);
   const [times, setTimes] = useState<TimeOfDay[]>(group.usual_times ?? []);
-  const [courts, setCourts] = useState<string[]>(() => {
-    const given = group.home_courts ?? [];
-    return [...given, ...Array<string>(COURTS_MAX - given.length).fill("")];
-  });
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -215,7 +195,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     changed();
-    if ([about, ...courts].some(hasLink)) {
+    if (hasLink(about)) {
       setProblem("Leave out links and web or email addresses.");
       return;
     }
@@ -226,7 +206,6 @@ function ProfileSection({ group, onSaved }: SectionProps) {
           about: about.trim() || null,
           usual_days: days,
           usual_times: times,
-          home_courts: courts.map((c) => c.trim()).filter(Boolean),
         }),
       );
       setSaved(true);
@@ -249,10 +228,7 @@ function ProfileSection({ group, onSaved }: SectionProps) {
     "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
 
   return (
-    <SettingsSection
-      title="Crew profile"
-      description="Helps people decide to join. About and times show on invites; courts only to members."
-    >
+    <SettingsSection title="Crew profile" description="Helps people decide to join. It shows on invites.">
       <form className="flex flex-col gap-5" onSubmit={(event) => void submit(event)} noValidate>
         <label className="flex flex-col gap-2">
           <span className="text-body font-bold">About</span>
@@ -310,25 +286,6 @@ function ProfileSection({ group, onSaved }: SectionProps) {
               </label>
             ))}
           </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-body font-bold">Home courts</legend>
-          <p className="text-meta text-muted">A court or park name, not a home address. Only members see these.</p>
-          {courts.map((court, index) => (
-            <input
-              key={index}
-              aria-label={`Home court ${String(index + 1)}`}
-              value={court}
-              onChange={(event) => {
-                setCourts(courts.map((c, i) => (i === index ? event.target.value : c)));
-                changed();
-              }}
-              maxLength={COURT_MAX}
-              autoComplete="off"
-              className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink"
-            />
-          ))}
         </fieldset>
 
         <div className="flex items-center gap-3">

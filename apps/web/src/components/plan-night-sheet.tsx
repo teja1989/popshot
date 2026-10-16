@@ -3,14 +3,21 @@
 import { useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { apiPatch, apiPost, ApiError } from "@/lib/api-client";
+import { initialWhere, inOrder, wherePayload, type Where } from "@/lib/courts";
+import type { GroupDetail } from "@/lib/groups";
 import { toLocalInput } from "@/lib/games";
 import { defaultStart, MAX_WEEKS, NOTE_MAX, VENUE_MAX, type Night } from "@/lib/nights";
 
 import { useSignedIn } from "./auth";
 import { buttonClass } from "./ui/button";
 import { Sheet } from "./ui/sheet";
+import { useApiGet } from "./use-api";
 
 const field = "min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink placeholder:text-muted";
+const chip =
+  "flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-line px-4 text-body font-bold text-muted " +
+  "has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-on-primary " +
+  "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary";
 
 /** Plan a meetup (optionally weekly), or change one. */
 export function PlanNightSheet({
@@ -32,7 +39,10 @@ export function PlanNightSheet({
   const [open, setOpen] = useState(false);
   const venueRef = useRef<HTMLInputElement>(null);
   const [when, setWhen] = useState("");
-  const [venue, setVenue] = useState("");
+  // The crew's saved courts, default first (already loaded on the crew's pages).
+  const crew = useApiGet<GroupDetail>(`/v1/groups/${groupId}`).result;
+  const courts = crew.kind === "ready" ? inOrder(crew.data.courts ?? []) : [];
+  const [where, setWhere] = useState<Where>({ kind: "elsewhere", venue: "" });
   const [spots, setSpots] = useState("");
   const [weekly, setWeekly] = useState(false);
   const [weeks, setWeeks] = useState(4);
@@ -42,7 +52,7 @@ export function PlanNightSheet({
 
   function reset() {
     setWhen(toLocalInput(editing ? new Date(editing.starts_at) : defaultStart()));
-    setVenue(editing?.venue ?? lastVenue ?? "");
+    setWhere(initialWhere(courts, editing, lastVenue));
     setSpots(editing?.spots ? String(editing.spots) : "");
     setWeekly(false);
     setWeeks(4);
@@ -52,7 +62,8 @@ export function PlanNightSheet({
 
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!venue.trim()) {
+    const place = wherePayload(where);
+    if (!place.venue) {
       setProblem("Say where you're playing.");
       venueRef.current?.focus();
       return;
@@ -69,7 +80,7 @@ export function PlanNightSheet({
     }
     setSaving(true);
     setProblem(null);
-    const body = { starts_at: startsAt.toISOString(), venue, note: note.trim() || null, spots: limit };
+    const body = { starts_at: startsAt.toISOString(), ...place, note: note.trim() || null, spots: limit };
     try {
       const saved = editing
         ? await apiPatch<Night>(user, `/v1/groups/${groupId}/nights/${editing.id}`, body)
@@ -102,7 +113,9 @@ export function PlanNightSheet({
         setOpen(next);
       }}
       title={editing ? "Change this meetup" : "Plan a meetup"}
-      description={editing ? "Everyone's answers stay as they are." : "Your crew gets a notification to say if they're in."}
+      description={
+        editing ? "Everyone's answers stay as they are." : "Your crew gets a notification to say if they're in."
+      }
       fullOnPhone
     >
       <form className="flex flex-col gap-5" onSubmit={(event) => void submit(event)} noValidate>
@@ -117,20 +130,69 @@ export function PlanNightSheet({
             className={field}
           />
         </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-body font-bold">Where</span>
-          <input
-            ref={venueRef}
-            value={venue}
-            onChange={(event) => {
-              setVenue(event.target.value);
-            }}
-            maxLength={VENUE_MAX}
-            autoComplete="off"
-            placeholder="Riverside Park courts"
-            className={field}
-          />
-        </label>
+        {courts.length > 0 ? (
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-body font-bold">Where</legend>
+            <div className="flex flex-wrap gap-2">
+              {courts.map((court) => (
+                <label key={court.id} className={chip}>
+                  <input
+                    type="radio"
+                    name="where"
+                    className="sr-only"
+                    checked={where.kind === "court" && where.court.id === court.id}
+                    onChange={() => {
+                      setWhere({ kind: "court", court });
+                    }}
+                  />
+                  {court.label}
+                </label>
+              ))}
+              <label className={chip}>
+                <input
+                  type="radio"
+                  name="where"
+                  className="sr-only"
+                  checked={where.kind === "elsewhere"}
+                  onChange={() => {
+                    setWhere({ kind: "elsewhere", venue: "" });
+                    window.setTimeout(() => venueRef.current?.focus(), 0);
+                  }}
+                />
+                Somewhere else
+              </label>
+            </div>
+            {where.kind === "elsewhere" && (
+              <input
+                ref={venueRef}
+                aria-label="Other venue"
+                value={where.venue}
+                onChange={(event) => {
+                  setWhere({ kind: "elsewhere", venue: event.target.value });
+                }}
+                maxLength={VENUE_MAX}
+                autoComplete="off"
+                placeholder="Riverside Park courts"
+                className={field}
+              />
+            )}
+          </fieldset>
+        ) : (
+          <label className="flex flex-col gap-2">
+            <span className="text-body font-bold">Where</span>
+            <input
+              ref={venueRef}
+              value={where.kind === "elsewhere" ? where.venue : ""}
+              onChange={(event) => {
+                setWhere({ kind: "elsewhere", venue: event.target.value });
+              }}
+              maxLength={VENUE_MAX}
+              autoComplete="off"
+              placeholder="Riverside Park courts"
+              className={field}
+            />
+          </label>
+        )}
         <label className="flex flex-col gap-2">
           <span className="text-body font-bold">Spots</span>
           <input
@@ -145,7 +207,9 @@ export function PlanNightSheet({
             placeholder="No limit"
             className={`${field} w-40`}
           />
-          <span className="text-small text-muted">When it&apos;s full, others join a waitlist and move up if someone drops out.</span>
+          <span className="text-small text-muted">
+            When it&apos;s full, others join a waitlist and move up if someone drops out.
+          </span>
         </label>
         {!editing && (
           <div className="flex flex-wrap items-center gap-3">
