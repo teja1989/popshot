@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { clearCache } from "@/lib/api-cache";
 import { apiGet } from "@/lib/api-client";
+import { followSignIn } from "@/lib/auth-state";
 import type { FirebaseWebConfig } from "@/lib/config";
 import { getClientAuth, signInWithGoogle, signOut } from "@/lib/firebase-client";
 
@@ -53,39 +54,17 @@ export function AuthProvider({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    let lastUid: string | null = null;
-    // Who is signed in right now. A profile answer that arrives after a sign-out or a switch
-    // belongs to someone else and is dropped, or it would put the old account back.
-    let current: User | null = null;
-    return onAuthStateChanged(auth, (user) => {
-      current = user;
-      // Remembered API answers belong to one account: drop them on sign-out or a switch.
-      if (user?.uid !== lastUid) {
-        clearCache();
-        lastUid = user?.uid ?? null;
-      }
-      if (!user) {
-        setState({ kind: "signed-out" });
-        return;
-      }
-      setState({ kind: "signed-in", user, me: null, problem: null });
-      apiGet<Me>(user, "/v1/me")
-        .then((me) => {
-          if (current !== user) return;
-          setState({ kind: "signed-in", user, me, problem: null });
-        })
-        .catch(() => {
-          if (current !== user) return;
-          setState({
-            kind: "signed-in",
-            user,
-            me: null,
-            problem: "We couldn't load your profile just now. Try again in a moment.",
-          });
-        });
-    });
-  }, [auth]);
+  useEffect(
+    () =>
+      followSignIn<User, Me>(
+        (next) => onAuthStateChanged(auth, next),
+        (user) => apiGet<Me>(user, "/v1/me"),
+        setState,
+        // Remembered API answers belong to one account: drop them on sign-out or a switch.
+        clearCache,
+      ),
+    [auth],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
