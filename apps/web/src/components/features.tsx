@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { apiGet } from "@/lib/api-client";
-import { featureOn, NO_FEATURES, REFRESH_MS, youOn, type MyFeatures } from "@/lib/features";
+import { featureOn, NO_FEATURES, REFRESH_MS, tabKeys, youOn, type MyFeatures } from "@/lib/features";
 
 import { useSignedIn } from "./auth";
 
@@ -52,11 +52,11 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
     };
   }, [load]);
 
-  const value = useMemo(() => ({ features, everywhere: new Set(features.everywhere), loaded }), [features, loaded]);
+  const value = useMemo(() => ({ features, everywhere: tabKeys(features), loaded }), [features, loaded]);
   return <FeaturesContext.Provider value={value}>{children}</FeaturesContext.Provider>;
 }
 
-/** Keys that are on in at least one of your crews. */
+/** Keys that are on in at least one of your crews, or live anywhere (for tabs like Find). */
 export function useEverywhere(): ReadonlySet<string> {
   return useContext(FeaturesContext).everywhere;
 }
