@@ -94,7 +94,9 @@ export default async function PrivacyPage() {
           times, the name it gives its default court with a link to that place on Google Maps, how far away it is and
           how many members it has. It never shows who the members are or their games; those stay for members, including
           anyone who joins. Members are told when their group opens, and can leave any time. To find groups near you,
-          the app sends Popshot where you&apos;re searching from; it&apos;s used for that search and not kept.
+          the app sends Popshot where you&apos;re searching from; it&apos;s used for that search and not kept. You can
+          type a town or park instead: what you type goes to Google Maps to find it, as with court search. This device
+          remembers how you last searched (your location, or the place you picked), never where you were.
         </li>
         <li>
           <strong>Reports:</strong> if you report an open group&apos;s listing, our staff see the group, the reason and

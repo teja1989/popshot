@@ -19,7 +19,7 @@ export interface SettingsContext {
   plan: Plan;
 }
 
-export type SectionId = "crew" | "court" | "profile" | "rules" | "leave";
+export type SectionId = "crew" | "court" | "open" | "profile" | "rules" | "leave";
 
 interface Section {
   id: SectionId;
@@ -34,6 +34,8 @@ export const SECTIONS: readonly Section[] = [
   { id: "crew", show: runsTheCrew },
   // The crew's saved courts (ADR 0007).
   { id: "court", show: runsTheCrew },
+  // Open the crew to anyone on Popshot (lib/open-crews.ts). Hidden while crew.open is off.
+  { id: "open", show: runsTheCrew },
   { id: "profile", show: runsTheCrew },
   { id: "rules", show: runsTheCrew },
   // Leave (or cancel a request to join) for everyone; the lead sees Delete here instead.

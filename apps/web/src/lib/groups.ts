@@ -59,6 +59,13 @@ export interface GroupDetail extends GroupSummary {
   members: Member[];
   // Leads and co-leads only: people removed or declined, who can be restored.
   former_members: FormerMember[];
+  // Open crews (lib/open-crews.ts): anyone signed in can find the crew and join, up to
+  // max_members. Unlisted: Popshot's staff took it off the listing. Closed for court: it
+  // closed because its default court stopped being one from the map.
+  open_to_all?: boolean;
+  max_members?: number;
+  unlisted?: boolean;
+  closed_for_court?: boolean;
 }
 
 export interface DeletedGroup {

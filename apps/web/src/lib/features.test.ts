@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { featureOn, youOn } from "./features";
+import { featureOn, tabKeys, youOn } from "./features";
 
 describe("feature switches", () => {
   const mine = { crews: { a: ["events.shuffle", "recaps.ai"], b: ["recaps.ai"] }, everywhere: [] };
@@ -31,5 +31,16 @@ describe("per-person switches", () => {
 
   it("is off when an older answer has no list", () => {
     expect(youOn({ crews: { a: ["you.journey"] }, everywhere: ["you.journey"] }, "you.journey")).toBe(false);
+  });
+});
+
+describe("tabKeys", () => {
+  it("shows a tab that's live anywhere, even with no crew", () => {
+    expect(tabKeys({ crews: {}, everywhere: [], you: [], live: ["crew.open"] })).toEqual(new Set(["crew.open"]));
+  });
+
+  it("joins your crews' switches and live ones, and copes with older answers", () => {
+    expect(tabKeys({ crews: { a: ["x"] }, everywhere: ["x"], live: ["y"] })).toEqual(new Set(["x", "y"]));
+    expect(tabKeys({ crews: {}, everywhere: ["x"] })).toEqual(new Set(["x"]));
   });
 });

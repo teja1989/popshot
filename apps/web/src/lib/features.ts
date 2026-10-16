@@ -9,9 +9,17 @@ export interface MyFeatures {
   // Switches in the 'you' area, which are per person, not per crew (migration 0032). Older
   // answers may not have it.
   you?: string[];
+  // Live anywhere, in your crews or not (migration 0039): for what anyone can browse, like
+  // the Find tab. Keys only. Older answers may not have it.
+  live?: string[];
 }
 
-export const NO_FEATURES: MyFeatures = { crews: {}, everywhere: [], you: [] };
+export const NO_FEATURES: MyFeatures = { crews: {}, everywhere: [], you: [], live: [] };
+
+/** Keys for the tab bar: on in one of your crews, or live anywhere. */
+export function tabKeys(features: MyFeatures): Set<string> {
+  return new Set([...features.everywhere, ...(features.live ?? [])]);
+}
 
 /** Is this 'you' switch on for you? Prefix keys ending in ".*" match any under them. */
 export function youOn(features: MyFeatures, key: string): boolean {

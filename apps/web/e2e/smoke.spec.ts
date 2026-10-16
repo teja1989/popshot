@@ -74,6 +74,11 @@ test("security headers are set", async ({ request }) => {
     expect(headers["x-frame-options"]).toBe("DENY");
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["x-powered-by"]).toBeUndefined();
+    // Location only for Popshot's own pages (Find); camera and microphone for nobody.
+    const permissions = headers["permissions-policy"] ?? "";
+    expect(permissions).toContain("geolocation=(self)");
+    expect(permissions).toContain("camera=()");
+    expect(permissions).toContain("microphone=()");
   }
 });
 

@@ -7,9 +7,11 @@ import { apiPatch, apiPut, ApiError } from "@/lib/api-client";
 import { ABOUT_MAX, DAY_LABEL, DAYS, TIME_LABEL, TIMES, hasLink, type Day, type TimeOfDay } from "@/lib/crew-profile";
 import { sectionsFor, type SectionId } from "@/lib/crew-settings";
 import { describeRules, GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
+import { MEMBERS_DEFAULT, MEMBERS_MAX, MEMBERS_MIN, OPEN_FEATURE } from "@/lib/open-crews";
 
 import { useSignedIn } from "./auth";
 import { CrewCourts } from "./crew-courts";
+import { useFeature } from "./features";
 import { GroupExit } from "./group-exit";
 import { GroupRulesFields, type Rules } from "./group-rules-fields";
 import { buttonClass } from "./ui/button";
@@ -25,6 +27,7 @@ interface SectionProps {
 const SECTION_VIEWS: Record<SectionId, (props: SectionProps) => ReactNode> = {
   crew: CrewSection,
   court: CourtSection,
+  open: OpenSection,
   profile: ProfileSection,
   rules: RulesSection,
   leave: LeaveSection,
@@ -170,6 +173,121 @@ function CourtSection({ group, onSaved }: SectionProps) {
       description="Where your crew plays. The default is picked first for meetups. Only members see these."
     >
       <CrewCourts group={group} onSaved={onSaved} />
+    </SettingsSection>
+  );
+}
+
+function OpenSection({ group, onSaved }: SectionProps) {
+  const on = useFeature(OPEN_FEATURE, group.id);
+  if (!on) {
+    return null;
+  }
+  return <OpenForm group={group} onSaved={onSaved} />;
+}
+
+function OpenForm({ group, onSaved }: SectionProps) {
+  const { user } = useSignedIn();
+  const [open, setOpen] = useState(group.open_to_all ?? false);
+  const [cap, setCap] = useState(String(group.max_members ?? MEMBERS_DEFAULT));
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const capId = useId();
+  const onMap = (group.courts ?? []).some((c) => c.is_default && c.google_place_id);
+  const capNumber = Number(cap);
+  const capOk = Number.isInteger(capNumber) && capNumber >= MEMBERS_MIN && capNumber <= MEMBERS_MAX;
+  const unchanged = open === (group.open_to_all ?? false) && capNumber === (group.max_members ?? MEMBERS_DEFAULT);
+
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!capOk) {
+      setProblem(`Pick between ${String(MEMBERS_MIN)} and ${String(MEMBERS_MAX)} players.`);
+      return;
+    }
+    setSaving(true);
+    setProblem(null);
+    setSaved(false);
+    try {
+      onSaved(await apiPut<GroupDetail>(user, `/v1/groups/${group.id}/open`, { open, max_members: capNumber }));
+      setSaved(true);
+    } catch (error) {
+      setProblem(error instanceof ApiError && error.detail ? error.detail : "We couldn't save that just now.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (group.unlisted) {
+    return (
+      <SettingsSection title="Open crew">
+        <p className="text-body">
+          Popshot&apos;s team took this crew off the listing, so it can&apos;t be opened for now. Write to us if that
+          seems wrong.
+        </p>
+      </SettingsSection>
+    );
+  }
+
+  return (
+    <SettingsSection
+      title="Open crew"
+      description="Anyone on Popshot can find an open crew near its default court and join straight away."
+    >
+      {group.closed_for_court && !group.open_to_all && (
+        <p role="note" className="rounded-2xl bg-surface-high p-4 text-body">
+          Your crew was closed because its default court isn&apos;t one from the map. Make a court from the map the
+          default, then open it again.
+        </p>
+      )}
+      <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)} noValidate>
+        <label className="flex min-h-11 items-center justify-between gap-4">
+          <span className="text-body font-bold">Open to anyone on Popshot</span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={open}
+            disabled={!onMap && !open}
+            onChange={(event) => {
+              setOpen(event.target.checked);
+              setSaved(false);
+            }}
+            className="size-6 accent-primary"
+          />
+        </label>
+        {!onMap && !open && (
+          <p className="text-small text-muted">Make a court from the map your default first (Courts, above).</p>
+        )}
+        <label htmlFor={capId} className="flex flex-col gap-2">
+          <span className="text-body font-bold">Players who can join from the listing</span>
+          <input
+            id={capId}
+            type="number"
+            inputMode="numeric"
+            min={MEMBERS_MIN}
+            max={MEMBERS_MAX}
+            value={cap}
+            onChange={(event) => {
+              setCap(event.target.value);
+              setSaved(false);
+            }}
+            className="min-h-12 w-28 rounded-xl border border-line bg-bg px-4 text-field text-ink"
+          />
+          <span className="text-small text-muted">Joins stop at this many players. Invites still work as before.</span>
+        </label>
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-small text-muted">
+          <li>The listing shows the crew&apos;s name, about, usual times, default court and how many play.</li>
+          <li>Members, games and stats stay for members.</li>
+          <li>Members are told when the crew opens, and can leave any time.</li>
+        </ul>
+        <div className="flex items-center gap-3">
+          <button type="submit" className={buttonClass("primary")} disabled={saving || unchanged}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <p role="status" className={`text-body ${problem ? "text-warn" : "text-muted"} empty:hidden`}>
+            {problem ?? (saved ? "Saved." : "")}
+          </p>
+        </div>
+      </form>
     </SettingsSection>
   );
 }

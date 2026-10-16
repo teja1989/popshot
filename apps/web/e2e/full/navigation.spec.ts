@@ -255,16 +255,22 @@ test("Play shows the crew's meetups first, and old Games links still work", asyn
 
 test("a tab behind a feature switch comes and goes without a reload", async ({ page }) => {
   await signIn(page, newUser("Ivo"));
-  // The real answer first: four tabs, with nothing extra switched on.
+  // The real answer first. Find shows only while open crews are live somewhere (another test
+  // may have opened a crew), so the tabs follow what the API said.
   const real = page.waitForResponse((r) => r.url().endsWith("/api/v1/me/features"));
   await page.goto("/");
-  expect((await real).status()).toBe(200);
-  await expect(nav(page).getByRole("link")).toHaveText(["Home", "Play", "Crew", "You"]);
+  const answer = await real;
+  expect(answer.status()).toBe(200);
+  const live = ((await answer.json()) as { live?: string[] }).live ?? [];
+  await expect(nav(page).getByRole("link")).toHaveText(
+    live.includes("crew.open") ? ["Home", "Play", "Find", "Crew", "You"] : ["Home", "Play", "Crew", "You"],
+  );
 
-  // Stand in for an admin switching open crews on, then off again: Find comes and goes.
+  // Stand in for an admin switching open crews on, then off again: Find comes and goes, for
+  // someone with no crew too (live anywhere, migration 0039).
   let on = ["crew.open"];
   await page.route("**/api/v1/me/features", (route) =>
-    route.fulfill({ contentType: "application/json", body: JSON.stringify({ crews: {}, everywhere: on }) }),
+    route.fulfill({ contentType: "application/json", body: JSON.stringify({ crews: {}, everywhere: [], live: on }) }),
   );
   const comeBack = () => page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
   await comeBack();
