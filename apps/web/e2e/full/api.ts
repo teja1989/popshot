@@ -35,3 +35,33 @@ export async function apiAs(page: Page, method: string, path: string, body?: unk
     { method, path, body },
   );
 }
+
+/** Log a singles game to 11 through the API, you against `guest` (already in the crew), and
+ *  return its id. For tests whose subject isn't the log screen; that has its own tests. */
+export async function logSinglesAs(
+  page: Page,
+  groupId: string,
+  guest: string,
+  [mine, theirs]: [number, number],
+): Promise<string> {
+  const players = (await apiAs(page, "GET", `/v1/groups/${groupId}/players`)) as {
+    id: string;
+    display_name: string;
+    is_me: boolean;
+  }[];
+  const me = players.find((p) => p.is_me);
+  const them = players.find((p) => p.display_name === guest);
+  if (!me || !them) {
+    throw new Error(`players not found: ${guest}`);
+  }
+  const game = (await apiAs(page, "POST", `/v1/groups/${groupId}/matches`, {
+    format: "singles",
+    points_to: 11,
+    win_by_two: true,
+    best_of: 1,
+    team_a: [me.id],
+    team_b: [them.id],
+    games: [{ team_a: mine, team_b: theirs }],
+  })) as { id: string };
+  return game.id;
+}

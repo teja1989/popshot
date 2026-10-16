@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { logSinglesAs } from "./api";
 import { newUser, signIn } from "./auth";
 import { watchProblems } from "./problems";
 
@@ -53,10 +54,12 @@ test("your stats and the crew's highlights fill in as games are logged", async (
   await expect(week).toContainText("A quiet week on court.");
   await expect(week).toContainText("Rest weeks count too.");
 
-  // A skunk, a close win, then a loss.
+  // A skunk, a close win, then a loss. The first through the screens; the others through the
+  // API, so the test stays quick (logging has its own tests).
   await logSingles(page, groupUrl, user.name, "Lou", ["11", "2"], true);
-  await logSingles(page, groupUrl, user.name, "Lou", ["12", "10"], false);
-  await logSingles(page, groupUrl, user.name, "Lou", ["5", "11"], false);
+  const groupId = groupUrl.split("/").pop() ?? "";
+  await logSinglesAs(page, groupId, "Lou", [12, 10]);
+  await logSinglesAs(page, groupId, "Lou", [5, 11]);
 
   await page.goto("/you");
   await expect(stats).toContainText("3 games · 2–1 · Lost the last one");
@@ -124,14 +127,17 @@ test("you can compare how the last 30 days went in each crew", async ({ page }) 
     return page.url();
   }
 
-  // Five easy wins in one crew, five heavy losses in the other.
+  // Five easy wins in one crew, five heavy losses in the other: the first in each through the
+  // screens (it adds the guest), the rest through the API.
   const thursday = await startGroup("Thursday Smashers");
-  for (let i = 0; i < 5; i++) {
-    await logSingles(page, thursday, user.name, "Lou", ["11", "2"], i === 0);
+  await logSingles(page, thursday, user.name, "Lou", ["11", "2"], true);
+  for (let i = 1; i < 5; i++) {
+    await logSinglesAs(page, thursday.split("/").pop() ?? "", "Lou", [11, 2]);
   }
   const sunday = await startGroup("Sunday Crew");
-  for (let i = 0; i < 4; i++) {
-    await logSingles(page, sunday, user.name, "Max", ["2", "11"], i === 0);
+  await logSingles(page, sunday, user.name, "Max", ["2", "11"], true);
+  for (let i = 1; i < 4; i++) {
+    await logSinglesAs(page, sunday.split("/").pop() ?? "", "Max", [2, 11]);
   }
 
   await page.goto("/you");
@@ -140,7 +146,7 @@ test("you can compare how the last 30 days went in each crew", async ({ page }) 
   await expect(section).toContainText("4 games · a few more for a trend");
   await expect(section).not.toContainText("is where to focus");
 
-  await logSingles(page, sunday, user.name, "Max", ["2", "11"], false);
+  await logSinglesAs(page, sunday.split("/").pop() ?? "", "Max", [2, 11]);
   await page.goto("/you");
   await expect(section).toContainText("Going well in Thursday Smashers; Sunday Crew is where to focus.");
   const rows = section.getByRole("listitem");
