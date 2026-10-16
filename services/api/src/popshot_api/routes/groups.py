@@ -24,14 +24,7 @@ from pydantic import (
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from popshot_api.courts import (
-    CourtRefusedError,
-    add_court,
-    list_courts,
-    map_court,
-    remove_court,
-    typed_courts,
-)
+from popshot_api.courts import list_courts
 from popshot_api.db import CurrentUserSession
 
 router = APIRouter(prefix="/v1/groups")
@@ -109,9 +102,6 @@ class CrewProfile(BaseModel):
     about: About | None = None
     usual_days: list[Day] = Field(default_factory=list, max_length=7)
     usual_times: list[TimeOfDay] = Field(default_factory=list, max_length=3)
-    # Leave out to keep the crew's courts as they are. Given, it replaces the typed courts
-    # (crew courts without a Google place, migration 0036); courts on the map stay.
-    home_courts: list[CourtName] | None = Field(default=None, max_length=3)
 
     @field_validator("about", mode="before")
     @classmethod
@@ -181,17 +171,12 @@ class GroupDetail(GroupSummary):
     default_points_to: int
     default_win_by_two: bool
     created_at: datetime
-    # The crew profile. Home courts are for members only (empty while you're waiting).
+    # The crew profile.
     about: str | None = None
     usual_days: list[Day] = []
     usual_times: list[TimeOfDay] = []
     # The crew's saved courts (migration 0036, ADR 0007), default included: members only.
     courts: list[Court] = []
-    # The same courts as the screens before crew courts showed them (removed once the web has
-    # moved to `courts`): the typed ones, and the one on the map with Google's ID for it.
-    home_courts: list[str] = []
-    home_place: str | None = None
-    home_place_google_id: str | None = None
     members: list[Member]
     # Leads and co-leads only: people removed or declined, who can be restored.
     former_members: list[FormerMember] = []
@@ -382,13 +367,9 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
     active = sum(1 for m in members if m.status == "active")
     # crew_courts' policy shows them to active members only.
     saved = list_courts(session, group_id) if group["my_status"] == "active" else []
-    on_map = map_court(saved)
     return GroupDetail(
         **group,
         courts=[Court(**asdict(c)) for c in saved],
-        home_courts=[c.label for c in typed_courts(saved)][:3],
-        home_place=on_map.label if on_map else None,
-        home_place_google_id=on_map.google_place_id if on_map else None,
         member_count=active if group["my_status"] == "active" else None,
         members=members,
         former_members=former,
@@ -463,30 +444,15 @@ def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) 
     return _detail_or_404(session, me, group_id)
 
 
-def _replace_typed_courts(session: Session, group_id: UUID, me: UUID, labels: list[str]) -> None:
-    """The home courts of the screens before crew courts: the typed courts become `labels`,
-    in that order, after the courts on the map."""
-    keep = {c.label: c for c in typed_courts(list_courts(session, group_id))}
-    for court in keep.values():
-        if court.label not in labels:
-            remove_court(session, group_id, court.id)
-    for label in labels:
-        if label not in keep:
-            try:
-                add_court(session, group_id, me, label)
-            except CourtRefusedError:
-                raise HTTPException(
-                    status.HTTP_409_CONFLICT, detail="A crew can save up to 5 courts."
-                ) from None
-
-
 def _in_order(values: list[str], order: tuple[str, ...]) -> list[str]:
     return [v for v in order if v in values]
 
 
 @router.put("/{group_id}/profile")
 def set_profile(group_id: UUID, body: CrewProfile, user: CurrentUserSession) -> GroupDetail:
-    """The crew profile: about, usual days and times, home courts. Leads and co-leads."""
+    """The crew profile: about, and usual days and times. Leads and co-leads.
+
+    Its courts are saved separately (routes/courts.py)."""
     session, me = user.session, user.user_id
     if _my_membership(session, me, group_id) not in ("lead", "co_lead"):
         raise HTTPException(
@@ -506,8 +472,6 @@ def set_profile(group_id: UUID, body: CrewProfile, user: CurrentUserSession) -> 
             "times": _in_order(list(body.usual_times), TIMES),
         },
     )
-    if body.home_courts is not None:
-        _replace_typed_courts(session, group_id, me, list(dict.fromkeys(body.home_courts)))
     _log(session, group_id, me, "group.profile_updated", group_id)
     return _detail_or_404(session, me, group_id)
 
