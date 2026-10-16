@@ -23,9 +23,14 @@ test("a lead fills in the crew profile; invited people see it without the courts
   await profile.getByText("Tue", { exact: true }).click();
   await profile.getByText("Sat", { exact: true }).click();
   await profile.getByText("Morning", { exact: true }).click();
-  await profile.getByLabel("Home court 1").fill("Riverside Park courts");
   await profile.getByRole("button", { name: "Save profile" }).click();
   await expect(profile.getByRole("status")).toHaveText("Saved.");
+  // Courts are their own section now (crew courts, ADR 0007).
+  const courts = page.getByRole("region", { name: "Courts" });
+  await courts.getByRole("button", { name: "Add a court" }).click();
+  await courts.getByLabel("Court name").fill("Riverside Park courts");
+  await courts.getByRole("button", { name: "Save court" }).click();
+  await expect(courts.getByRole("status")).toHaveText("Saved.");
 
   // Members see it all on the group page.
   await page.goto(groupUrl);

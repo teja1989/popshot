@@ -1,5 +1,6 @@
 // Shapes returned by the API's /v1/groups endpoints (services/api/.../routes/groups.py).
 
+import type { Court } from "./courts";
 import type { Day, TimeOfDay } from "./crew-profile";
 
 export type Role = "lead" | "co_lead" | "member";
@@ -49,10 +50,8 @@ export interface GroupDetail extends GroupSummary {
   about?: string | null;
   usual_days?: Day[];
   usual_times?: TimeOfDay[];
-  home_courts?: string[];
-  // The crew's court on the map (lib/places.ts): its own name for it and Google's ID. Members only.
-  home_place?: string | null;
-  home_place_google_id?: string | null;
+  // The crew's saved courts (lib/courts.ts), default included. Members only.
+  courts?: Court[];
   default_format: Format;
   default_points_to: PointsTo;
   default_win_by_two: boolean;

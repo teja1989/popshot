@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { apiPost, ApiError } from "@/lib/api-client";
+import { courtMapsUrl } from "@/lib/courts";
 import { myStatus, nightWhen, spotsLine, type Night, type NightPerson } from "@/lib/nights";
 
 import { useSignedIn } from "./auth";
@@ -58,7 +59,17 @@ function NightDetail({ night, onChange }: { night: Night; onChange: (night: Nigh
           <p className="self-start rounded-full bg-chip px-3 py-1 text-small font-bold text-warn">Cancelled</p>
         )}
         <h1 className="text-display-sm leading-tight font-extrabold font-display">{nightWhen(night.starts_at)}</h1>
-        <p className="text-title-sm font-bold">{night.venue}</p>
+        <p className="text-title-sm font-bold break-words">{night.venue}</p>
+        {night.court_google_place_id && (
+          <a
+            href={courtMapsUrl({ label: night.venue, google_place_id: night.court_google_place_id }) ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="self-start text-body font-bold text-primary"
+          >
+            Open in Maps ↗
+          </a>
+        )}
         {night.note && <p className="text-lead text-muted">{night.note}</p>}
         <p className="text-small text-muted">
           Planned by {night.created_by_name} · {spotsLine(night)}

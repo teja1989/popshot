@@ -3,10 +3,8 @@
 import Link from "next/link";
 
 import { describeRules, type GroupDetail } from "@/lib/groups";
-import { PLACES_FEATURE } from "@/lib/places";
 
 import { CrewProfileSummary } from "./crew-profile-summary";
-import { useFeature } from "./features";
 import { PlayNightsSection } from "./play-nights-section";
 import { useApiGet } from "./use-api";
 import { AvatarStack } from "./ui/avatar";
@@ -53,7 +51,6 @@ export function GroupView({ groupId }: { groupId: string }) {
 }
 
 function Group({ group }: { group: GroupDetail }) {
-  const mapOn = useFeature(PLACES_FEATURE, group.id);
   const active = group.members.filter((m) => m.status === "active");
   const waiting = group.members.filter((m) => m.status === "pending").length;
 
@@ -65,10 +62,7 @@ function Group({ group }: { group: GroupDetail }) {
         </h1>
         <p className="text-body text-muted">{describeRules(group)}</p>
         <div className="mt-2">
-          <CrewProfileSummary
-            profile={group}
-            court={mapOn && group.home_place ? { name: group.home_place, googleId: group.home_place_google_id } : null}
-          />
+          <CrewProfileSummary profile={group} courts={group.courts} />
         </div>
         <Link
           href={`/groups/${group.id}/settings`}

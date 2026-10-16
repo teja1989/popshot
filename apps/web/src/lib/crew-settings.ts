@@ -32,7 +32,7 @@ const runsTheCrew = (ctx: SettingsContext) =>
 /** In page order. */
 export const SECTIONS: readonly Section[] = [
   { id: "crew", show: runsTheCrew },
-  // The court on the map. Its view also checks the courts.places switch.
+  // The crew's saved courts (ADR 0007).
   { id: "court", show: runsTheCrew },
   { id: "profile", show: runsTheCrew },
   { id: "rules", show: runsTheCrew },
