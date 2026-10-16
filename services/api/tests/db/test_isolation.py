@@ -278,6 +278,26 @@ TABLES += [
         cross_refs=[],
     ),
     TableSpec(
+        name="crew_courts",
+        a_row="id = :id",
+        a_params=lambda s: {"id": s.court_a},
+        b_params=lambda s: {"id": s.court_b},
+        noop_update="label = label",
+        deletable=True,
+        insert_into_a=(
+            "INSERT INTO crew_courts (group_id, label, created_by) VALUES (:g, 'Sneaky', :u)",
+            lambda s: {"g": s.group_a, "u": s.bob},
+        ),
+        cross_refs=[
+            # A meetup in group B can't be placed at group A's court.
+            (
+                "INSERT INTO play_nights (group_id, starts_at, venue, created_by, court_id) "
+                "VALUES (:g, now() + interval '1 day', 'Borrowed', :u, :c)",
+                lambda s: {"g": s.group_b, "u": s.bob, "c": s.court_a},
+            ),
+        ],
+    ),
+    TableSpec(
         name="play_night_rsvps",
         a_row="night_id = :n AND user_id = :u",
         a_params=lambda s: {"n": s.night_a, "u": s.alice},

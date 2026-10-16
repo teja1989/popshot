@@ -148,6 +148,8 @@ class Seed:
     audit_b: int
     night_a: UUID
     night_b: UUID
+    court_a: UUID
+    court_b: UUID
 
 
 def new_token_hash() -> bytes:
@@ -353,6 +355,7 @@ def seed(app_engine: Engine) -> Seed:
 
     # A play night in each group, its planner going.
     nights = {}
+    courts = {}
     for user, group in ((users["alice"], group_a), (users["bob"], group_b)):
         with committed_as(app_engine, user) as conn:
             night = _scalar(
@@ -370,6 +373,14 @@ def seed(app_engine: Engine) -> Seed:
                 {"n": night, "g": group, "u": user},
             )
             nights[group] = night
+            # And a saved court (migration 0036).
+            courts[group] = _scalar(
+                conn,
+                """INSERT INTO crew_courts (group_id, label, created_by)
+                   VALUES (:g, 'Riverside courts', :u) RETURNING id""",
+                g=group,
+                u=user,
+            )
 
     # AI recap words for each group's outing (keyed by its first match).
     for user, match, group in (
@@ -412,6 +423,8 @@ def seed(app_engine: Engine) -> Seed:
         audit_b=audit_b,
         night_a=nights[group_a],
         night_b=nights[group_b],
+        court_a=courts[group_a],
+        court_b=courts[group_b],
     )
 
 

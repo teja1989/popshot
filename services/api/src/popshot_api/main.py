@@ -21,6 +21,7 @@ from popshot_api.push import PushSender
 from popshot_api.routes import (
     board,
     calendar,
+    courts,
     direct_invites,
     events,
     export,
@@ -170,6 +171,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(features.router)
     app.include_router(events.router)
     app.include_router(places_routes.router)
+    app.include_router(courts.router)
     return app
 
 
