@@ -101,3 +101,9 @@ def remove_court(session: Session, group_id: UUID, court_id: UUID) -> bool:
         {"g": group_id, "c": court_id},
     ).first()
     return removed is not None
+
+
+def settle(session: Session) -> None:
+    """Run the check that closes an open crew whose default court is no longer from the map
+    (migration 0038) now, not when the request is saved, so the answer shows it closed."""
+    session.execute(text("SET CONSTRAINTS crew_courts_close_open_crew IMMEDIATE"))

@@ -27,6 +27,7 @@ Category = Literal[
     "journey",
     "invites",
     "requests",
+    "crew",
     "tab",
     "milestones",
 ]
@@ -35,6 +36,7 @@ Category = Literal[
 OFFERED: tuple[Category, ...] = (
     "invites",
     "requests",
+    "crew",
     "play_nights",
     "recaps",
     "your_week",
@@ -210,8 +212,12 @@ def _settings(session: Session, me: UUID) -> NotificationSettings:
         text("SELECT count(*) FROM push_subscriptions WHERE user_id = :me"), {"me": me}
     ).scalar_one()
     journey_on = session.execute(text("SELECT app_feature_on_for_me('you.journey')")).scalar_one()
+    # Crew news (a crew opening to everyone, 0036) only for people in a crew that can open.
+    crew_on = session.execute(
+        text("SELECT EXISTS (SELECT 1 FROM app_my_features() WHERE feature = 'crew.open')")
+    ).scalar_one()
     # Journey check-ins only for people whose journey is on (migration 0034).
-    offered = [c for c in OFFERED if c != "journey" or journey_on]
+    offered = [c for c in OFFERED if (c != "journey" or journey_on) and (c != "crew" or crew_on)]
     return NotificationSettings(
         categories=offered, muted=[c for c in offered if c in (muted or [])], devices=devices
     )

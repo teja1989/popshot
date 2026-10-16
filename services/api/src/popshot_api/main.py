@@ -38,6 +38,7 @@ from popshot_api.routes import (
     me,
     nights,
     notifications,
+    open_crews,
     recaps,
     shares,
     stats,
@@ -172,6 +173,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(events.router)
     app.include_router(places_routes.router)
     app.include_router(courts.router)
+    app.include_router(open_crews.router)
     return app
 
 

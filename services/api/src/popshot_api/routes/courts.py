@@ -20,6 +20,7 @@ from popshot_api.courts import (
     list_courts,
     make_default,
     remove_court,
+    settle,
 )
 from popshot_api.db import CurrentUserSession
 from popshot_api.places import PlacesUnavailableError
@@ -129,6 +130,7 @@ def change(
         )
     if body.is_default:
         make_default(session, group_id, court_id)
+        settle(session)
     _log(session, group_id, me, "group.court_changed", court_id)
     return _detail_or_404(session, me, group_id)
 
@@ -140,5 +142,6 @@ def remove(group_id: UUID, court_id: UUID, user: CurrentUserSession) -> GroupDet
     _require_admin(user, group_id)
     if not remove_court(session, group_id, court_id):
         raise NO_SUCH_COURT
+    settle(session)
     _log(session, group_id, me, "group.court_removed", court_id)
     return _detail_or_404(session, me, group_id)
