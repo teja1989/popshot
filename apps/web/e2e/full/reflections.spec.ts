@@ -1,16 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { apiAs, logSinglesAs } from "./api";
 import { newUser, signIn } from "./auth";
 import { watchProblems } from "./problems";
 
+/** A crew of your own, made through the API (starting one has its own tests). */
 async function startGroup(page: Page, name: string): Promise<string> {
   await page.goto("/");
-  await page.getByRole("button", { name: "Start a group" }).first().click();
-  const dialog = page.getByRole("dialog", { name: "Start a group" });
-  await dialog.getByLabel("Group name").fill(name);
-  await dialog.getByRole("button", { name: "Create group" }).click();
-  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
-  return page.url();
+  const crew = (await apiAs(page, "POST", "/v1/groups", { name })) as { id: string };
+  return `/groups/${crew.id}`;
 }
 
 /** Log a singles game against the guest Gary (added the first time). Lands on Games. */
@@ -29,7 +27,10 @@ async function logSingles(page: Page, groupUrl: string, firstTime: boolean): Pro
     await picker.getByRole("button", { name: /^Gary/ }).click();
   }
   await expect(page.getByRole("dialog")).toBeHidden();
-  await page.getByRole("textbox", { name: /^Game 1,/ }).first().fill("11");
+  await page
+    .getByRole("textbox", { name: /^Game 1,/ })
+    .first()
+    .fill("11");
   await page.getByRole("textbox", { name: "Game 1, Gary" }).fill("4");
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/play$/);
@@ -64,7 +65,9 @@ test("reflect after a game, skip one, and keep it to yourself", async ({ page })
   await sheet.getByRole("button", { name: "Save" }).click();
   await expect(sheet).toBeHidden();
   const first = page.getByRole("listitem").filter({ hasText: "Went well:" });
-  await expect(first).toContainText("Went well: Footwork, Return of serve, Third-shot drops. To improve: Serve consistency.");
+  await expect(first).toContainText(
+    "Went well: Footwork, Return of serve, Third-shot drops. To improve: Serve consistency.",
+  );
 
   // Closing the sheet keeps the prompt on the card; skipping clears it.
   await logSingles(page, groupUrl, false);
@@ -90,32 +93,55 @@ test("pick strengths and areas, and promote a repeated reflection", async ({ pag
   await section.getByRole("button", { name: "Edit your game" }).click();
   const edit = page.getByRole("dialog", { name: "Your game" });
   const strengths = edit.getByRole("group", { name: /Strengths/ });
-  for (const name of ["Footwork", "Court coverage", "Serve consistency", "Return of serve", "Poaching", "Backhand consistency"]) {
+  for (const name of [
+    "Footwork",
+    "Court coverage",
+    "Serve consistency",
+    "Return of serve",
+    "Poaching",
+    "Backhand consistency",
+  ]) {
     await strengths.getByRole("button", { name }).click();
   }
   await expect(strengths.getByRole("button", { name: "Lobs and overheads" })).toBeDisabled();
   for (const name of ["Poaching", "Backhand consistency"]) {
     await strengths.getByRole("button", { name }).click();
   }
-  await expect(edit.getByRole("group", { name: /Areas to improve/ }).getByRole("button", { name: /Footwork/ })).toBeDisabled();
+  await expect(
+    edit.getByRole("group", { name: /Areas to improve/ }).getByRole("button", { name: /Footwork/ }),
+  ).toBeDisabled();
   await strengths.getByRole("button", { name: /Return of serve/ }).click();
-  await edit.getByRole("group", { name: /Areas to improve/ }).getByRole("button", { name: "Dinking patience" }).click();
+  await edit
+    .getByRole("group", { name: /Areas to improve/ })
+    .getByRole("button", { name: "Dinking patience" })
+    .click();
   await edit.getByRole("button", { name: "Save" }).click();
   await expect(edit).toBeHidden();
   await expect(section).toContainText("Footwork");
   await expect(section).toContainText("Dinking patience");
 
-  // Five games where third-shot drops went well: a suggestion appears.
-  for (let n = 0; n < 5; n++) {
-    await logSingles(page, groupUrl, n === 0);
-    const sheet = page.getByRole("dialog", { name: "How did it go?" });
-    if (n === 0) {
-      // Profile items are marked, not pre-picked.
-      await expect(sheet.getByRole("button", { name: /Footwork · in your profile/ })).toHaveAttribute("aria-pressed", "false");
-    }
-    await sheet.getByRole("group", { name: /What went well/ }).getByRole("button", { name: "Third-shot drops" }).click();
-    await sheet.getByRole("button", { name: "Save" }).click();
-    await expect(sheet).toBeHidden();
+  // Five games where third-shot drops went well: a suggestion appears. The first through the
+  // screens; the other four through the API, so the test stays quick.
+  await logSingles(page, groupUrl, true);
+  const sheet = page.getByRole("dialog", { name: "How did it go?" });
+  // Profile items are marked, not pre-picked.
+  await expect(sheet.getByRole("button", { name: /Footwork · in your profile/ })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await sheet
+    .getByRole("group", { name: /What went well/ })
+    .getByRole("button", { name: "Third-shot drops" })
+    .click();
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(sheet).toBeHidden();
+  const groupId = groupUrl.split("/").pop() ?? "";
+  for (let n = 1; n < 5; n++) {
+    const game = await logSinglesAs(page, groupId, "Gary", [11, 4]);
+    await apiAs(page, "PUT", `/v1/groups/${groupId}/matches/${game}/reflection`, {
+      went_well: ["third_shot_drop"],
+      to_improve: [],
+    });
   }
   await page.goto("/you");
   await expect(section).toContainText("You picked Third-shot drops as going well in 5 of your last 5 games.");
