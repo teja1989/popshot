@@ -59,6 +59,9 @@ Crew ratings come from different player pools, so they can't be compared between
 
 ## Roadmap
 
+The current plan, with plans, pricing and the order of work, is in [growth-plan.md](growth-plan.md).
+The phases below are the original outline.
+
 | Phase | Scope |
 |---|---|
 | 0 | Repo, CI/CD, infrastructure, sign-in, isolation model and tests |
