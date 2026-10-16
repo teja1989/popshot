@@ -177,6 +177,14 @@ class GroupDetail(GroupSummary):
     usual_times: list[TimeOfDay] = []
     # The crew's saved courts (migration 0036, ADR 0007), default included: members only.
     courts: list[Court] = []
+    # Open crews (0038): anyone on Popshot can find the crew and join, up to max_members.
+    open_to_all: bool = False
+    max_members: int = 12
+    # Popshot's staff took it off the listing; its lead can't open it until it's relisted.
+    unlisted: bool = False
+    # It was closed because its default court stopped being one from the map: leads see a
+    # note to pick one, until the crew opens again.
+    closed_for_court: bool = False
     members: list[Member]
     # Leads and co-leads only: people removed or declined, who can be restored.
     former_members: list[FormerMember] = []
@@ -313,6 +321,8 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
                 SELECT g.id, g.name, g.default_format, g.default_points_to,
                        g.default_win_by_two, g.created_at,
                        g.about, g.usual_days, g.usual_times,
+                       g.open_to_all, g.max_members, g.unlisted_at IS NOT NULL AS unlisted,
+                       g.closed_for_court_at IS NOT NULL AS closed_for_court,
                        m.role AS my_role, m.status AS my_status
                 FROM groups g
                 JOIN group_members m ON m.group_id = g.id AND m.user_id = :me

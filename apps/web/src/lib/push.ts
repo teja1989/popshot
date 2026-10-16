@@ -24,6 +24,7 @@ export type Category =
   | "journey"
   | "invites"
   | "requests"
+  | "crew"
   | "tab"
   | "milestones";
 
@@ -34,7 +35,8 @@ export const CATEGORY_LABEL: Record<Category, { title: string; body: string }> =
   your_week: { title: "Your week", body: "On Mondays, a look back at your week, if you played." },
   journey: { title: "Journey check-ins", body: "Every two weeks you played, a look at how your game is growing." },
   invites: { title: "Invites", body: "When a crew invites you to join." },
-  requests: { title: "Join requests", body: "When someone asks to join a crew you lead." },
+  requests: { title: "Join requests", body: "When someone asks to join, or joins, a crew you lead." },
+  crew: { title: "Crew news", body: "When a crew you're in opens so anyone on Popshot can join." },
   tab: { title: "Crew tab", body: "Expenses and settle-ups that involve you." },
   milestones: { title: "Milestones", body: "When you reach one." },
 };

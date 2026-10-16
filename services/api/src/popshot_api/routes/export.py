@@ -129,6 +129,13 @@ def export_my_data(user: CurrentUserSession) -> JSONResponse:
             "SELECT kind, at FROM place_lookups WHERE user_id = :me ORDER BY at",
             params,
         ),
+        # Open crews' listings you reported (migration 0036).
+        "crew_reports": _rows(
+            session,
+            "SELECT group_id, reason, note, created_at, resolution FROM crew_reports "
+            "WHERE reporter_id = :me ORDER BY created_at",
+            params,
+        ),
         # Where you first came from, if Popshot knows (migration 0024).
         "signup_source": session.execute(text("SELECT app_my_signup_source()")).scalar_one(),
     }

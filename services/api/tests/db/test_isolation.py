@@ -410,6 +410,8 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         # test_places_api.py covers them.
         "places",
         "place_lookups",
+        # Read only through the admin functions, or your own (test_open_crews.py).
+        "crew_reports",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 

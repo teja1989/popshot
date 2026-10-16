@@ -28,9 +28,9 @@ export default async function PrivacyPage() {
         </li>
         <li>
           <strong>What you add:</strong> the groups you start or join (and a group&apos;s profile: its about, usual
-          times and home courts), invites, games (players, scores, rules and when they were played), meetups (time,
-          venue, note, who&apos;s going), your playing level, the focus areas and game notes you pick, and your
-          notification choices.
+          times and courts), invites, games (players, scores, rules and when they were played), meetups (time, venue,
+          note, who&apos;s going), your playing level, the focus areas and game notes you pick, and your notification
+          choices.
         </li>
         <li>
           <strong>Your journey:</strong> the story you write in your own words (how you started, what you&apos;re good
@@ -86,14 +86,27 @@ export default async function PrivacyPage() {
         <li>
           <strong>Your crew:</strong> people in a group see each member&apos;s name, photo, games, crew points and
           meetup answers in that group. Groups are private: nobody outside one can find or see it, except a recap
-          someone in it shares (below).
+          someone in it shares (below), or a group its lead opens (next).
+        </li>
+        <li>
+          <strong>Open groups:</strong> a group&apos;s lead or co-lead can open it, so anyone signed in to Popshot can
+          find it near them and join straight away. The listing shows the group&apos;s name, its about and usual play
+          times, the name it gives its default court with a link to that place on Google Maps, how far away it is and
+          how many members it has. It never shows who the members are or their games; those stay for members, including
+          anyone who joins. Members are told when their group opens, and can leave any time. To find groups near you,
+          the app sends Popshot where you&apos;re searching from; it&apos;s used for that search and not kept.
+        </li>
+        <li>
+          <strong>Reports:</strong> if you report an open group&apos;s listing, our staff see the group, the reason and
+          any note you add, not who you are. Your reports are in your data download; if you delete your account, they
+          stay without your name.
         </li>
         <li>
           <strong>Only you:</strong> your focus areas, game notes, journey story and learning notes.
         </li>
         <li>
           <strong>People invited to a group:</strong> see its name, its about and usual play times, and who invited
-          them. Its home courts and members stay hidden until they join.
+          them. Its courts and members stay hidden until they join.
         </li>
         <li>
           <strong>Invites:</strong> there&apos;s no search for people on Popshot. A crew&apos;s lead or co-lead can
@@ -119,11 +132,11 @@ export default async function PrivacyPage() {
           notifications. They handle data only to provide those services.
         </li>
         <li>
-          <strong>Court search:</strong> when a crew&apos;s lead or co-lead searches for its home court, what they type
-          goes to Google Maps from our servers, never with their name or email. We keep only Google&apos;s ID for the
-          place they pick, its map position (checked with Google every month) and the name the crew gives it, which only
-          the crew&apos;s members see. To keep searching fair, we also note when each person searched, and delete that
-          after 2 days.
+          <strong>Court search:</strong> when a crew&apos;s lead or co-lead searches for one of its courts, what they
+          type goes to Google Maps from our servers, never with their name or email. We keep only Google&apos;s ID for
+          the place they pick, its map position (checked with Google every month) and the name the crew gives it, which
+          only the crew&apos;s members see. To keep searching fair, we also note when each person searched, and delete
+          that after 2 days.
         </li>
         <li>
           <strong>Recaps written by AI:</strong> after an outing, Google&apos;s Gemini AI (through Google Cloud, in the

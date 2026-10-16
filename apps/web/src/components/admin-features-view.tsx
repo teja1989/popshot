@@ -136,7 +136,7 @@ function Switches({
 
   return (
     <>
-      <fieldset className={`${segmentTrack} auto-cols-max grid-flow-col self-start overflow-x-auto`}>
+      <fieldset className={`${segmentTrack} auto-cols-max grid-flow-col self-start overflow-x-auto min-w-0 max-w-full`}>
         <legend className="sr-only">Area</legend>
         {[null, ...areas].map((a) => (
           <label key={a ?? "all"} className={segmentOption}>
