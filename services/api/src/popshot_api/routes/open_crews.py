@@ -12,15 +12,16 @@ While the crew.open switch is off for a crew, it isn't listed, and its lead can'
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from popshot_api.db import CurrentUserSession
+from popshot_api.places import PlacesUnavailableError
 from popshot_api.push import Message
-from popshot_api.routes.features import feature_on
+from popshot_api.routes.features import feature_live, feature_on
 from popshot_api.routes.groups import (
     NOT_FOUND,
     GroupDetail,
@@ -31,6 +32,14 @@ from popshot_api.routes.groups import (
     _no_links,
 )
 from popshot_api.routes.notifications import CurrentNotifier
+from popshot_api.routes.places import (
+    PlaceId,
+    PlaceSearch,
+    SearchResult,
+    _count,
+    _places,
+    _suggestion,
+)
 
 router = APIRouter(prefix="/v1")
 
@@ -69,6 +78,18 @@ class OpenCrewSearch(BaseModel):
     radius_km: Annotated[int, Field(ge=1, le=100)] = 25
 
 
+class PlaceStart(BaseModel):
+    """Search from a town, park or court picked from a typed search, when the phone's
+    location isn't shared."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    place_id: PlaceId
+    # The typed search's Google session, which the pick ends.
+    session: UUID | None = None
+    radius_km: Annotated[int, Field(ge=1, le=100)] = 25
+
+
 class OpenCrew(BaseModel):
     """What the listing shows. Never who the members are."""
 
@@ -86,6 +107,13 @@ class OpenCrew(BaseModel):
     full: bool
     # 'active' or 'pending' when you're already in it (or waiting), else None.
     my_status: Literal["active", "pending"] | None
+
+
+class PlaceAnswer(BaseModel):
+    # 'not_found' or 'unavailable' when Google couldn't place it: answers, not errors (an
+    # error would undo the lookup's count, routes/places.py).
+    outcome: Literal["found", "not_found", "unavailable"]
+    crews: list["OpenCrew"]
 
 
 class OpenSettings(BaseModel):
@@ -127,12 +155,10 @@ def _limited(session: Session, sql: str, params: dict[str, object], limited: HTT
     return outcome
 
 
-@router.post("/open-crews/search")
-def search_open_crews(body: OpenCrewSearch, user: CurrentUserSession) -> list[OpenCrew]:
-    """Open crews near a point, nearest first (up to 20)."""
-    rows = user.session.execute(
+def _near(session: Session, lat: float, lng: float, radius_km: int) -> list[OpenCrew]:
+    rows = session.execute(
         text("SELECT * FROM app_open_crews_near(:lat, :lng, :radius, 20)"),
-        {"lat": body.lat, "lng": body.lng, "radius": body.radius_km},
+        {"lat": lat, "lng": lng, "radius": radius_km},
     ).mappings()
     return [
         OpenCrew(
@@ -151,6 +177,54 @@ def search_open_crews(body: OpenCrewSearch, user: CurrentUserSession) -> list[Op
         )
         for row in rows
     ]
+
+
+@router.post("/open-crews/search")
+def search_open_crews(body: OpenCrewSearch, user: CurrentUserSession) -> list[OpenCrew]:
+    """Open crews near a point, nearest first (up to 20)."""
+    return _near(user.session, body.lat, body.lng, body.radius_km)
+
+
+def _require_find(request: Request, session: Session) -> None:
+    """Typed searches call Google: only while Find is live, and only with places set up."""
+    _places(request)
+    if not feature_live(session, FEATURE):
+        raise NOT_FOUND
+
+
+@router.post("/open-crews/places")
+def search_places_to_start(
+    body: PlaceSearch, request: Request, user: CurrentUserSession
+) -> SearchResult:
+    """Towns, parks and courts matching what's typed so far, to search from. Nothing is kept."""
+    _require_find(request, user.session)
+    _count(user.session, "search")
+    try:
+        found = _places(request).suggest(body.text, str(body.session))
+    except PlacesUnavailableError:
+        return SearchResult(suggestions=[], unavailable=True)
+    return SearchResult(suggestions=[_suggestion(f) for f in found])
+
+
+@router.post("/open-crews/search/place")
+def search_open_crews_from_place(
+    body: PlaceStart, request: Request, user: CurrentUserSession
+) -> PlaceAnswer:
+    """Open crews near a picked place. The place's coordinates are used for this search only:
+    not kept, and not sent back."""
+    _require_find(request, user.session)
+    _count(user.session, "pick")
+    try:
+        location = _places(request).locate(
+            body.place_id, str(body.session) if body.session else None
+        )
+    except PlacesUnavailableError:
+        return PlaceAnswer(outcome="unavailable", crews=[])
+    if location is None:
+        return PlaceAnswer(outcome="not_found", crews=[])
+    return PlaceAnswer(
+        outcome="found", crews=_near(user.session, location.lat, location.lng, body.radius_km)
+    )
 
 
 @router.post("/open-crews/{group_id}/join")

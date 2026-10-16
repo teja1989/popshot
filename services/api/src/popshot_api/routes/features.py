@@ -31,6 +31,9 @@ class MyFeatures(BaseModel):
     everywhere: list[str]
     # Switches in the 'you' area, which are per person, not per crew (migration 0032).
     you: list[str]
+    # Live anywhere, in your crews or not (migration 0039): for what anyone can browse, like
+    # Find. Keys only, never which crews.
+    live: list[str] = []
 
 
 @router.get("/me/features")
@@ -42,4 +45,12 @@ def my_features(user: CurrentUserSession) -> MyFeatures:
     you = list(
         user.session.execute(text("SELECT feature FROM app_my_personal_features()")).scalars()
     )
-    return MyFeatures(crews=crews, everywhere=sorted({row.feature for row in rows}), you=you)
+    live = list(user.session.execute(text("SELECT app_live_features()")).scalars())
+    return MyFeatures(
+        crews=crews, everywhere=sorted({row.feature for row in rows}), you=you, live=live
+    )
+
+
+def feature_live(session: Session, key: str) -> bool:
+    """Is `key` on for everyone, or for at least one crew (migration 0039)?"""
+    return key in session.execute(text("SELECT app_live_features()")).scalars().all()

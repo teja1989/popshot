@@ -167,7 +167,7 @@ def test_unknown_features_are_off_and_changes_apply_at_once(
     assert not is_on(app_engine, me, key, group_id)
 
 
-def test_my_features(people: People, switches: Switches) -> None:
+def test_my_features(people: People, switches: Switches, owner_engine: Engine) -> None:
     casey = people.new("Casey")
     mine = create(people, casey, "Mine")["id"]
     other = create(people, casey, "Other")["id"]
@@ -183,12 +183,28 @@ def test_my_features(people: People, switches: Switches) -> None:
     assert {beta, paid} <= set(body["everywhere"])
     # The AI recap writer starts on for everyone.
     assert "recaps.ai" in body["crews"][mine]
-    # Someone with no crews gets nothing.
-    assert people.client.get("/v1/me/features", headers=people.new("Robin")).json() == {
+    # Someone with no crews gets nothing about crews; only what's live anywhere, by key
+    # (migration 0039), which includes beta now that a crew has it.
+    loner = people.client.get("/v1/me/features", headers=people.new("Robin")).json()
+    assert {k: v for k, v in loner.items() if k != "live"} == {
         "crews": {},
         "everywhere": [],
         "you": [],
     }
+    with owner(owner_engine) as conn:
+        expected = (
+            conn.execute(
+                text(
+                    "SELECT key FROM features f WHERE rollout = 'everyone' OR (rollout = 'crews' "
+                    "AND EXISTS (SELECT 1 FROM feature_crews c JOIN groups g ON g.id = c.group_id "
+                    "AND g.deleted_at IS NULL WHERE c.feature_key = f.key)) ORDER BY key"
+                )
+            )
+            .scalars()
+            .all()
+        )
+    assert loner["live"] == list(expected)
+    assert beta in loner["live"]
     assert people.client.get("/v1/me/features").status_code == 401
 
 
