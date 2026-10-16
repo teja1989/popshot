@@ -101,15 +101,3 @@ def remove_court(session: Session, group_id: UUID, court_id: UUID) -> bool:
         {"g": group_id, "c": court_id},
     ).first()
     return removed is not None
-
-
-def map_court(courts: list[SavedCourt]) -> SavedCourt | None:
-    """The court on the map, as the screens before crew courts showed it: the default when
-    it's a Google place, otherwise the first one that is."""
-    google = [c for c in courts if c.google_place_id]
-    return next((c for c in google if c.is_default), google[0] if google else None)
-
-
-def typed_courts(courts: list[SavedCourt]) -> list[SavedCourt]:
-    """Courts without a Google place: what the screens before crew courts called home courts."""
-    return [c for c in courts if not c.google_place_id]

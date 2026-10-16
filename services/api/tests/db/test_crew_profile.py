@@ -18,7 +18,6 @@ PROFILE = {
     "about": "Friendly games, all levels. We rotate partners.",
     "usual_days": ["thu", "tue", "sat"],
     "usual_times": ["evening", "morning"],
-    "home_courts": ["Riverside Park courts", "St. James Rec"],
 }
 
 
@@ -33,6 +32,12 @@ def crew(people: People) -> dict[str, Any]:
 
 def set_profile(people: People, who: Headers, gid: str, profile: dict[str, Any]) -> Any:
     return people.client.put(f"/v1/groups/{gid}/profile", json=profile, headers=who)
+
+
+def add_court(people: People, who: Headers, gid: str, label: str) -> None:
+    """Courts are saved on their own (routes/courts.py), not with the profile."""
+    response = people.client.post(f"/v1/groups/{gid}/courts", json={"label": label}, headers=who)
+    assert response.status_code == 200, response.text
 
 
 def detail(people: People, who: Headers, gid: str) -> dict[str, Any]:
@@ -51,18 +56,12 @@ def test_leads_set_the_profile_and_members_see_it(people: People, crew: dict[str
     # Days and times come back in week and day order.
     assert seen["usual_days"] == ["tue", "thu", "sat"]
     assert seen["usual_times"] == ["morning", "evening"]
-    assert seen["home_courts"] == PROFILE["home_courts"]
     # Members can't change it.
     assert set_profile(people, crew["sam"], gid, PROFILE).status_code == 403
     # Clearing it.
     cleared = set_profile(people, crew["casey"], gid, {"about": "  "})
     assert cleared.status_code == 200
     assert cleared.json()["about"] is None
-    # Leaving the courts out keeps them (they're the crew's saved courts now, migration 0036);
-    # an empty list clears them.
-    assert cleared.json()["home_courts"] == PROFILE["home_courts"]
-    cleared = set_profile(people, crew["casey"], gid, {"home_courts": []})
-    assert cleared.json()["home_courts"] == []
 
 
 @pytest.mark.parametrize(
@@ -73,9 +72,6 @@ def test_leads_set_the_profile_and_members_see_it(people: People, crew: dict[str
         {"about": "Email casey@example.com to join"},
         {"about": "Find us on dinkers.app"},
         {"about": "x" * 201},
-        {"home_courts": ["Visit courts.com"]},
-        {"home_courts": ["A", "B", "C", "D"]},
-        {"home_courts": ["x" * 81]},
         {"usual_days": ["monday"]},
         {"usual_times": ["night"]},
         {"about": "Tab\u0000here"},
@@ -88,8 +84,9 @@ def test_the_profile_refuses_links_and_oversize_values(
 
 
 def test_normal_text_with_dots_is_fine(people: People, crew: dict[str, Any]) -> None:
-    profile = {"about": "Dr. Lee's group, e.g. drills first.", "home_courts": ["St. James Rec"]}
+    profile = {"about": "Dr. Lee's group, e.g. drills first."}
     assert set_profile(people, crew["casey"], crew["group_id"], profile).status_code == 200
+    add_court(people, crew["casey"], crew["group_id"], "St. James Rec")
 
 
 def test_the_database_refuses_links_too(
@@ -110,6 +107,7 @@ def test_people_not_in_the_crew_see_about_and_times_but_never_courts(
 ) -> None:
     gid = crew["group_id"]
     set_profile(people, crew["casey"], gid, PROFILE)
+    add_court(people, crew["casey"], gid, "Riverside Park courts")
 
     # Through an invite link's preview.
     link = people.client.post(
@@ -121,14 +119,14 @@ def test_people_not_in_the_crew_see_about_and_times_but_never_courts(
     shown = preview.json()
     assert shown["about"] == PROFILE["about"]
     assert shown["usual_days"] == ["tue", "thu", "sat"]
-    assert "home_courts" not in shown
+    assert not [key for key in shown if "court" in key]
     assert "Riverside" not in preview.text
 
     # While waiting to be let in: still no courts.
     people.client.post("/v1/invites/join", json={"token": link}, headers=riley)
     waiting = detail(people, riley, gid)
     assert waiting["my_status"] == "pending"
-    assert waiting["home_courts"] == []
+    assert waiting["courts"] == []
     assert waiting["about"] == PROFILE["about"]
 
     # In the invites inbox.
@@ -148,10 +146,11 @@ def test_the_preview_functions_never_return_courts(
 ) -> None:
     """Even called straight in the database, by someone outside the crew."""
     set_profile(people, crew["casey"], crew["group_id"], PROFILE)
+    add_court(people, crew["casey"], crew["group_id"], "Riverside Park courts")
     outsider = people.user_id(people.new("Pat"))
     with as_user(app_engine, outsider) as conn:
         for fn in ("app_preview_invite(:h)", "app_my_direct_invites()"):
             columns = conn.execute(
                 text(f"SELECT * FROM {fn} LIMIT 0"), {"h": secrets.token_bytes(32)}
             ).keys()
-            assert "home_courts" not in columns
+            assert not [c for c in columns if "court" in c]

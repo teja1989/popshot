@@ -25,13 +25,11 @@ export const TIME_LABEL: Record<TimeOfDay, { one: string; many: string }> = {
 
 export const ABOUT_MAX = 200;
 export const COURT_MAX = 80;
-export const COURTS_MAX = 3;
 
 export interface CrewProfile {
   about: string | null;
   usual_days: Day[];
   usual_times: TimeOfDay[];
-  home_courts?: string[];
 }
 
 function and(parts: string[]): string {

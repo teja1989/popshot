@@ -1,4 +1,5 @@
-"""A crew's home court from Google Places (migration 0035, routes/places.py).
+"""Crew courts found with Google Places (migrations 0035 and 0036, routes/places.py and
+routes/courts.py).
 
 Google is replaced by FakePlaces. Each test puts its own crew on the courts.places list, so no
 global switch changes under other tests. The day's limit is shared by everyone, so tests that
@@ -67,7 +68,7 @@ def pick(
     people: People, who: Headers, gid: str, place_id: str = "fake-riverside-park", **over: Any
 ) -> Any:
     body = {"place_id": place_id, "session": str(uuid4()), "label": "Riverside courts", **over}
-    return people.client.put(f"/v1/groups/{gid}/home-place", json=body, headers=who)
+    return people.client.post(f"/v1/groups/{gid}/courts", json=body, headers=who)
 
 
 def detail(people: People, who: Headers, gid: str) -> dict[str, Any]:
@@ -75,6 +76,12 @@ def detail(people: People, who: Headers, gid: str) -> dict[str, Any]:
     assert response.status_code == 200, response.text
     body: dict[str, Any] = response.json()
     return body
+
+
+def on_map(group: dict[str, Any]) -> tuple[str, str] | None:
+    """The crew's saved court from Google, by its name and Google's ID."""
+    found = [(c["label"], c["google_place_id"]) for c in group["courts"] if c["google_place_id"]]
+    return found[0] if found else None
 
 
 def lookups(owner_engine: Engine, user_id: UUID | None = None) -> int:
@@ -110,7 +117,7 @@ def fill(owner_engine: Engine) -> Iterator[Any]:
         conn.execute(text("DELETE FROM place_lookups WHERE id = ANY(:ids)"), {"ids": added})
 
 
-def test_a_lead_searches_picks_and_names_the_home_court(
+def test_a_lead_searches_picks_and_names_a_court(
     people: People, crew: dict[str, Any], fake: FakePlaces
 ) -> None:
     gid = crew["gid"]
@@ -131,15 +138,11 @@ def test_a_lead_searches_picks_and_names_the_home_court(
     saved = pick(people, crew["casey"], gid, session=session, label="  Riverside courts ")
     assert saved.status_code == 200, saved.text
     assert saved.json()["outcome"] == "saved"
-    assert saved.json()["group"]["home_place"] == "Riverside courts"
+    assert on_map(saved.json()["group"]) == ("Riverside courts", "fake-riverside-park")
     # The pick ends the search's Google session.
     assert fake.calls[-1] == ("locate", session)
     # Members see it by the crew's own name, with Google's ID for an "Open in Maps" link.
-    seen = detail(people, crew["sam"], gid)
-    assert (seen["home_place"], seen["home_place_google_id"]) == (
-        "Riverside courts",
-        "fake-riverside-park",
-    )
+    assert on_map(detail(people, crew["sam"], gid)) == ("Riverside courts", "fake-riverside-park")
 
 
 def test_only_ids_and_fresh_coordinates_are_kept(
@@ -170,12 +173,12 @@ def test_members_strangers_and_waiting_people_cant(people: People, crew: dict[st
     assert search(people, stranger, gid).status_code == 404
     assert pick(people, stranger, gid).status_code == 404
     assert pick(people, crew["casey"], gid).json()["outcome"] == "saved"
-    # Someone waiting to join sees the crew, but not its home court.
+    # Someone waiting to join sees the crew, but not its courts.
     waiting = people.new("Wren")
     token = people.client.post(f"/v1/groups/{gid}/invites", json={}, headers=crew["casey"]).json()
     people.client.post("/v1/invites/join", json={"token": token["token"]}, headers=waiting)
     hidden = detail(people, waiting, gid)
-    assert (hidden["home_place"], hidden["home_place_google_id"]) == (None, None)
+    assert hidden["courts"] == []
 
 
 def test_hidden_while_the_switch_is_off_or_places_are_off(
@@ -212,7 +215,7 @@ def test_an_unknown_place_is_an_answer_and_still_counts(
     answer = pick(people, crew["casey"], crew["gid"], place_id="fake-nowhere")
     assert answer.status_code == 200
     assert answer.json()["outcome"] == "not_found"
-    assert answer.json()["group"]["home_place"] is None
+    assert answer.json()["group"]["courts"] == []
     # Not rolled back with an error: the lookup Google answered is counted.
     assert lookups(owner_engine, casey) == before + 1
 
@@ -275,17 +278,6 @@ def lookups_today(owner_engine: Engine, kind: str) -> int:
             {"k": kind},
         ).scalar_one()
     return count
-
-
-def test_clearing_the_home_court(people: People, crew: dict[str, Any]) -> None:
-    gid = crew["gid"]
-    assert pick(people, crew["casey"], gid).json()["outcome"] == "saved"
-    assert (
-        people.client.delete(f"/v1/groups/{gid}/home-place", headers=crew["sam"]).status_code == 403
-    )
-    cleared = people.client.delete(f"/v1/groups/{gid}/home-place", headers=crew["casey"])
-    assert cleared.status_code == 200
-    assert (cleared.json()["home_place"], cleared.json()["home_place_google_id"]) == (None, None)
 
 
 def test_the_app_reads_places_only_through_crews_and_never_writes_them(
@@ -390,7 +382,10 @@ def test_coordinates_older_than_thirty_days_are_cleared(
         ).one()
     assert tuple(row) == (None, None)
     # The crew keeps its court and its name for it.
-    assert detail(people, crew["sam"], crew["gid"])["home_place"] == "Riverside courts"
+    assert on_map(detail(people, crew["sam"], crew["gid"])) == (
+        "Riverside courts",
+        "fake-riverside-park",
+    )
 
 
 def test_the_tidy_up_drops_lookup_counts_after_two_days(

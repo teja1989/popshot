@@ -50,11 +50,6 @@ def test_a_lead_saves_courts_and_the_first_is_the_default(
         ("Riverside courts", True),
         ("St James indoor", False),
     ]
-    # Typed courts are the crew's home courts as the screens before crew courts showed them.
-    assert detail(people, crew["sam"], gid)["home_courts"] == [
-        "Riverside courts",
-        "St James indoor",
-    ]
 
 
 def test_five_at_most_and_names_are_checked(people: People, crew: dict[str, Any]) -> None:
@@ -148,8 +143,6 @@ def test_a_google_court_is_counted_and_saved_once(
     assert fake.calls[-1] == ("locate", session)
     [court] = saved.json()["group"]["courts"]
     assert (court["google_place_id"], court["is_default"]) == ("fake-riverside-park", True)
-    # The court on the map, as the screens before crew courts showed it.
-    assert saved.json()["group"]["home_place"] == "Riverside courts"
     calls = len(fake.calls)
     again = add(people, casey, gid, "Again", place_id="fake-riverside-park")
     assert (again.status_code, again.json()["detail"]) == (409, "That court is already saved.")
@@ -216,75 +209,71 @@ def test_a_meetup_can_be_at_a_saved_court_and_keeps_its_name(
     assert (kept["venue"], kept["court_id"]) == ("Riverside courts", None)
 
 
-def test_the_old_screens_keep_working(people: People, crew: dict[str, Any]) -> None:
-    """Until the web moves to /courts: the profile's home courts and the court on the map."""
+def test_the_old_ways_to_set_courts_are_gone(people: People, crew: dict[str, Any]) -> None:
+    """Crew courts replaced the home courts and the court on the map (migration 0037)."""
     gid, casey = crew["gid"], crew["casey"]
-    profile = {"home_courts": ["Riverside courts", "St James"]}
-    assert people.client.put(f"/v1/groups/{gid}/profile", json=profile, headers=casey).is_success
-    picked = people.client.put(
-        f"/v1/groups/{gid}/home-place",
-        json={"place_id": "fake-sunset-park", "session": str(uuid4()), "label": "Sunset"},
-        headers=casey,
+    profile = {"home_courts": ["Riverside courts"]}
+    assert (
+        people.client.put(f"/v1/groups/{gid}/profile", json=profile, headers=casey).status_code
+        == 422
     )
-    assert picked.json()["outcome"] == "saved"
-    assert courts(people, casey, gid) == [
-        ("Riverside courts", False),
-        ("St James", False),
-        ("Sunset", True),
-    ]
-    # Picking another place on the map replaces it.
-    people.client.put(
-        f"/v1/groups/{gid}/home-place",
-        json={"place_id": "fake-riverside-park", "label": "Riverside park"},
-        headers=casey,
+    body = {"place_id": "fake-sunset-park", "session": str(uuid4()), "label": "Sunset"}
+    assert (
+        people.client.put(f"/v1/groups/{gid}/home-place", json=body, headers=casey).status_code
+        == 404
     )
-    assert courts(people, casey, gid)[-1] == ("Riverside park", True)
-    assert len(courts(people, casey, gid)) == 3
-    people.client.delete(f"/v1/groups/{gid}/home-place", headers=casey)
-    assert courts(people, casey, gid) == [("Riverside courts", True), ("St James", False)]
+    assert people.client.delete(f"/v1/groups/{gid}/home-place", headers=casey).status_code == 404
+    shown = detail(people, casey, gid)
+    assert not {"home_courts", "home_place", "home_place_google_id"} & set(shown)
+    assert courts(people, casey, gid) == []
 
 
-def _backfill_sql() -> str:
-    path = Path(__file__).parents[2] / "migrations" / "versions" / "0036_crew_courts.py"
-    spec = importlib.util.spec_from_file_location("migration_0036", path)
+def _migration(name: str) -> Any:
+    path = Path(__file__).parents[2] / "migrations" / "versions" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(f"migration_{name}", path)
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    sql: str = module.BACKFILL
-    return sql
+    return module
 
 
-def test_existing_courts_are_copied_in_with_the_map_court_as_default(
-    people: People, owner_engine: Engine
+def test_going_back_and_forth_keeps_the_courts(
+    people: People, crew: dict[str, Any], owner_engine: Engine
 ) -> None:
-    casey = people.new("Casey")
-    both = people.client.post("/v1/groups", json={"name": "Both"}, headers=casey).json()["id"]
-    typed = people.client.post("/v1/groups", json={"name": "Typed"}, headers=casey).json()["id"]
-    with owner(owner_engine) as conn:
-        place = conn.execute(
-            text("INSERT INTO places (google_place_id) VALUES (:p) RETURNING id"),
-            {"p": f"test-{uuid4().hex}"},
-        ).scalar_one()
-        conn.execute(
-            text(
-                "UPDATE groups SET home_courts = ARRAY['Riverside', 'St James'], "
-                "home_place_id = :p, home_place_label = 'On the map' WHERE id = :g"
-            ),
-            {"p": place, "g": both},
-        )
-        conn.execute(
-            text("UPDATE groups SET home_courts = ARRAY['Hall', ' '] WHERE id = :g"), {"g": typed}
-        )
-        conn.execute(text(_backfill_sql()))
-        # Running it again adds nothing.
-        conn.execute(text(_backfill_sql()))
-    assert courts(people, casey, both) == [
-        ("On the map", True),
-        ("Riverside", False),
-        ("St James", False),
-    ]
-    assert courts(people, casey, typed) == [("Hall", True)]
+    """0037's downgrade fills the old columns from crew courts, and 0036's copy brings them
+    back. Run as the owner in a transaction that's rolled back, so nothing else sees it."""
+    gid, casey = crew["gid"], crew["casey"]
+    add(people, casey, gid, "On the map", place_id="fake-riverside-park")
+    for label in ("Riverside", "St James", "Hall", "Fourth"):
+        add(people, casey, gid, label)
+    before = courts(people, casey, gid)
+    with owner_engine.connect() as conn:
+        transaction = conn.begin()
+        try:
+            conn.execute(text("SET LOCAL ROLE popshot_owner"))
+            conn.execute(text(_migration("0037_drop_old_home_courts").DOWNGRADE))
+            old = conn.execute(
+                text("SELECT home_courts, home_place_label FROM groups WHERE id = :g"), {"g": gid}
+            ).one()
+            # The screens before crew courts kept three typed courts at most.
+            assert tuple(old) == (["Riverside", "St James", "Hall"], "On the map")
+            conn.execute(text("DELETE FROM crew_courts WHERE group_id = :g"), {"g": gid})
+            backfill = _migration("0036_crew_courts").BACKFILL
+            conn.execute(text(backfill))
+            # Running it again adds nothing.
+            conn.execute(text(backfill))
+            copied = conn.execute(
+                text(
+                    "SELECT label, is_default FROM crew_courts WHERE group_id = :g "
+                    "ORDER BY position, created_at, id"
+                ),
+                {"g": gid},
+            ).all()
+            assert [tuple(c) for c in copied] == before[:4]
+        finally:
+            transaction.rollback()
+    assert courts(people, casey, gid) == before
 
 
 def test_the_job_keeps_and_refreshes_places_saved_courts_use(
