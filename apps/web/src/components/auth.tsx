@@ -55,7 +55,11 @@ export function AuthProvider({
 
   useEffect(() => {
     let lastUid: string | null = null;
+    // Who is signed in right now. A profile answer that arrives after a sign-out or a switch
+    // belongs to someone else and is dropped, or it would put the old account back.
+    let current: User | null = null;
     return onAuthStateChanged(auth, (user) => {
+      current = user;
       // Remembered API answers belong to one account: drop them on sign-out or a switch.
       if (user?.uid !== lastUid) {
         clearCache();
@@ -68,9 +72,11 @@ export function AuthProvider({
       setState({ kind: "signed-in", user, me: null, problem: null });
       apiGet<Me>(user, "/v1/me")
         .then((me) => {
+          if (current !== user) return;
           setState({ kind: "signed-in", user, me, problem: null });
         })
         .catch(() => {
+          if (current !== user) return;
           setState({
             kind: "signed-in",
             user,
