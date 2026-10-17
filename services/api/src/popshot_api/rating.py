@@ -102,12 +102,14 @@ def replay(
     matches: Iterable[PlayedMatch],
     starts: Mapping[UUID, float],
     pregame: dict[UUID, tuple[float, float]] | None = None,
+    edges: dict[UUID, float] | None = None,
 ) -> dict[UUID, PlayerRating]:
     """Ratings for every player after all `matches`, played in time order.
 
     `starts` gives a player's starting rating (from a self-rated level); anyone missing
     starts at START. If `pregame` is given, it's filled with each match's team ratings
-    (team A, team B) going into that match.
+    (team A, team B) going into that match; if `edges` is, with team A's points share above
+    expected in each match (team B's is the negative).
     """
     players: dict[UUID, PlayerRating] = {}
 
@@ -136,6 +138,8 @@ def replay(
                 p.rating = clamp(p.rating - step(p.matches) * surprise)
         winner = match.winner
         edge_a = sum(surprises) / len(surprises) if surprises else 0.0
+        if edges is not None:
+            edges[match.id] = edge_a
         for team, side in (("A", side_a), ("B", side_b)):
             for p in side:
                 won = team == winner

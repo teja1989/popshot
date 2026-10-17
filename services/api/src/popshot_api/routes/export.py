@@ -120,6 +120,17 @@ def export_my_data(user: CurrentUserSession) -> JSONResponse:
             "settings": next(iter(_rows(session, _JOURNEY_SETTINGS, params)), None),
             "checkins": _rows(session, _CHECKINS, params),
         },
+        # Your weekly games goal for your game map (migration 0042), if you set one.
+        "play_goal": next(
+            iter(
+                _rows(
+                    session,
+                    "SELECT weekly_games, updated_at FROM play_goals WHERE user_id = :me",
+                    params,
+                )
+            ),
+            None,
+        ),
         "invites": _rows(session, "SELECT * FROM app_my_direct_invites()", params),
         "blocked_crews": _rows(session, "SELECT * FROM app_my_invite_blocks()", params),
         # When you searched for or picked a court in the last two days (migration 0035): kept

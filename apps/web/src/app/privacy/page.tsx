@@ -39,6 +39,10 @@ export default async function PrivacyPage() {
           deleted with your account.
         </li>
         <li>
+          <strong>Your weekly games goal:</strong> if you set one for your game map on You. Only you see it; it&apos;s
+          in your data download and deleted with your account. The map itself is worked out from your games each time.
+        </li>
+        <li>
           <strong>Invites:</strong> your Popshot code (a random code you can change any time), invites crews send you
           and how you answered, crews you&apos;ve stopped from inviting you, and when leads looked codes up (to limit
           how often they can, so codes can&apos;t be guessed).
