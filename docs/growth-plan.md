@@ -248,7 +248,7 @@ is a busy open-play court nearby for a pilot.
 ## Still open
 
 - Which countries come after the US, for pricing by country and where video is stored.
-- What PB Vision's partner terms allow: highlights in the API, white-labelling, keeping the stats,
+- What PB Vision's partner terms allow (the request is in `partners/pb-vision.md`): highlights in the API, white-labelling, keeping the stats,
   and the final price per hour.
 
 - Whether the full Journey check-ins move behind Plus. Anyone using them during the trial keeps
