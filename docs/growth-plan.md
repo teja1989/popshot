@@ -153,6 +153,67 @@ health and fitness apps keep about 3–8% of people at day 30.
 | Written recaps (Gemini) are free and cost the most | Decide later | Option: free recaps use Popshot's own words; Gemini-written ones with Crew Plus |
 | Shared recaps are public by link | Accept | That's the marketing loop |
 
+## Video: highlights and how the game was played
+
+Proposal, 17 Oct 2026. A player records a game on their phone and uploads it; the crew gets
+highlights to share and a picture of how the game was played, with what to work on next.
+
+**Partner, don't build (for now).** PB Vision analyses pickleball video today: shots, third shots,
+court positioning, rally patterns. Its partner API costs about $8 per hour of HD video (about $1.60
+for a 12-minute game), needs an Annual Premium pass ($396 a year) and approval, and takes 3 to 24
+hours to process. Building our own model (ball tracking, poses, court lines) would need thousands
+of labelled rallies and months of work before the numbers are trustworthy; it pays off only at
+thousands of hours a month. We keep our own layer in between, so the provider can change.
+
+**What players see**
+
+| Where | What |
+|---|---|
+| A game | "Add video" (recorded on a phone, up to 20 minutes), then "Analysing, ready in a few hours" |
+| The game, once analysed | Highlights; how it was played (shot mix, third shots, time at the kitchen line); one or two things to try next |
+| The day's recap | The best highlight at the top, and in the shared card |
+| Journey | Check-ins use the analysis for "what went well" and "try next", in Popshot's friendly words |
+
+Same rules as everywhere else: nothing that ranks or shames, and no "AI" on screens.
+
+**Pilot budget: $100 a month, hard capped**
+
+| Item | Cost a month |
+|---|---|
+| PB Vision Annual Premium (needed for the API) | ~$33 |
+| Analysis, about 35 games at ~$1.60 | ~$56 |
+| Upload storage (deleted after 14 days) and sending video to PB Vision | ~$5–10 |
+| **Total** | **~$95–100** |
+
+- Cap: 30 analysed games a month across all pilot crews (for example 3 crews, 10 each). When it's
+  reached, "Add video" says it's back next month. A switch stops all analysis at once.
+- Rates are negotiated; confirm with PB Vision before building.
+
+**Privacy and safety**
+
+- Everyone in the game is told a video was added, and any of them can have it removed.
+- No face recognition: players are matched by who was logged in the game, not by their faces.
+- Raw video is deleted 14 days after analysis; clips and stats stay with the game. Only the crew
+  sees them, unless a recap is shared.
+- The privacy page names PB Vision and says what is sent (the video and the players' first names).
+- The API key stays on the server; uploads go straight to storage through a short-lived link;
+  PB Vision's replies are checked against a shared secret.
+
+**Paying for it later (not in the pilot)**
+
+Video goes into Crew Plus, held by the lead, as a monthly number of analysed games, with top-ups
+for busy crews. Any member can add a video from the crew's games, up to a monthly limit the lead
+sets. Prices come from what the pilot really costs per game, plus payment fees (about 5%). Sold on
+the web, not through app stores.
+
+**What the pilot must show**
+
+- Pilot crews add video to at least 1 in 5 game days.
+- Uploads finish (at least 9 in 10 started on a phone).
+- Analysed games are opened by at least half the players in them.
+- Pilot crews play more weeks than similar crews without video.
+- The real cost per analysed game.
+
 ## Order of work
 
 Each step is one or two small PRs from `main`, behind a switch, and measured before the next.
@@ -168,6 +229,15 @@ Each step is one or two small PRs from `main`, behind a switch, and measured bef
 | 6 | The shared-recap door, and the three ways forward after sign-up |
 | 7 | Plus and Crew Plus: payments, bands, trials (only after seasons ship) |
 
+Video runs alongside, as its own pilot:
+
+| Step | What |
+|---|---|
+| V0 | Apply to PB Vision's partner API and confirm rates, highlights and data terms (the owner) |
+| V1 | Upload a game's video (behind a switch, pilot crews only), the monthly cap and deletion |
+| V2 | Send it for analysis; show highlights and how the game was played |
+| V3 | Highlights in recaps and shared cards; analysis in Journey check-ins |
+
 ## Parked
 
 **Popshot at the court:** a QR sign at public courts with a digital paddle stack for open play.
@@ -176,6 +246,10 @@ together are offered a crew. A live board shows counts, never names. Venues coul
 is a busy open-play court nearby for a pilot.
 
 ## Still open
+
+- Which countries come after the US, for pricing by country and where video is stored.
+- What PB Vision's partner terms allow: highlights in the API, white-labelling, keeping the stats,
+  and the final price per hour.
 
 - Whether the full Journey check-ins move behind Plus. Anyone using them during the trial keeps
   them, and any change is announced first.
