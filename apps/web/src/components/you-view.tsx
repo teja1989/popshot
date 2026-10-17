@@ -6,6 +6,7 @@ import { useSignedIn } from "./auth";
 import { CrewPointsSection } from "./crew-points-section";
 import { EditNameSheet } from "./edit-name-sheet";
 import { FocusSection } from "./focus-section";
+import { GameMapSection } from "./game-map-section";
 import { MyStatsSection } from "./my-stats-section";
 import { YouTabs } from "./you-tabs";
 import { Avatar } from "./ui/avatar";
@@ -39,6 +40,8 @@ export function YouView() {
           <SettingsIcon />
         </Link>
       </section>
+
+      <GameMapSection />
 
       <CrewPointsSection />
 

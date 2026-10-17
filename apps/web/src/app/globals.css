@@ -19,6 +19,8 @@
   --c-ink: #161d1a;
   --c-muted: #3f4945;
   --c-line: #c3ccc7;
+  /* Earlier weeks on the game map: a grey that clears 3:1 on the surface (docs/game-map.md). */
+  --c-trail: #808a85;
   --c-primary: #1f6b5a;
   --c-on-primary: #ffffff;
   --c-primary-container: #a6f2db;
@@ -49,6 +51,7 @@
     --c-ink: #dee4e0;
     --c-muted: #bfc9c4;
     --c-line: #3f4945;
+    --c-trail: #7a847f;
     --c-primary: #8bd6bf;
     --c-on-primary: #00382d;
     --c-primary-container: #005143;
@@ -78,6 +81,7 @@
   --c-ink: #dee4e0;
   --c-muted: #bfc9c4;
   --c-line: #3f4945;
+  --c-trail: #7a847f;
   --c-primary: #8bd6bf;
   --c-on-primary: #00382d;
   --c-primary-container: #005143;
@@ -139,6 +143,7 @@
   --color-ink: var(--c-ink);
   --color-muted: var(--c-muted);
   --color-line: var(--c-line);
+  --color-trail: var(--c-trail);
   --color-primary: var(--c-primary);
   --color-on-primary: var(--c-on-primary);
   --color-primary-container: var(--c-primary-container);
