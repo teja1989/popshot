@@ -1,5 +1,5 @@
-// Recaps: a crew's outings and what's worth celebrating in each. Shapes match the API's
-// routes/recaps.py.
+// Recaps: a crew's days of games (3 or more) and what's worth celebrating in each. Shapes
+// match the API's routes/recaps.py.
 
 import type { PlayerRef } from "./stats";
 
@@ -48,9 +48,9 @@ export function describeAward(award: Pick<Award, "kind" | "value">): { title: st
         why: plural(n, "Partnered a first-timer", `Partnered ${String(n)} first-timers`),
       };
     case "personal_best":
-      return { title: "Personal Best", why: `${String(n)} games in one outing, a new high` };
+      return { title: "Personal Best", why: `${String(n)} games in one day, a new high` };
     case "close_call":
-      return { title: "Close Call", why: "Won a game by two" };
+      return { title: "Close Call", why: "Won a game by a point or two" };
   }
 }
 

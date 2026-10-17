@@ -13,6 +13,8 @@ dependencies = [
     "pywebpush==2.5.0",
     "sqlalchemy==2.1.4",
     "structlog==26.1.0",
+    # Time zone rules for crews' local days (recap.py), whatever the base image has.
+    "tzdata==2026.5",
     "uvicorn==0.54.0",
 ]
 

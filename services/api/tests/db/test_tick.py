@@ -18,11 +18,13 @@ from sqlalchemy.pool import NullPool
 
 from popshot_api.main import create_app
 from popshot_api.ops.tick import WEEK_MESSAGE_TITLE, WEEK_SEND_AT, run
+from popshot_api.recap import MIN_GAMES
 from tests.conftest import make_settings
 from tests.db.conftest import People, as_user, committed_as, create
 from tests.db.test_games_api import join_and_approve, log, players
 from tests.db.test_nights_api import plan, rsvp
 from tests.db.test_notifications_api import RecordingSender, device
+from tests.db.test_recaps_api import recap_key
 from tests.fakes import FakeTokenVerifier
 
 pytestmark = pytest.mark.db
@@ -287,7 +289,13 @@ def test_players_hear_their_recap_is_ready_once(
 ) -> None:
     first = singles(people, crew, "Casey", "Sam")
     singles(people, crew, "Sam", "Casey")
-    # Just played: too soon.
+    # Two games an hour ago: not enough for a recap.
+    played_ago(app_engine, people, crew, 2)
+    tick(jobs_engine, sender)
+    assert recaps_sent(sender, crew) == {}
+
+    # A third, just played: too soon.
+    singles(people, crew, "Casey", "Sam")
     tick(jobs_engine, sender)
     assert recaps_sent(sender, crew) == {}
 
@@ -298,11 +306,12 @@ def test_players_hear_their_recap_is_ready_once(
     assert set(sent) == {"Casey", "Sam"}
     assert summary.announced_recaps == 1
     message = sent["Casey"]
-    assert message.url == f"/groups/{crew['group_id']}/recaps/{first}"
+    day = recap_key(app_engine, people.user_id(crew["casey"]), crew["group_id"], first)
+    assert message.url == f"/groups/{crew['group_id']}/recaps/{day}"
     # No one's name on the lock screen.
     assert "Casey" not in message.body
     assert "Sam" not in message.body
-    assert message.body.endswith("2 games. Tap to see the awards.")
+    assert message.body.endswith("3 games. Tap to see the awards.")
 
     # Once only.
     tick(jobs_engine, sender)
@@ -320,7 +329,8 @@ def test_recaps_can_be_muted(
         "/v1/me/notifications", json={"muted": ["recaps"]}, headers=crew["sam"]
     )
     assert muted.status_code == 200, muted.text
-    singles(people, crew, "Casey", "Sam")
+    for _ in range(MIN_GAMES):
+        singles(people, crew, "Casey", "Sam")
     played_ago(app_engine, people, crew, 2)
     tick(jobs_engine, sender)
     assert set(recaps_sent(sender, crew)) == {"Casey"}

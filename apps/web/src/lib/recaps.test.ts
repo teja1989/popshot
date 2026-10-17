@@ -11,8 +11,8 @@ describe("recaps", () => {
     expect(describeAward(award("great_partner", 3)).why).toBe("Won with 3 different partners");
     expect(describeAward(award("welcome_wagon", 1)).why).toBe("Partnered a first-timer");
     expect(describeAward(award("welcome_wagon", 2)).why).toBe("Partnered 2 first-timers");
-    expect(describeAward(award("personal_best", 7)).why).toBe("7 games in one outing, a new high");
-    expect(describeAward(award("close_call", 2))).toEqual({ title: "Close Call", why: "Won a game by two" });
+    expect(describeAward(award("personal_best", 7)).why).toBe("7 games in one day, a new high");
+    expect(describeAward(award("close_call", 2))).toEqual({ title: "Close Call", why: "Won a game by a point or two" });
   });
 
   it("asks the calendar for exactly the outing, even a single game", () => {

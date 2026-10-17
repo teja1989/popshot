@@ -8,7 +8,7 @@ import { ABOUT_MAX, DAY_LABEL, DAYS, TIME_LABEL, TIMES, hasLink, type Day, type 
 import { sectionsFor, type SectionId } from "@/lib/crew-settings";
 import { describeRules, GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
 import { MEMBERS_DEFAULT, MEMBERS_MAX, MEMBERS_MIN, OPEN_FEATURE } from "@/lib/open-crews";
-import { browserTimeZone, knownZones, zoneChoices, zoneLabel } from "@/lib/time-zone";
+import { knownZones, zoneChoices, zoneLabel } from "@/lib/time-zone";
 
 import { useSignedIn } from "./auth";
 import { CrewCourts } from "./crew-courts";
@@ -169,11 +169,11 @@ function CrewSection({ group, onSaved }: SectionProps) {
 }
 
 function TimeZoneForm({ group, onSaved }: SectionProps) {
-  const [zone, setZone] = useState(() => group.time_zone ?? browserTimeZone() ?? "UTC");
-  const choices = useMemo(() => zoneChoices(group.time_zone ?? zone, knownZones()), [group.time_zone, zone]);
+  const [zone, setZone] = useState(group.time_zone);
+  const choices = useMemo(() => zoneChoices(group.time_zone, knownZones()), [group.time_zone]);
   // The API keeps a zone's current name (Asia/Calcutta is kept as Asia/Kolkata): show that.
   const { save, saving, status, clearSaved } = useSave(group, (saved) => {
-    if (saved.time_zone) setZone(saved.time_zone);
+    setZone(saved.time_zone);
     onSaved(saved);
   });
 
@@ -187,11 +187,7 @@ function TimeZoneForm({ group, onSaved }: SectionProps) {
     >
       <label className="flex flex-col gap-2">
         <span className="text-body font-bold">Time zone</span>
-        <span className="text-small text-muted">
-          {group.time_zone
-            ? "Your crew's days follow this clock."
-            : "Not set yet. Pick where your crew plays, so its days follow the right clock."}
-        </span>
+        <span className="text-small text-muted">Your crew&apos;s days and recaps follow this clock.</span>
         <select
           value={zone}
           onChange={(event) => {

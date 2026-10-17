@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 from popshot_api.main import create_app
+from popshot_api.recap import MIN_GAMES
 from popshot_api.routes.shares import MAX_LIVE_SHARES
 from tests.conftest import make_settings
 from tests.db.conftest import People, as_user, committed_as, create, sqlstate_of
@@ -67,6 +68,12 @@ def doubles(people: People, crew: dict[str, Any], a: list[str], b: list[str], sc
     return match_id
 
 
+def day_of(people: People, crew: dict[str, Any], a: list[str], b: list[str], score: Any) -> None:
+    """The same game MIN_GAMES times: a day with a recap."""
+    for _ in range(MIN_GAMES):
+        doubles(people, crew, a, b, score)
+
+
 def at_venue(
     people: People, crew: dict[str, Any], app_engine: Engine, venue: str, ago: str = "30 minutes"
 ) -> None:
@@ -116,7 +123,7 @@ def test_anyone_with_the_link_sees_the_card(
     people: People, crew: dict[str, Any], app_engine: Engine
 ) -> None:
     at_venue(people, crew, app_engine, "12 Elm Street")
-    doubles(people, crew, ["Casey", "Sam"], ["Jo", "Gary"], (11, 9))
+    day_of(people, crew, ["Casey", "Sam"], ["Jo", "Gary"], (11, 9))
     key = key_of(people, crew)
 
     response = share(people, crew, key)
@@ -126,12 +133,13 @@ def test_anyone_with_the_link_sees_the_card(
 
     body = card(people, token)
     assert body["crew"] == "Lunch Dinkers"
-    assert body["games"] == 1
+    assert body["games"] == MIN_GAMES
     # First names only, with the scores.
-    [only] = body["matches"]
-    assert sorted(only["team_a"]) == ["Casey", "Sam"]
-    assert sorted(only["team_b"]) == ["Gary", "Jo"]
-    assert only["games"] == [[11, 9]]
+    assert len(body["matches"]) == MIN_GAMES
+    for game in body["matches"]:
+        assert sorted(game["team_a"]) == ["Casey", "Sam"]
+        assert sorted(game["team_b"]) == ["Gary", "Jo"]
+        assert game["games"] == [[11, 9]]
     assert sorted(p["name"] for p in body["played"]) == ["Casey", "Gary", "Jo", "Sam"]
     flat = repr(body)
     # No surnames, ids, emails or venue (it could be someone's home).
@@ -142,14 +150,13 @@ def test_anyone_with_the_link_sees_the_card(
 def test_a_link_works_only_for_its_outing(
     people: People, crew: dict[str, Any], app_engine: Engine
 ) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     age(app_engine, people, crew, "2 days")
-    doubles(people, crew, ["Sam"], ["Jo"], (11, 7))
+    day_of(people, crew, ["Sam"], ["Jo"], (11, 7))
     listed = people.client.get(f"/v1/groups/{crew['group_id']}/recaps", headers=crew["sam"])
     older = listed.json()[1]["key"]
     body = card(people, share(people, crew, older).json()["token"])
-    assert body["matches"][0]["games"] == [[11, 3]]
-    assert len(body["matches"]) == 1
+    assert [m["games"] for m in body["matches"]] == [[[11, 3]]] * MIN_GAMES
 
 
 def test_bad_and_unknown_links_look_the_same(people: People) -> None:
@@ -162,7 +169,7 @@ def test_bad_and_unknown_links_look_the_same(people: People) -> None:
 
 
 def test_only_members_share_and_only_real_outings(people: People, crew: dict[str, Any]) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     key = key_of(people, crew)
     outsider = people.new("Riley")
     gid = crew["group_id"]
@@ -181,7 +188,7 @@ def test_only_members_share_and_only_real_outings(people: People, crew: dict[str
 
 
 def test_who_can_turn_links_off(people: People, crew: dict[str, Any]) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     key = key_of(people, crew)
     sams = share(people, crew, key, "sam").json()["token"]
     jos = share(people, crew, key, "jo").json()["token"]
@@ -203,7 +210,7 @@ def test_who_can_turn_links_off(people: People, crew: dict[str, Any]) -> None:
 def test_expired_links_and_deleted_crews_are_gone(
     people: People, crew: dict[str, Any], app_engine: Engine
 ) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     key = key_of(people, crew)
     token = secrets.token_urlsafe(32)
     with committed_as(app_engine, people.user_id(crew["sam"])) as conn:
@@ -232,7 +239,7 @@ def test_expired_links_and_deleted_crews_are_gone(
 def test_links_cannot_outlast_thirty_days(
     people: People, crew: dict[str, Any], app_engine: Engine
 ) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     key = key_of(people, crew)
     sam = people.user_id(crew["sam"])
     sql = (
@@ -256,7 +263,7 @@ def test_people_can_stay_off_shared_cards(people: People, crew: dict[str, Any]) 
     assert people.client.get("/v1/me", headers=crew["jo"]).json()["hide_on_shared_cards"] is False
 
     # Sam and Jo play their first game: both are newcomers. Sam wins by two.
-    doubles(people, crew, ["Sam"], ["Jo"], (11, 9))
+    day_of(people, crew, ["Sam"], ["Jo"], (11, 9))
     key = key_of(people, crew)
     body = card(people, share(people, crew, key, "jo").json()["token"])
     assert "Sam" not in repr(body)
@@ -276,7 +283,7 @@ def test_people_can_stay_off_shared_cards(people: People, crew: dict[str, Any]) 
 def test_ai_words_are_used_only_if_they_name_nobody_hidden(
     people: People, crew: dict[str, Any], writer: FakeWriter, app_engine: Engine
 ) -> None:
-    doubles(people, crew, ["Sam"], ["Jo"], (11, 4))
+    day_of(people, crew, ["Sam"], ["Jo"], (11, 4))
     age(app_engine, people, crew, "2 hours")
     key = key_of(people, crew)
     writer.reply = {"headline": "Paddles up, crew!", "lines": ["Sam and Jo kept rallying."]}
@@ -302,7 +309,7 @@ def test_ai_words_naming_the_venue_are_not_shared(
     people: People, crew: dict[str, Any], writer: FakeWriter, app_engine: Engine
 ) -> None:
     at_venue(people, crew, app_engine, "Elm Street", "150 minutes")
-    doubles(people, crew, ["Sam"], ["Jo"], (11, 4))
+    day_of(people, crew, ["Sam"], ["Jo"], (11, 4))
     age(app_engine, people, crew, "2 hours")
     key = key_of(people, crew)
     writer.reply = {"headline": "Paddles up at Elm Street!", "lines": ["Sam and Jo rallied."]}
@@ -314,7 +321,7 @@ def test_ai_words_naming_the_venue_are_not_shared(
 
 
 def test_each_person_has_a_limit_on_live_links(people: People, crew: dict[str, Any]) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     key = key_of(people, crew)
     for _ in range(MAX_LIVE_SHARES):
         assert share(people, crew, key).status_code == 201
@@ -327,7 +334,7 @@ def test_each_person_has_a_limit_on_live_links(people: People, crew: dict[str, A
 def test_with_no_user_the_tables_stay_closed(
     people: People, crew: dict[str, Any], app_engine: Engine
 ) -> None:
-    doubles(people, crew, ["Casey"], ["Gary"], (11, 3))
+    day_of(people, crew, ["Casey"], ["Gary"], (11, 3))
     share(people, crew, key_of(people, crew))
     with as_user(app_engine, None) as conn:
         for table in ("recap_shares", "matches", "players", "users", "recap_texts"):
@@ -347,7 +354,7 @@ def test_the_ai_switch_reaches_shared_links(
     app_engine: Engine,
     owner_engine: Engine,
 ) -> None:
-    doubles(people, crew, ["Sam"], ["Jo"], (11, 4))
+    day_of(people, crew, ["Sam"], ["Jo"], (11, 4))
     age(app_engine, people, crew, "2 hours")
     key = key_of(people, crew)
     writer.reply = {"headline": "Paddles up, crew!", "lines": ["Sam and Jo kept rallying."]}
@@ -368,3 +375,24 @@ def test_the_ai_switch_reaches_shared_links(
     finally:
         set_rollout("everyone")
     assert card(people, token)["written_by"] == "ai"
+
+
+def test_a_shared_link_follows_the_crews_own_day(
+    people: People, crew: dict[str, Any], app_engine: Engine
+) -> None:
+    # 7pm to 9pm in New York (the crew's zone) runs past midnight UTC: one day, not two.
+    ids = [doubles(people, crew, ["Casey"], ["Gary"], (11, 3)) for _ in range(MIN_GAMES)]
+    with committed_as(app_engine, people.user_id(crew["casey"])) as conn:
+        for hour, match_id in zip((19, 20, 21), ids, strict=True):
+            conn.execute(
+                text("UPDATE matches SET played_at = :at WHERE id = :id"),
+                {"at": f"2026-09-01 {hour}:00-04", "id": match_id},
+            )
+    token = share(people, crew, key_of(people, crew)).json()["token"]
+    assert card(people, token)["games"] == MIN_GAMES
+    # The zone is given for a live link only.
+    with as_user(app_engine, None) as conn:
+        zone = conn.execute(
+            text("SELECT app_public_share_zone(:h)"), {"h": secrets.token_bytes(32)}
+        ).scalar_one()
+    assert zone is None

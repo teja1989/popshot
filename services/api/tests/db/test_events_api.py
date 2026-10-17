@@ -14,7 +14,7 @@ from sqlalchemy import Engine, text
 
 from tests.db.conftest import INSUFFICIENT_PRIVILEGE, People, as_user, create, sqlstate_of
 from tests.db.test_features import owner
-from tests.db.test_games_api import add_guest, join_and_approve, players
+from tests.db.test_games_api import add_guest, join_and_approve, log, players
 
 pytestmark = pytest.mark.db
 
@@ -322,10 +322,20 @@ def test_event_games_count_like_any_game(people: People, crew: dict[str, Any]) -
     }
     for p in court["team_a"] + court["team_b"]:
         assert played[p] == 1
-    # Recaps see the outing.
+    # Recaps see the day: the event's two games and one logged as usual.
+    logged = log(
+        people,
+        crew["casey"],
+        crew["gid"],
+        format="singles",
+        team_a=[crew["ids"]["Ana"]],
+        team_b=[crew["ids"]["Bo"]],
+        games=[{"team_a": 11, "team_b": 4}],
+    )
+    assert logged.status_code == 201, logged.text
     recaps = people.client.get(f"/v1/groups/{crew['gid']}/recaps", headers=crew["casey"]).json()
     assert recaps
-    assert recaps[0]["games"] == 2
+    assert recaps[0]["games"] == 3
     # Your week counts it for whoever played.
     on_court = {p for c in event["round_list"][0]["courts"] for p in c["team_a"] + c["team_b"]}
     week = people.client.get("/v1/me/week", headers=crew["casey"]).json()

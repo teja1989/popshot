@@ -938,6 +938,7 @@ dependencies = [
     { name = "pywebpush" },
     { name = "sqlalchemy" },
     { name = "structlog" },
+    { name = "tzdata" },
     { name = "uvicorn" },
 ]
 
@@ -962,6 +963,7 @@ requires-dist = [
     { name = "pywebpush", specifier = "==2.5.0" },
     { name = "sqlalchemy", specifier = "==2.1.4" },
     { name = "structlog", specifier = "==26.1.0" },
+    { name = "tzdata", specifier = "==2026.5" },
     { name = "uvicorn", specifier = "==0.54.0" },
 ]
 

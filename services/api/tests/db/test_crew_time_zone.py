@@ -39,8 +39,9 @@ def test_the_creators_zone_is_kept_and_members_see_it(people: People, crew: dict
     assert detail(people, crew["sam"], crew["group_id"])["time_zone"] == "America/New_York"
 
 
-def test_a_crew_made_without_a_zone_has_none(people: People) -> None:
-    assert create(people, people.new("Lee"))["time_zone"] is None
+def test_a_crew_made_without_a_zone_gets_the_default(people: People) -> None:
+    # Migration 0041: every crew has a zone; leads change it in settings.
+    assert create(people, people.new("Lee"))["time_zone"] == "America/New_York"
 
 
 def test_a_zone_postgres_doesnt_know_never_stops_a_crew_being_made(people: People) -> None:
@@ -50,7 +51,19 @@ def test_a_zone_postgres_doesnt_know_never_stops_a_crew_being_made(people: Peopl
         headers=people.new("Ari"),
     )
     assert made.status_code == 201, made.text
-    assert made.json()["time_zone"] is None
+    assert made.json()["time_zone"] == "America/New_York"
+
+
+def test_the_database_never_leaves_a_crew_without_a_zone(
+    people: People, crew: dict[str, Any], app_engine: Engine
+) -> None:
+    with (
+        as_user(app_engine, people.user_id(crew["casey"])) as conn,
+        pytest.raises(Exception, match="not-null"),
+    ):
+        conn.execute(
+            text("UPDATE groups SET time_zone = NULL WHERE id = :g"), {"g": crew["group_id"]}
+        )
 
 
 @pytest.mark.parametrize(

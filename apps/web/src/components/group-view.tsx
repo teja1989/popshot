@@ -1,13 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 
-import { apiPatch } from "@/lib/api-client";
 import { describeRules, type GroupDetail } from "@/lib/groups";
-import { browserTimeZone, shouldFillTimeZone } from "@/lib/time-zone";
 
-import { useSignedIn } from "./auth";
 import { CrewProfileSummary } from "./crew-profile-summary";
 import { PlayNightsSection } from "./play-nights-section";
 import { useApiGet } from "./use-api";
@@ -15,25 +11,8 @@ import { AvatarStack } from "./ui/avatar";
 import { buttonClass } from "./ui/button";
 import { BackIcon, ChevronIcon, PlusIcon } from "./ui/icons";
 
-// Crews whose time zone this tab has already tried to fill in, so it's sent once.
-const zoneSent = new Set<string>();
-
 export function GroupView({ groupId }: { groupId: string }) {
-  const { user } = useSignedIn();
-  const { result, reload, replace } = useApiGet<GroupDetail>(`/v1/groups/${groupId}`);
-  const group = result.kind === "ready" ? result.data : null;
-
-  // Crews made before time zones were kept get the zone of their lead's device, once.
-  useEffect(() => {
-    if (!group || zoneSent.has(group.id)) return;
-    const zone = browserTimeZone();
-    if (!shouldFillTimeZone(group, zone)) return;
-    zoneSent.add(group.id);
-    apiPatch<GroupDetail>(user, `/v1/groups/${group.id}`, { time_zone: zone }).then(replace, () => {
-      // Nothing to show: it's tried again on the next visit.
-      zoneSent.delete(group.id);
-    });
-  }, [group, user, replace]);
+  const { result, reload } = useApiGet<GroupDetail>(`/v1/groups/${groupId}`);
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 pt-6 pb-12 lg:max-w-2xl lg:px-8 lg:pt-10">

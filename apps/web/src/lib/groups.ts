@@ -56,8 +56,8 @@ export interface GroupDetail extends GroupSummary {
   default_points_to: PointsTo;
   default_win_by_two: boolean;
   created_at: string;
-  // Its days follow this clock (lib/time-zone.ts). Null until a lead's browser sends it.
-  time_zone?: string | null;
+  // Its days and recaps follow this clock (lib/time-zone.ts).
+  time_zone: string;
   members: Member[];
   // Leads and co-leads only: people removed or declined, who can be restored.
   former_members: FormerMember[];
