@@ -229,6 +229,9 @@ Each step is one or two small PRs from `main`, behind a switch, and measured bef
 | 6 | The shared-recap door, and the three ways forward after sign-up |
 | 7 | Plus and Crew Plus: payments, bands, trials (only after seasons ship) |
 
+Your game map, on the You tab, is planned in `game-map.md` (steps M1 to M4, free except the
+video skills map).
+
 Video runs alongside, as its own pilot:
 
 | Step | What |
