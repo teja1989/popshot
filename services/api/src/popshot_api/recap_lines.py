@@ -1,8 +1,8 @@
 """Popshot's own commentator: a headline and a few lines for a recap, from its facts only.
 
 Every line was written to be friendly to everyone: it celebrates, never mocks, and doesn't
-refer to anyone as he or she. Lines are picked by the outing's key, so a recap reads the same
-every time it's opened, and different outings get different lines.
+refer to anyone as he or she. Lines are picked by the day's key, so a recap reads the same
+every time it's opened, and different days get different lines.
 
 (The AI commentator, when it's on, falls back to these.)
 """
@@ -47,11 +47,11 @@ ONE: dict[AwardKind, list[str]] = {
     ],
     "personal_best": [
         "{names} played {n} games, a personal best. Somebody get {names} some water!",
-        "New record for {names}: {n} games in one go.",
+        "New record for {names}: {n} games in one day.",
     ],
     "close_call": [
-        "{names} won one by two points. Nerves of steel.",
-        "Won by two: {names} kept cool when it counted.",
+        "{names} won one by a point or two. Nerves of steel.",
+        "A point or two in it: {names} kept cool when it counted.",
     ],
 }
 MANY: dict[AwardKind, list[str]] = {
@@ -68,8 +68,8 @@ MANY: dict[AwardKind, list[str]] = {
     ],
     "personal_best": [],  # one award per person
     "close_call": [
-        "Two-point finishes for {names}. Nerves of steel!",
-        "Won by two: {names}. That's how you finish a rally.",
+        "Down-to-the-wire wins for {names}. Nerves of steel!",
+        "A point or two in it: {names}. That's how you finish a rally.",
     ],
 }
 # {names} are the first-timers.

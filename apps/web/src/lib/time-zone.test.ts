@@ -1,23 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import type { GroupDetail } from "./groups";
-import { browserTimeZone, isZoneName, shouldFillTimeZone, zoneChoices, zoneLabel } from "./time-zone";
+import { browserTimeZone, isZoneName, zoneChoices, zoneLabel } from "./time-zone";
 
 function fakeIntl(zone: unknown) {
   return {
     DateTimeFormat: (() => ({ resolvedOptions: () => ({ timeZone: zone }) })) as unknown as typeof Intl.DateTimeFormat,
   };
-}
-
-function crew(changes: Partial<GroupDetail>): GroupDetail {
-  return {
-    id: "g",
-    name: "Dawn Dinkers",
-    my_role: "lead",
-    my_status: "active",
-    time_zone: null,
-    ...changes,
-  } as GroupDetail;
 }
 
 describe("this device's zone", () => {
@@ -42,20 +30,6 @@ describe("this device's zone", () => {
     expect(isZoneName("UTC")).toBe(true);
     expect(isZoneName("America/Argentina/Buenos_Aires")).toBe(true);
     expect(isZoneName("/UTC")).toBe(false);
-  });
-});
-
-describe("filling it in once", () => {
-  it("fills it for a lead or co-lead when the crew has none", () => {
-    expect(shouldFillTimeZone(crew({}), "Europe/London")).toBe(true);
-    expect(shouldFillTimeZone(crew({ my_role: "co_lead" }), "Europe/London")).toBe(true);
-  });
-
-  it("never for members, people waiting, crews that have one, or without a zone", () => {
-    expect(shouldFillTimeZone(crew({ my_role: "member" }), "Europe/London")).toBe(false);
-    expect(shouldFillTimeZone(crew({ my_status: "pending" }), "Europe/London")).toBe(false);
-    expect(shouldFillTimeZone(crew({ time_zone: "Asia/Tokyo" }), "Europe/London")).toBe(false);
-    expect(shouldFillTimeZone(crew({}), null)).toBe(false);
   });
 });
 

@@ -1,27 +1,31 @@
-"""Recaps: a crew's games grouped into outings, and what's worth celebrating in each.
+"""Recaps: a crew's games grouped by day, and what's worth celebrating in each.
 
-An outing is a run of games with no gap longer than OUTING_GAP between them: a morning
-session, a lunchtime game, an evening meetup. No time zones needed. Its key is its first
-match's id.
+An outing is a crew's games on one day, in the crew's own time zone (groups.time_zone,
+migration 0040). A day with at least MIN_GAMES games gets a recap; smaller days still count
+as history (who's new, personal bests). Its key is made from the crew and the date, so it
+never changes when games are added, backdated or deleted (old keys: migration 0041).
 
 Awards only ever celebrate (agreed with the crew): nothing for losing, nobody is "worst".
 - Always There: has played every week for ALWAYS_THERE_WEEKS weeks or more, counting this one.
 - Great Partner: won with the most different partners in the outing (at least 2).
 - Welcome Wagon: partnered someone in their very first outing.
 - Personal Best: more games than in any earlier outing, and at least PERSONAL_BEST_MIN.
-- Close Call: won a game by exactly CLOSE_CALL_MARGIN points.
+- Close Call: won a game by CLOSE_CALL_MARGIN points or fewer.
 """
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, date, datetime, tzinfo
 from typing import Literal
-from uuid import UUID
+from uuid import UUID, uuid5
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from popshot_api.rating import PlayedMatch
 from popshot_api.stats import weeks_in_a_row
 
-OUTING_GAP = timedelta(hours=3)
+MIN_GAMES = 3
+# Fixed for good: every recap key (and every shared link) is made from it.
+DAY_KEYS = UUID("85b09a18-97f6-4a54-858f-e87aab46e025")
 ALWAYS_THERE_WEEKS = 4
 PERSONAL_BEST_MIN = 3
 CLOSE_CALL_MARGIN = 2
@@ -36,13 +40,27 @@ AWARD_ORDER: tuple[AwardKind, ...] = (
 )
 
 
+def day_key(group_id: UUID, day: date) -> UUID:
+    return uuid5(DAY_KEYS, f"{group_id}/{day.isoformat()}")
+
+
+def zone(name: str | None) -> tzinfo:
+    """The crew's zone. The database keeps only zones it knows; UTC if Python doesn't."""
+    try:
+        return ZoneInfo(name) if name else UTC
+    except (ZoneInfoNotFoundError, ValueError):
+        return UTC
+
+
 @dataclass(frozen=True, slots=True)
 class Outing:
+    key: UUID
+    day: date
     matches: tuple[PlayedMatch, ...]  # oldest first
 
     @property
-    def key(self) -> UUID:
-        return self.matches[0].id
+    def has_recap(self) -> bool:
+        return len(self.matches) >= MIN_GAMES
 
     @property
     def start(self) -> datetime:
@@ -74,15 +92,13 @@ def _in_order(matches: Iterable[PlayedMatch]) -> list[PlayedMatch]:
     return sorted(matches, key=lambda m: (m.played_at, str(m.id)))
 
 
-def outings(matches: Iterable[PlayedMatch]) -> list[Outing]:
-    """All of a crew's outings, oldest first."""
-    found: list[list[PlayedMatch]] = []
+def outings(matches: Iterable[PlayedMatch], group_id: UUID, time_zone: str | None) -> list[Outing]:
+    """All of a crew's days with games, oldest first."""
+    local = zone(time_zone)
+    days: dict[date, list[PlayedMatch]] = {}
     for match in _in_order(matches):
-        if found and match.played_at - found[-1][-1].played_at <= OUTING_GAP:
-            found[-1].append(match)
-        else:
-            found.append([match])
-    return [Outing(tuple(group)) for group in found]
+        days.setdefault(match.played_at.astimezone(local).date(), []).append(match)
+    return [Outing(day_key(group_id, day), day, tuple(found)) for day, found in days.items()]
 
 
 def _players(match: PlayedMatch) -> tuple[UUID, ...]:
@@ -149,7 +165,7 @@ def _close_call(matches: Iterable[PlayedMatch]) -> list[Award]:
     close_games = 0
     for match in matches:
         for game in match.games:
-            if abs(game.team_a - game.team_b) == CLOSE_CALL_MARGIN:
+            if 0 < abs(game.team_a - game.team_b) <= CLOSE_CALL_MARGIN:
                 close_games += 1
                 winners.update(match.team_a if game.team_a > game.team_b else match.team_b)
     return [Award("close_call", _sorted(winners), close_games)] if winners else []
@@ -173,9 +189,14 @@ def recap(outing: Outing, earlier: Sequence[Outing]) -> Recap:
     return Recap(outing=outing, players=players, newcomers=newcomers, awards=tuple(awards))
 
 
+def with_recaps(all_outings: Sequence[Outing]) -> list[tuple[Outing, list[Outing]]]:
+    """Each day that has a recap, with every day before it, oldest first."""
+    return [(o, list(all_outings[:i])) for i, o in enumerate(all_outings) if o.has_recap]
+
+
 def find(all_outings: Sequence[Outing], key: UUID) -> tuple[Outing, list[Outing]] | None:
-    """The outing with `key` and the outings before it, or None."""
+    """The day with `key`, if it has a recap, and the days before it; or None."""
     for i, outing in enumerate(all_outings):
-        if outing.key == key:
+        if outing.key == key and outing.has_recap:
             return outing, list(all_outings[:i])
     return None

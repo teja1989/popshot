@@ -1,7 +1,5 @@
-// A crew's time zone (migration 0040): its days follow this clock. The lead's browser sends
-// its own zone when a crew is made, and fills it in once for older crews.
-
-import type { GroupDetail } from "./groups";
+// A crew's time zone (migrations 0040, 0041): its days and recaps follow this clock. The
+// lead's browser sends its own zone when a crew is made; without one it's America/New_York.
 
 // The API's own check (routes/groups.py TimeZone); the database then keeps only zones it knows.
 const ZONE = /^[A-Za-z][A-Za-z0-9_+/-]{0,63}$/;
@@ -18,16 +16,6 @@ export function browserTimeZone(intl: Pick<typeof Intl, "DateTimeFormat"> = Intl
   } catch {
     return null;
   }
-}
-
-/** Whether to fill in the crew's zone from this device: a lead or co-lead, and none yet. */
-export function shouldFillTimeZone(group: GroupDetail, zone: string | null): zone is string {
-  return (
-    zone !== null &&
-    !group.time_zone &&
-    group.my_status === "active" &&
-    (group.my_role === "lead" || group.my_role === "co_lead")
-  );
 }
 
 /** "America/New_York" → "America / New York". */

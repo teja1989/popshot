@@ -28,7 +28,7 @@ test("a new crew takes its lead's time zone, and the lead can change it", async 
   const section = page.getByRole("region", { name: "Group", exact: true });
   const zone = section.getByLabel("Time zone");
   await expect(zone).toHaveValue("Asia/Kolkata");
-  await expect(section).toContainText("Your crew's days follow this clock.");
+  await expect(section).toContainText("Your crew's days and recaps follow this clock.");
   const save = section.getByRole("button", { name: "Save time zone" });
   await expect(save).toBeDisabled();
   await zone.selectOption("Europe/London");
@@ -40,18 +40,19 @@ test("a new crew takes its lead's time zone, and the lead can change it", async 
   expect(problems).toEqual([]);
 });
 
-test("an older crew gets its time zone once its lead opens it", async ({ page }) => {
+test("a crew made without a time zone uses New York until a lead changes it", async ({ page }) => {
   await signIn(page, newUser("Ira"));
   await page.goto("/");
-  // As crews made before zones were kept: none sent.
+  // As from a browser that can't say: none sent.
   const crew = (await apiAs(page, "POST", "/v1/groups", { name: `Old ${String(Date.now())}` })) as {
     id: string;
-    time_zone: string | null;
+    time_zone: string;
   };
-  expect(crew.time_zone).toBeNull();
-
+  expect(crew.time_zone).toBe("America/New_York");
+  // Opening it doesn't change it.
   await page.goto(`/groups/${crew.id}`);
-  await expect.poll(() => zoneOf(page, crew.id)).toBe("Asia/Kolkata");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  expect(await zoneOf(page, crew.id)).toBe("America/New_York");
 });
 
 test.describe("on a device that reports an old zone name", () => {

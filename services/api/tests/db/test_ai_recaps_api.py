@@ -9,6 +9,7 @@ from sqlalchemy import Engine, text
 
 from popshot_api.ai_recap import DAILY_LIMIT
 from popshot_api.main import create_app
+from popshot_api.recap import MIN_GAMES
 from tests.conftest import make_settings
 from tests.db.conftest import People, committed_as, create
 from tests.db.test_games_api import join_and_approve, log, players
@@ -73,6 +74,12 @@ def game(people: People, crew: dict[str, Any], a: str, b: str, score: tuple[int,
     return match_id
 
 
+def day(people: People, crew: dict[str, Any], a: str, b: str, score: tuple[int, int]) -> None:
+    """The same game MIN_GAMES times: a day with a recap."""
+    for _ in range(MIN_GAMES):
+        game(people, crew, a, b, score)
+
+
 def age(app_engine: Engine, people: People, crew: dict[str, Any], interval: str) -> None:
     """Move every game in the crew back by `interval`, so the outing has settled."""
     with committed_as(app_engine, people.user_id(crew["casey"])) as conn:
@@ -99,7 +106,7 @@ def open_recap(people: People, crew: dict[str, Any]) -> dict[str, Any]:
 def test_ai_words_wait_until_the_outing_has_settled(
     people: People, crew: dict[str, Any], writer: FakeWriter, app_engine: Engine
 ) -> None:
-    game(people, crew, "Casey", "Gary", (11, 9))
+    day(people, crew, "Casey", "Gary", (11, 9))
     recap = open_recap(people, crew)
     assert recap["written_by"] == "popshot"
     assert writer.calls == []
@@ -119,7 +126,7 @@ def test_ai_words_wait_until_the_outing_has_settled(
 def test_words_are_written_once_and_the_list_reuses_them(
     people: People, crew: dict[str, Any], writer: FakeWriter, app_engine: Engine
 ) -> None:
-    game(people, crew, "Casey", "Gary", (11, 9))
+    day(people, crew, "Casey", "Gary", (11, 9))
     age(app_engine, people, crew, "2 hours")
     open_recap(people, crew)
     open_recap(people, crew)
@@ -134,7 +141,7 @@ def test_words_are_written_once_and_the_list_reuses_them(
 def test_changed_games_are_written_about_again(
     people: People, crew: dict[str, Any], writer: FakeWriter, app_engine: Engine
 ) -> None:
-    game(people, crew, "Casey", "Gary", (11, 9))
+    day(people, crew, "Casey", "Gary", (11, 9))
     age(app_engine, people, crew, "2 hours")
     open_recap(people, crew)
     # A game added to the same outing (logged as played then).
@@ -144,10 +151,10 @@ def test_changed_games_are_written_about_again(
             text("UPDATE matches SET played_at = now() - interval '110 minutes' WHERE id = :id"),
             {"id": late},
         )
-    writer.reply = {"headline": "Three players, two games!", "lines": ["Welcome, Sam!"]}
+    writer.reply = {"headline": "Three players, one more game!", "lines": ["Welcome, Sam!"]}
     recap = open_recap(people, crew)
     assert len(writer.calls) == 2
-    assert recap["headline"] == "Three players, two games!"
+    assert recap["headline"] == "Three players, one more game!"
 
 
 @pytest.mark.parametrize(
@@ -164,7 +171,7 @@ def test_bad_or_failed_replies_fall_back_and_are_not_retried_at_once(
     people: People, crew: dict[str, Any], writer: FakeWriter, app_engine: Engine, reply: Any
 ) -> None:
     writer.reply = reply
-    game(people, crew, "Casey", "Gary", (11, 9))
+    day(people, crew, "Casey", "Gary", (11, 9))
     age(app_engine, people, crew, "2 hours")
     first = open_recap(people, crew)
     assert first["written_by"] == "popshot"
@@ -186,7 +193,7 @@ def test_the_daily_limit_holds(
             ),
             {"g": group_id, "n": DAILY_LIMIT},
         )
-    game(people, crew, "Casey", "Gary", (11, 9))
+    day(people, crew, "Casey", "Gary", (11, 9))
     age(app_engine, people, crew, "2 hours")
     assert open_recap(people, crew)["written_by"] == "popshot"
     assert writer.calls == []
@@ -214,7 +221,7 @@ def test_the_switch_turns_ai_words_off_at_once(
     app_engine: Engine,
     ai_switch: Callable[[str], None],
 ) -> None:
-    game(people, crew, "Casey", "Gary", (11, 9))
+    day(people, crew, "Casey", "Gary", (11, 9))
     age(app_engine, people, crew, "2 hours")
     ai_switch("off")
     recap = open_recap(people, crew)

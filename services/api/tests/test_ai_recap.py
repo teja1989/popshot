@@ -26,7 +26,9 @@ def outing_facts() -> dict[str, Any]:
             match([A], [D], (11, 4), T0 - timedelta(days=7)),
             match([A, B], [C], (11, 9), T0),
             match([A, B], [C], (11, 5), T0 + timedelta(minutes=15)),
-        ]
+        ],
+        uuid4(),
+        "UTC",
     )
     found = recap(all_outings[-1], all_outings[:-1])
     return facts_for(found, NAMES, "Lunch Dinkers", "Riverside courts")

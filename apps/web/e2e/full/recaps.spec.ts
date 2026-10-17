@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { apiAs } from "./api";
 import { newUser, signIn } from "./auth";
 import { watchProblems } from "./problems";
 
@@ -12,7 +13,32 @@ async function addGuestTo(page: Page, slot: Locator, name: string): Promise<void
   await expect(page.getByRole("dialog")).toBeHidden();
 }
 
-test("after a game, the Crew tab links to a recap with friendly awards", async ({ page }) => {
+/** Log the same doubles game again through the API until the day has 3 games, enough for a
+ *  recap. The log screen has its own tests. */
+async function makeItADay(page: Page, groupId: string, logged: number): Promise<void> {
+  const players = (await apiAs(page, "GET", `/v1/groups/${groupId}/players`)) as {
+    id: string;
+    display_name: string;
+    is_me: boolean;
+  }[];
+  const id = (name: string) => players.find((p) => p.display_name === name)?.id ?? "";
+  const me = players.find((p) => p.is_me)?.id ?? "";
+  for (let i = logged; i < 3; i++) {
+    await apiAs(page, "POST", `/v1/groups/${groupId}/matches`, {
+      format: "doubles",
+      points_to: 11,
+      win_by_two: true,
+      best_of: 1,
+      team_a: [me, id("Ivy")],
+      team_b: [id("Raj"), id("Lena")],
+      games: [{ team_a: 11, team_b: 9 }],
+    });
+  }
+}
+
+const groupIdOf = (url: string) => /\/groups\/([0-9a-f-]{36})/.exec(url)?.[1] ?? "";
+
+test("after a game day, the Crew tab links to a recap with friendly awards", async ({ page }) => {
   const nora = newUser("Nora");
   await signIn(page, nora);
   const problems = await watchProblems(page);
@@ -28,7 +54,7 @@ test("after a game, the Crew tab links to a recap with friendly awards", async (
   await expect(page.getByRole("heading", { name: "No games yet" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Latest outing" })).toHaveCount(0);
 
-  // A doubles game won by two.
+  // A doubles game won by two: one game isn't a recap yet.
   await page.goto(`${groupUrl}/log`);
   await addGuestTo(page, page.getByRole("button", { name: "Team A, player 2: pick a player" }), "Ivy");
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Raj");
@@ -40,8 +66,13 @@ test("after a game, the Crew tab links to a recap with friendly awards", async (
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
 
   await page.goto("/crew");
+  await expect(page.getByRole("region", { name: "Latest outing" })).toHaveCount(0);
+
+  // Three games that day: a recap.
+  await makeItADay(page, groupIdOf(groupUrl), 1);
+  await page.reload();
   const latest = page.getByRole("region", { name: "Latest outing" });
-  await expect(latest).toContainText("1 game · 4 players");
+  await expect(latest).toContainText("3 games · 4 players");
   await latest.getByRole("link", { name: /See the recap/ }).click();
   await expect(page).toHaveURL(/\/recaps\/[0-9a-f-]{36}$/);
 
@@ -53,7 +84,8 @@ test("after a game, the Crew tab links to a recap with friendly awards", async (
   await expect(awards.getByRole("listitem").filter({ hasText: "Close Call" })).toContainText(`Ivy, ${nora.name}`);
   await expect(page.getByRole("region", { name: "Who played" }).getByRole("listitem")).toHaveCount(4);
   const games = page.getByRole("region", { name: "The games" });
-  const game = games.getByRole("listitem");
+  await expect(games.getByRole("listitem")).toHaveCount(3);
+  const game = games.getByRole("listitem").first();
   await expect(game.locator("span").first()).toHaveText(/^(Ivy & Nora Test|Nora Test & Ivy)$/);
   await expect(game).toContainText(/11–9 · vs (Raj & Lena|Lena & Raj)/);
   // Popshot's own words here (the AI is off in tests), so no AI label.
@@ -86,6 +118,7 @@ test("a shared recap opens for anyone, hides people who opt out, and can be turn
   await page.getByLabel("Group name").fill("Lunch Dinkers");
   await page.getByRole("button", { name: "Create group" }).click();
   await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
+  const groupId = groupIdOf(page.url());
   await page.goto(`${page.url()}/log`);
   await addGuestTo(page, page.getByRole("button", { name: "Team A, player 2: pick a player" }), "Ivy");
   await addGuestTo(page, page.getByRole("button", { name: "Team B, player 1: pick a player" }), "Raj");
@@ -95,6 +128,7 @@ test("a shared recap opens for anyone, hides people who opt out, and can be turn
   await page.getByRole("button", { name: "Log game" }).click();
   await expect(page).toHaveURL(/\/play/);
   await page.getByRole("dialog", { name: "How did it go?" }).getByRole("button", { name: "Skip this game" }).click();
+  await makeItADay(page, groupId, 1);
   await page.goto("/crew");
   await page
     .getByRole("region", { name: "Latest outing" })
@@ -116,9 +150,11 @@ test("a shared recap opens for anyone, hides people who opt out, and can be turn
   await visitor.goto(path);
   await expect(visitor.getByRole("heading", { level: 1 })).toContainText(/game/i);
   const card = visitor.getByRole("main");
-  await expect(card).toContainText("Lunch Dinkers · 1 game · 4 players");
+  await expect(card).toContainText("Lunch Dinkers · 3 games · 4 players");
   await expect(card).toContainText("Keep score with your own crew.");
-  await expect(visitor.getByRole("region", { name: "The games" })).toContainText(/11–9 · vs (Raj & Lena|Lena & Raj)/);
+  await expect(visitor.getByRole("region", { name: "The games" }).getByRole("listitem").first()).toContainText(
+    /11–9 · vs (Raj & Lena|Lena & Raj)/,
+  );
   await expect(visitor.getByRole("region", { name: "Who played" })).toContainText("Nora");
   // First names only.
   await expect(card).not.toContainText("Nora Test");
@@ -131,7 +167,7 @@ test("a shared recap opens for anyone, hides people who opt out, and can be turn
   expect(preview.headers()["content-type"]).toContain("image/png");
   await expect(visitor.locator('meta[property="og:description"]')).toHaveAttribute(
     "content",
-    "1 game · 4 players with Lunch Dinkers.",
+    "3 games · 4 players with Lunch Dinkers.",
   );
 
   // Nora would rather not be named on shared cards.

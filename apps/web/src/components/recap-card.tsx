@@ -8,7 +8,7 @@ import { outingSize, type RecapSummary } from "@/lib/recaps";
 import { useApiGet } from "./use-api";
 import { ChevronIcon } from "./ui/icons";
 
-/** The Crew tab's latest outing, and a few before it. Nothing until the first game. */
+/** The Crew tab's latest game day, and a few before it. Nothing until a day with 3 games. */
 export function RecapCard({ groupId }: { groupId: string }) {
   const { result } = useApiGet<RecapSummary[]>(`/v1/groups/${groupId}/recaps`);
   if (result.kind !== "ready" || result.data.length === 0) {

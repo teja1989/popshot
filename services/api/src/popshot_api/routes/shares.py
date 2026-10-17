@@ -34,8 +34,8 @@ from popshot_api.rating import GameScore, PlayedMatch
 from popshot_api.recap_lines import NAMES_SHOWN, Commentary, commentary, first_name
 from popshot_api.routes.board import group_matches
 from popshot_api.routes.games import _require_member
-from popshot_api.routes.recaps import MEETUP_LEAD
 from popshot_api.routes.recaps import NOT_FOUND as RECAP_NOT_FOUND
+from popshot_api.routes.recaps import venue_for
 
 router = APIRouter()
 
@@ -123,7 +123,10 @@ class SharedRecap(BaseModel):
 
 
 def _outing_or_404(session: Session, group_id: UUID, key: UUID) -> None:
-    if recaps.find(recaps.outings(group_matches(session, group_id)), key) is None:
+    zone = session.execute(
+        text("SELECT time_zone FROM groups WHERE id = :g"), {"g": group_id}
+    ).scalar_one()
+    if recaps.find(recaps.outings(group_matches(session, group_id), group_id, zone), key) is None:
         raise RECAP_NOT_FOUND
 
 
@@ -204,16 +207,6 @@ def _shared_matches(session: Session, digest: bytes) -> list[PlayedMatch]:
     ]
 
 
-def _venue(nights: Sequence[tuple[datetime, str]], outing: recaps.Outing) -> str | None:
-    """Same rule as routes/recaps._venue, from the rows already read."""
-    near = [
-        (abs(starts_at - outing.start), venue)
-        for starts_at, venue in nights
-        if outing.start - MEETUP_LEAD <= starts_at <= outing.end
-    ]
-    return min(near, key=lambda n: n[0])[1] if near else None
-
-
 def _ai_words(  # noqa: PLR0913
     session: Session,
     request: Request,
@@ -262,7 +255,9 @@ def shared_recap(body: ShareToken, session: PublicSession, request: Request) -> 
     share = session.execute(text("SELECT * FROM app_public_share(:h)"), {"h": digest}).one_or_none()
     if share is None:
         raise DEAD_LINK
-    found = recaps.find(recaps.outings(_shared_matches(session, digest)), share.outing_key)
+    zone = session.execute(text("SELECT app_public_share_zone(:h)"), {"h": digest}).scalar_one()
+    days = recaps.outings(_shared_matches(session, digest), share.group_id, zone)
+    found = recaps.find(days, share.outing_key)
     if found is None:
         raise DEAD_LINK
     outing, earlier = found
@@ -276,7 +271,7 @@ def shared_recap(body: ShareToken, session: PublicSession, request: Request) -> 
         (n.starts_at, n.venue)
         for n in session.execute(text("SELECT * FROM app_public_share_nights(:h)"), {"h": digest})
     ]
-    venue = _venue(nights, outing)
+    venue = venue_for(nights, outing)
 
     result = recaps.recap(outing, earlier)
     said = _ai_words(

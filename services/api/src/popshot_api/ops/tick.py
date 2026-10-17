@@ -1,9 +1,9 @@
 """The scheduled job, run every 15 minutes by Cloud Scheduler: play-night reminders,
-"your recap is ready" for the people who played (an hour or more after an outing's last
-game), "your week is ready" on Mondays for people who played that week, deleting groups
-whose 30 days to be restored have passed, deleting usage activity older than 13 months, and
-deleting accounts whose 7 days to change their mind have passed (their Firebase sign-in
-first, then their data: migration 0023).
+"your recap is ready" for the people who played (an hour or more after the last game of a
+crew's day with a recap), "your week is ready" on Mondays for people who played that week,
+deleting groups whose 30 days to be restored have passed, deleting usage activity older than
+13 months, and deleting accounts whose 7 days to change their mind have passed (their
+Firebase sign-in first, then their data: migration 0023).
 
 It logs in as its own database user (a member of popshot_jobs), which can only call the
 functions migration 0008 grants it. Reminders are marked sent before they go out, so a
@@ -29,17 +29,18 @@ from popshot_api.log_config import configure_logging
 from popshot_api.places import GooglePlaces, Places, PlacesUnavailableError
 from popshot_api.push import Message, PushSender, Subscription
 from popshot_api.rating import PlayedMatch
-from popshot_api.recap import OUTING_GAP, Outing, outings
+from popshot_api.recap import Outing, outings
 
 log = structlog.get_logger("popshot_api.tick")
 
 Kind = Literal["day", "soon"]
 SOON = timedelta(hours=2)
-# Recaps: announced once an outing has been over this long, and not after this long.
+# Recaps: announced once a day's last game was this long ago, and not after this long.
 RECAP_AFTER = timedelta(hours=1)
 RECAP_WITHIN = timedelta(hours=6)
-# How far back to read games when looking for outings to announce.
-RECAP_LOOKBACK = timedelta(hours=24)
+# How far back to read games: the whole of any local day (25 hours at most) that could be
+# due, which started no more than RECAP_WITHIN + 25 hours ago.
+RECAP_LOOKBACK = timedelta(hours=48)
 # Your week: sent from this time (UTC) on Mondays until the day ends, so a missed run catches
 # up. 13:00 UTC is morning in the Americas and afternoon or evening in Europe and Asia.
 WEEK_SEND_AT = time(13, tzinfo=UTC)
@@ -111,9 +112,8 @@ class DueRecap:
 
 
 def due_recaps(rows: Sequence[Row[Any]], now: datetime) -> list[DueRecap]:
-    """Outings in `rows` (app_jobs_recent_matches since now - RECAP_LOOKBACK) whose last game
-    was RECAP_AFTER to RECAP_WITHIN ago."""
-    since = now - RECAP_LOOKBACK
+    """Days in `rows` (app_jobs_recent_matches since now - RECAP_LOOKBACK) that have a recap
+    and whose last game was RECAP_AFTER to RECAP_WITHIN ago."""
     by_group: dict[UUID, list[Row[Any]]] = {}
     for row in rows:
         by_group.setdefault(row.group_id, []).append(row)
@@ -121,11 +121,8 @@ def due_recaps(rows: Sequence[Row[Any]], now: datetime) -> list[DueRecap]:
     for group_id, group_rows in by_group.items():
         users = {row.match_id: set(row.user_ids) for row in group_rows}
         matches = [PlayedMatch(row.match_id, row.played_at, (), (), ()) for row in group_rows]
-        for outing in outings(matches):
-            # An outing that might have started before the window would get the wrong key.
-            if outing.start - since <= OUTING_GAP:
-                continue
-            if RECAP_AFTER <= now - outing.end <= RECAP_WITHIN:
+        for outing in outings(matches, group_id, group_rows[0].time_zone):
+            if outing.has_recap and RECAP_AFTER <= now - outing.end <= RECAP_WITHIN:
                 players = frozenset(u for m in outing.matches for u in users[m.id])
                 found.append(DueRecap(group_id, group_rows[0].group_name, outing, players))
     return found

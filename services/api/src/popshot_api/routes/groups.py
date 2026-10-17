@@ -159,7 +159,8 @@ class CreateGroup(BaseModel):
     default_format: Format = "doubles"
     default_points_to: Literal[11, 15, 21] = 11
     default_win_by_two: bool = True
-    # The creator's own time zone. One Postgres doesn't know is left out, never refused.
+    # The creator's own time zone. Without one Postgres knows, the crew gets the default
+    # (migration 0041); it's never refused.
     time_zone: TimeZone | None = None
 
 
@@ -216,8 +217,8 @@ class GroupDetail(GroupSummary):
     default_points_to: int
     default_win_by_two: bool
     created_at: datetime
-    # Its days (and recaps) follow this clock. None until a lead's browser sends it.
-    time_zone: str | None = None
+    # Its days (and recaps) follow this clock.
+    time_zone: str
     # The crew profile.
     about: str | None = None
     usual_days: list[Day] = []
