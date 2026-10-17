@@ -4,6 +4,7 @@ import { useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { apiPost, ApiError } from "@/lib/api-client";
 import { GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
+import { browserTimeZone } from "@/lib/time-zone";
 
 import { useSignedIn } from "./auth";
 import { GroupRulesFields, type Rules } from "./group-rules-fields";
@@ -48,6 +49,8 @@ export function CreateGroupDialog({
         default_format: rules.format,
         default_points_to: rules.pointsTo,
         default_win_by_two: rules.winByTwo,
+        // Left out when this device can't say; a lead's visit fills it in later.
+        time_zone: browserTimeZone() ?? undefined,
       });
       reset();
       setOpen(false);

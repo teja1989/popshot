@@ -94,6 +94,49 @@ CourtName = Annotated[
 ]
 
 
+# An IANA time zone name such as "America/New_York", as browsers give it (Intl). The
+# database keeps only names Postgres knows (migration 0040); zone_to_keep asks it first.
+TimeZone = Annotated[
+    str,
+    StringConstraints(min_length=1, max_length=64, pattern=r"^[A-Za-z][A-Za-z0-9_+/-]{0,63}$"),
+]
+
+
+# Zones IANA renamed, under the old names browsers still report (ICU keeps them). Postgres
+# builds without the old aliases (Debian's tzdata without tzdata-legacy) refuse them, so
+# the current name is kept instead.
+RENAMED_ZONES = {
+    "Africa/Asmera": "Africa/Asmara",
+    "America/Buenos_Aires": "America/Argentina/Buenos_Aires",
+    "America/Catamarca": "America/Argentina/Catamarca",
+    "America/Cordoba": "America/Argentina/Cordoba",
+    "America/Godthab": "America/Nuuk",
+    "America/Indianapolis": "America/Indiana/Indianapolis",
+    "America/Jujuy": "America/Argentina/Jujuy",
+    "America/Louisville": "America/Kentucky/Louisville",
+    "America/Mendoza": "America/Argentina/Mendoza",
+    "Asia/Calcutta": "Asia/Kolkata",
+    "Asia/Katmandu": "Asia/Kathmandu",
+    "Asia/Rangoon": "Asia/Yangon",
+    "Asia/Saigon": "Asia/Ho_Chi_Minh",
+    "Atlantic/Faeroe": "Atlantic/Faroe",
+    "Europe/Kiev": "Europe/Kyiv",
+    "Pacific/Enderbury": "Pacific/Kanton",
+    "Pacific/Ponape": "Pacific/Pohnpei",
+    "Pacific/Truk": "Pacific/Chuuk",
+}
+
+
+def zone_to_keep(session: Session, name: str) -> str | None:
+    """The zone's current name when Postgres knows it, else None."""
+    current = RENAMED_ZONES.get(name, name)
+    known = session.execute(
+        text("SELECT EXISTS (SELECT 1 FROM pg_timezone_names WHERE name = :name)"),
+        {"name": current},
+    ).scalar_one()
+    return current if known else None
+
+
 class CrewProfile(BaseModel):
     """The whole profile, replaced at once. An empty "about" clears it."""
 
@@ -116,6 +159,8 @@ class CreateGroup(BaseModel):
     default_format: Format = "doubles"
     default_points_to: Literal[11, 15, 21] = 11
     default_win_by_two: bool = True
+    # The creator's own time zone. One Postgres doesn't know is left out, never refused.
+    time_zone: TimeZone | None = None
 
 
 class MemberPreview(BaseModel):
@@ -171,6 +216,8 @@ class GroupDetail(GroupSummary):
     default_points_to: int
     default_win_by_two: bool
     created_at: datetime
+    # Its days (and recaps) follow this clock. None until a lead's browser sends it.
+    time_zone: str | None = None
     # The crew profile.
     about: str | None = None
     usual_days: list[Day] = []
@@ -199,6 +246,7 @@ class GroupSettings(BaseModel):
     default_format: Format | None = None
     default_points_to: Literal[11, 15, 21] | None = None
     default_win_by_two: bool | None = None
+    time_zone: TimeZone | None = None
 
 
 class DeletedGroup(BaseModel):
@@ -284,6 +332,12 @@ def create_group(body: CreateGroup, user: CurrentUserSession) -> GroupDetail:
             "win_by_two": body.default_win_by_two,
         },
     ).scalar_one()
+    zone = body.time_zone and zone_to_keep(user.session, body.time_zone)
+    if zone:
+        user.session.execute(
+            text("UPDATE groups SET time_zone = :time_zone WHERE id = :group_id"),
+            {"time_zone": zone, "group_id": group_id},
+        )
     detail = group_detail(user.session, user.user_id, group_id)
     if detail is None:  # pragma: no cover - the creator is always its active lead
         raise NOT_FOUND
@@ -319,7 +373,7 @@ def group_detail(session: Session, me: UUID, group_id: UUID) -> GroupDetail | No
             text(
                 """
                 SELECT g.id, g.name, g.default_format, g.default_points_to,
-                       g.default_win_by_two, g.created_at,
+                       g.default_win_by_two, g.created_at, g.time_zone,
                        g.about, g.usual_days, g.usual_times,
                        g.open_to_all, g.max_members, g.unlisted_at IS NOT NULL AS unlisted,
                        g.closed_for_court_at IS NOT NULL AS closed_for_court,
@@ -420,11 +474,17 @@ def _detail_or_404(session: Session, me: UUID, group_id: UUID) -> GroupDetail:
 
 @router.patch("/{group_id}")
 def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) -> GroupDetail:
-    """Rename the group or change the rules new games start with. Leads and co-leads."""
+    """Rename the group, change its time zone or the rules new games start with. Leads and
+    co-leads."""
     session, me = user.session, user.user_id
     if _my_membership(session, me, group_id) not in ("lead", "co_lead"):
         raise HTTPException(
             status.HTTP_403_FORBIDDEN, detail="Only the group's lead or a co-lead can do that."
+        )
+    zone = body.time_zone and zone_to_keep(session, body.time_zone)
+    if body.time_zone is not None and not zone:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="We don't know that time zone."
         )
     changes = body.model_dump(exclude_none=True)
     if changes:
@@ -438,7 +498,8 @@ def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) 
                                               default_format),
                     default_points_to = coalesce(CAST(:default_points_to AS smallint),
                                                  default_points_to),
-                    default_win_by_two = coalesce(:default_win_by_two, default_win_by_two)
+                    default_win_by_two = coalesce(:default_win_by_two, default_win_by_two),
+                    time_zone = coalesce(:time_zone, time_zone)
                 WHERE id = :group_id
                 """
             ),
@@ -448,6 +509,7 @@ def update_group(group_id: UUID, body: GroupSettings, user: CurrentUserSession) 
                 "default_format": body.default_format,
                 "default_points_to": body.default_points_to,
                 "default_win_by_two": body.default_win_by_two,
+                "time_zone": zone,
             },
         )
         _log(session, group_id, me, "group.updated", group_id)

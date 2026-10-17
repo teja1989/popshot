@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useRef, useState, type ReactNode, type SubmitEvent } from "react";
+import { useId, useMemo, useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { apiPatch, apiPut, ApiError } from "@/lib/api-client";
 import { ABOUT_MAX, DAY_LABEL, DAYS, TIME_LABEL, TIMES, hasLink, type Day, type TimeOfDay } from "@/lib/crew-profile";
 import { sectionsFor, type SectionId } from "@/lib/crew-settings";
 import { describeRules, GROUP_NAME_MAX, type GroupDetail } from "@/lib/groups";
 import { MEMBERS_DEFAULT, MEMBERS_MAX, MEMBERS_MIN, OPEN_FEATURE } from "@/lib/open-crews";
+import { browserTimeZone, knownZones, zoneChoices, zoneLabel } from "@/lib/time-zone";
 
 import { useSignedIn } from "./auth";
 import { CrewCourts } from "./crew-courts";
@@ -162,7 +163,57 @@ function CrewSection({ group, onSaved }: SectionProps) {
           {status}
         </div>
       </form>
+      <TimeZoneForm group={group} onSaved={onSaved} />
     </SettingsSection>
+  );
+}
+
+function TimeZoneForm({ group, onSaved }: SectionProps) {
+  const [zone, setZone] = useState(() => group.time_zone ?? browserTimeZone() ?? "UTC");
+  const choices = useMemo(() => zoneChoices(group.time_zone ?? zone, knownZones()), [group.time_zone, zone]);
+  // The API keeps a zone's current name (Asia/Calcutta is kept as Asia/Kolkata): show that.
+  const { save, saving, status, clearSaved } = useSave(group, (saved) => {
+    if (saved.time_zone) setZone(saved.time_zone);
+    onSaved(saved);
+  });
+
+  return (
+    <form
+      className="flex flex-col gap-4 border-t border-line pt-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save({ time_zone: zone });
+      }}
+    >
+      <label className="flex flex-col gap-2">
+        <span className="text-body font-bold">Time zone</span>
+        <span className="text-small text-muted">
+          {group.time_zone
+            ? "Your crew's days follow this clock."
+            : "Not set yet. Pick where your crew plays, so its days follow the right clock."}
+        </span>
+        <select
+          value={zone}
+          onChange={(event) => {
+            setZone(event.target.value);
+            clearSaved();
+          }}
+          className="min-h-12 rounded-xl border border-line bg-bg px-4 text-field text-ink"
+        >
+          {choices.map((name) => (
+            <option key={name} value={name}>
+              {zoneLabel(name)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex items-center gap-3">
+        <button type="submit" className={buttonClass("primary")} disabled={saving || zone === group.time_zone}>
+          {saving ? "Saving…" : "Save time zone"}
+        </button>
+        {status}
+      </div>
+    </form>
   );
 }
 

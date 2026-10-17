@@ -44,6 +44,11 @@ export default async function PrivacyPage() {
           how often they can, so codes can&apos;t be guessed).
         </li>
         <li>
+          <strong>Your crew&apos;s time zone:</strong> when a lead or co-lead makes a crew or visits its page, their
+          device&apos;s time zone (such as &ldquo;America/New_York&rdquo;) is kept with the crew so its days follow the
+          right clock. Members can see it, and leads and co-leads can change it in the crew&apos;s settings.
+        </li>
+        <li>
           <strong>Names you add for others:</strong> when you add a guest to a game, the name you type is kept in that
           group, so please use names your crew would recognise and nothing more.
         </li>
