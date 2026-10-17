@@ -412,6 +412,8 @@ def test_every_table_is_covered(owner_engine: Engine) -> None:
         "place_lookups",
         # Read only through the admin functions, or your own (test_open_crews.py).
         "crew_reports",
+        # Yours alone (0042); test_game_map_api.py covers it.
+        "play_goals",
     }
     assert tables - {"alembic_version", *personal} == set(TABLE_IDS)
 

@@ -122,16 +122,19 @@ def group_matches(session: Session, group_id: UUID) -> list[PlayedMatch]:
     ]
 
 
-def group_ratings(
+def group_ratings(  # noqa: PLR0913 - optional outputs for callers that need them
     session: Session,
     group_id: UUID,
     matches: list[PlayedMatch] | None = None,
     pregame: dict[UUID, tuple[float, float]] | None = None,
     starts_out: dict[UUID, float] | None = None,
+    *,
+    edges: dict[UUID, float] | None = None,
 ) -> dict[UUID, PlayerRating]:
     """Everyone's crew points in the group. Pass `matches` if you've already loaded them.
 
-    `starts_out`, if given, is filled with the starting ratings from self-rated levels.
+    `starts_out`, if given, is filled with the starting ratings from self-rated levels;
+    `edges`, with each match's points share above expected for team A (see replay).
     """
     starts = {
         row.player_id: LEVEL_START[row.self_level]
@@ -144,7 +147,7 @@ def group_ratings(
         starts_out.update(starts)
     if matches is None:
         matches = group_matches(session, group_id)
-    return replay(matches, starts, pregame)
+    return replay(matches, starts, pregame, edges)
 
 
 def build_board(

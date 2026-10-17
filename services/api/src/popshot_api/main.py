@@ -44,6 +44,7 @@ from popshot_api.routes import (
     stats,
     week,
 )
+from popshot_api.routes import game_map as game_map_routes
 from popshot_api.routes import places as places_routes
 from popshot_api.settings import Settings
 
@@ -160,6 +161,7 @@ def create_app(  # noqa: PLR0913  (each service is injectable for tests)
     app.include_router(focus.router)
     app.include_router(journey.router)
     app.include_router(journey_checkins.router)
+    app.include_router(game_map_routes.router)
     app.include_router(board.router)
     app.include_router(stats.router)
     app.include_router(notifications.router)
